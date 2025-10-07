@@ -1,0 +1,21 @@
+# WoW SavedVariables
+*.lua.bak
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Amazon Q
+.amazonq/

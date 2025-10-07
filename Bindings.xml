@@ -1,0 +1,11 @@
+<Bindings>
+	<Binding name="ROROTA_ROTATION" header="RoRota" description="Run Rotation">
+		RoRotaRunRotation();
+	</Binding>
+	<Binding name="ROROTA_OPTIONS" description="Show Options">
+		if RoRotaGUIFrame then RoRotaGUIFrame:Show(); else RoRota:CreateGUI(); RoRotaGUIFrame:Show(); end
+	</Binding>
+	<Binding name="ROROTA_PREVIEW" description="Toggle Preview">
+		if not RoRotaPreviewFrame then RoRota:CreateRotationPreview(); end if RoRotaPreviewFrame:IsVisible() then RoRotaPreviewFrame:Hide(); else RoRotaPreviewFrame:Show(); end
+	</Binding>
+</Bindings>

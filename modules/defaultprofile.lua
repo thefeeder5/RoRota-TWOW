@@ -1,0 +1,62 @@
+-- RoRota Default Profile Module
+-- Default profile configuration for new characters
+
+RoRotaDefaultProfile = {
+	abilities = {
+		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2},
+		Eviscerate = {enabled = true, maxCP = 5},
+		SinisterStrike = {enabled = true},
+		NoxiousAssault = {enabled = false},
+		Envenom = {enabled = false, minCP = 1, maxCP = 2},
+		Rupture = {enabled = false, minCP = 1, maxCP = 5},
+		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5},
+		Hemorrhage = {enabled = false},
+		Backstab = {enabled = false, failsafeAttempts = 3},
+	},
+	mainBuilder = "Sinister Strike",
+	secondaryBuilder = "Sinister Strike",
+	builderFailsafe = 3,
+	buffPriority = "SnD",
+	opener = {
+		ability = "Ambush",
+		secondaryAbility = "Sinister Strike",
+		failsafeAttempts = 3,
+		pickPocket = false,
+		sapFailAction = "None",
+	},
+	interrupt = {
+		useKick = true,
+		useGouge = false,
+		useKidneyShot = false,
+		kidneyMaxCP = 2,
+	},
+	finisherPriority = {"Envenom", "SnD", "Rupture", "ExposeArmor"},
+	overkillPrevention = true,
+	smartEviscerate = true,
+	smartRupture = true,
+	energyPooling = {
+		enabled = true,
+		threshold = 10,
+	},
+	defensive = {
+		useVanish = false,
+		vanishHP = 20,
+		useGhostlyStrike = false,
+		ghostlyTargetMaxHP = 30,
+		ghostlyPlayerMinHP = 1,
+		ghostlyPlayerMaxHP = 90,
+		useFeint = false,
+		feintMode = "Always",
+		useRiposte = false,
+		useSurpriseAttack = false,
+	},
+	poisons = {
+		enabled = true,
+		timeThreshold = 180,
+		chargesThreshold = 10,
+		autoApply = false,
+		applyInCombat = false,
+		mainHandPoison = "None",
+		offHandPoison = "None",
+	},
+}

@@ -1,0 +1,12 @@
+## Interface: 11200
+## Title: RoRota (Rogue One-Button Rotation)
+## Notes: Minimal one-button rotation helper for Rogue (WoW 1.12.1). Suggest-only by default; secure-click mode supported.
+## Author: Generated
+## Version: 0.1
+## SavedVariables: RoRotaDB
+RoRota.lua
+rotation.lua
+secure.lua
+options.lua
+RoRota.xml
+README.md
