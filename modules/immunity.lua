@@ -52,5 +52,14 @@ function RoRota:UsedSap()
     self.sapFailTime = GetTime()
 end
 
+function RoRota:MarkTargetNoPockets()
+    if not UnitExists("target") then return end
+    local targetName = UnitName("target")
+    if not RoRotaDB.noPockets then
+        RoRotaDB.noPockets = {}
+    end
+    RoRotaDB.noPockets[targetName] = true
+end
+
 -- mark module as loaded
 RoRota.immunity = true

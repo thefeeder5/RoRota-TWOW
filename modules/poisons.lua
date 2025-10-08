@@ -146,43 +146,32 @@ function RoRota:ApplyPoisonsManual()
 	local mhPoison = db.mainHandPoison
 	local ohPoison = db.offHandPoison
 	local now = GetTime()
+	local applied = false
 	
-	if self.lastPoisonSlot == 17 then
-		if mhPoison and mhPoison ~= "None" then
-			if self:ApplyPoison(mhPoison, 16) then
-				self.poisonApplyPending = {slot = 16, type = mhPoison}
-				self.poisonApplyTime = now
-				return
-			else
-				self:Print("Failed to apply "..mhPoison.." to main hand (not in bags?)")
-			end
+	if mhPoison and mhPoison ~= "None" then
+		if self:ApplyPoison(mhPoison, 16) then
+			self.poisonApplyPending = {slot = 16, type = mhPoison}
+			self.poisonApplyTime = now
+			self.lastPoisonSlot = 16
+			applied = true
+		else
+			self:Print("Failed to apply "..mhPoison.." to main hand (not in bags?)")
 		end
-		if ohPoison and ohPoison ~= "None" then
-			if self:ApplyPoison(ohPoison, 17) then
-				self.poisonApplyPending = {slot = 17, type = ohPoison}
-				self.poisonApplyTime = now
-			else
-				self:Print("Failed to apply "..ohPoison.." to off hand (not in bags?)")
-			end
+	end
+	
+	if ohPoison and ohPoison ~= "None" then
+		if self:ApplyPoison(ohPoison, 17) then
+			self.poisonApplyPending = {slot = 17, type = ohPoison}
+			self.poisonApplyTime = now
+			self.lastPoisonSlot = 17
+			applied = true
+		else
+			self:Print("Failed to apply "..ohPoison.." to off hand (not in bags?)")
 		end
-	else
-		if ohPoison and ohPoison ~= "None" then
-			if self:ApplyPoison(ohPoison, 17) then
-				self.poisonApplyPending = {slot = 17, type = ohPoison}
-				self.poisonApplyTime = now
-				return
-			else
-				self:Print("Failed to apply "..ohPoison.." to off hand (not in bags?)")
-			end
-		end
-		if mhPoison and mhPoison ~= "None" then
-			if self:ApplyPoison(mhPoison, 16) then
-				self.poisonApplyPending = {slot = 16, type = mhPoison}
-				self.poisonApplyTime = now
-			else
-				self:Print("Failed to apply "..mhPoison.." to main hand (not in bags?)")
-			end
-		end
+	end
+	
+	if not applied then
+		self:Print("No poisons configured or available")
 	end
 end
 

@@ -269,3 +269,12 @@ function RoRota:UNIT_AURA()
         end
     end
 end
+
+function RoRota:UI_ERROR_MESSAGE()
+    local msg = arg1
+    if msg and (string.find(msg, "can't be pick pocketed") or string.find(msg, "no pockets") or string.find(msg, "nothing to steal")) then
+        if self.MarkTargetNoPockets then
+            self:MarkTargetNoPockets()
+        end
+    end
+end
