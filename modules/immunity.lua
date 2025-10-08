@@ -61,5 +61,21 @@ function RoRota:MarkTargetNoPockets()
     RoRotaDB.noPockets[targetName] = true
 end
 
+function RoRota:IsSpellUninterruptible(spellName)
+    if not spellName or not RoRotaDB or not RoRotaDB.uninterruptible then
+        return false
+    end
+    return RoRotaDB.uninterruptible[spellName]
+end
+
+function RoRota:MarkSpellUninterruptible(spellName)
+    if not spellName then return end
+    if not RoRotaDB.uninterruptible then
+        RoRotaDB.uninterruptible = {}
+    end
+    RoRotaDB.uninterruptible[spellName] = true
+    self:Print("Spell '"..spellName.."' cannot be interrupted - will skip")
+end
+
 -- mark module as loaded
 RoRota.immunity = true

@@ -141,7 +141,10 @@ local function RoRotaRunRotationInternal()
     
     -- Interrupts (High Priority)
     if RoRota:IsTargetCasting() then
-        if interrupt.useKick and RoRota:HasSpell("Kick") and RoRota:HasEnoughEnergy("Kick") and not RoRota:IsOnCooldown("Kick") and not RoRota:IsTargetImmune("Kick") then
+        -- skip if spell is known to be uninterruptible
+        if RoRota.currentTargetSpell and RoRota:IsSpellUninterruptible(RoRota.currentTargetSpell) then
+            -- don't try to interrupt
+        elseif interrupt.useKick and RoRota:HasSpell("Kick") and RoRota:HasEnoughEnergy("Kick") and not RoRota:IsOnCooldown("Kick") and not RoRota:IsTargetImmune("Kick") then
             cachedAbility = "Kick"
             CastSpellByName("Kick")
             RoRota.targetCasting = false
@@ -328,6 +331,8 @@ local function RoRotaRunRotationInternal()
     -- Builders
     
     -- energy pooling at 4+ CP
+    -- TODO: This implementation is simplified and needs rework for proper energy pooling
+    -- True pooling should wait at 5 CP when buffs/debuffs are active, not at 4 CP
     if energyCfg.enabled and cp >= 4 and not RoRota:HasAdrenalineRush() then
         local poolThreshold = energyCfg.threshold or 0
         if energy < RoRota:GetEnergyCost("Eviscerate") + poolThreshold then

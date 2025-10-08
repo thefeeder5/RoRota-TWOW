@@ -5,6 +5,9 @@
 -- return instantly if already loaded
 if RoRota.casting then return end
 
+RoRota.currentTargetSpell = nil
+RoRota.lastInterruptAttempt = 0
+
 function RoRota:IsTargetCasting()
     -- SuperWoW API: check for regular casts
     if UnitCastingInfo then
@@ -29,6 +32,10 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF()
     if UnitExists("target") and arg1 and string.find(arg1, UnitName("target")) and string.find(arg1, "begins to cast") then
         self.targetCasting = true
         self.castingTimeout = GetTime() + 3
+        -- extract spell name
+        for spell in string.gmatch(arg1, "begins to cast (.+)%.") do
+            self.currentTargetSpell = spell
+        end
     end
 end
 
@@ -56,6 +63,20 @@ end
 function RoRota:CHAT_MSG_SPELL_SELF_DAMAGE()
     if not UnitExists("target") or not arg1 then return end
     local targetName = UnitName("target")
+    
+    -- detect successful interrupt
+    if string.find(arg1, "interrupts") and (string.find(arg1, "Kick") or string.find(arg1, "Gouge") or string.find(arg1, "Kidney Shot")) then
+        self.targetCasting = false
+        self.castingTimeout = 0
+        self.currentTargetSpell = nil
+    end
+    
+    -- detect failed interrupt (spell still casting after kick)
+    if (string.find(arg1, "Kick") or string.find(arg1, "Gouge") or string.find(arg1, "Kidney Shot")) then
+        self.lastInterruptAttempt = GetTime()
+    end
+    
+    -- detect immunity
     if string.find(arg1, "failed") and string.find(arg1, "immune") then
         for ability in string.gmatch(arg1, "Your (.+) failed") do
             self:ProcessImmunity(targetName, ability)
@@ -80,6 +101,16 @@ end
 
 function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     if not arg1 then return end
+    
+    -- detect spell completion after interrupt attempt (uninterruptible)
+    if self.lastInterruptAttempt > 0 and GetTime() - self.lastInterruptAttempt < 1.5 then
+        if self.currentTargetSpell and self.targetCasting then
+            self:MarkSpellUninterruptible(self.currentTargetSpell)
+            self.currentTargetSpell = nil
+            self.lastInterruptAttempt = 0
+        end
+    end
+    
     if self.sapFailed and GetTime() - self.sapFailTime < 2 then
         self.sapFailed = true
     end

@@ -13,7 +13,6 @@
   - Manual poison application no longer shows immediate "Applied" message
 - Fixed poison rotation logic for manual application
   - Alternates between MH and OH based on last SUCCESSFUL application
-  - Prevents skipping MH when reapplying existing poisons
   - Only advances rotation when poison is confirmed applied, not just attempted
 
 ### Bug Fixes

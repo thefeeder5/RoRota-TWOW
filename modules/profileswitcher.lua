@@ -9,15 +9,16 @@ function RoRota:GetTargetProfile()
 		return nil
 	end
 	
-	local inRaid = UnitInRaid("player")
+	local raidMembers = GetNumRaidMembers()
 	local partyMembers = GetNumPartyMembers()
-	local inFullGroup = partyMembers >= 4
+	local inRaid = raidMembers > 0
+	local inGroup = partyMembers > 0
 	
 	if inRaid and RoRotaDB.autoSwitch.raidProfile then
 		return RoRotaDB.autoSwitch.raidProfile
-	elseif inFullGroup and RoRotaDB.autoSwitch.groupProfile then
+	elseif inGroup and RoRotaDB.autoSwitch.groupProfile then
 		return RoRotaDB.autoSwitch.groupProfile
-	elseif not inFullGroup and not inRaid and RoRotaDB.autoSwitch.soloProfile then
+	elseif not inGroup and not inRaid and RoRotaDB.autoSwitch.soloProfile then
 		return RoRotaDB.autoSwitch.soloProfile
 	end
 	
@@ -36,7 +37,7 @@ function RoRota:CheckProfileSwitch()
 	local currentProfile = RoRotaDB.char and RoRotaDB.char[charKey] or "Default"
 	
 	if targetProfile ~= currentProfile then
-		if InCombatLockdown() or UnitAffectingCombat("player") then
+		if UnitAffectingCombat("player") then
 			self.pendingProfileSwitch = targetProfile
 			return
 		end
@@ -53,10 +54,11 @@ function RoRota:CheckProfileSwitch()
 end
 
 function RoRota:OnGroupStateChange()
-	local inRaid = UnitInRaid("player")
+	local raidMembers = GetNumRaidMembers()
 	local partyMembers = GetNumPartyMembers()
-	local inFullGroup = partyMembers >= 4
-	local currentState = inRaid and "raid" or (inFullGroup and "group" or "solo")
+	local inRaid = raidMembers > 0
+	local inGroup = partyMembers > 0
+	local currentState = inRaid and "raid" or (inGroup and "group" or "solo")
 	
 	if self.lastGroupState ~= currentState then
 		self.lastGroupState = currentState
@@ -65,7 +67,7 @@ function RoRota:OnGroupStateChange()
 end
 
 function RoRota:CheckPendingSwitch()
-	if self.pendingProfileSwitch and not InCombatLockdown() and not UnitAffectingCombat("player") then
+	if self.pendingProfileSwitch and not UnitAffectingCombat("player") then
 		local targetProfile = self.pendingProfileSwitch
 		self.pendingProfileSwitch = nil
 		

@@ -74,6 +74,9 @@ function RoRota:OnEnable()
     if not RoRotaDB.noPockets then
         RoRotaDB.noPockets = {}
     end
+    if not RoRotaDB.uninterruptible then
+        RoRotaDB.uninterruptible = {}
+    end
     
     -- event registration
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
