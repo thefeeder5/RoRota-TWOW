@@ -1,12 +1,43 @@
-## Interface: 11200
+## Interface: 11100
 ## Title: RoRota (Rogue One-Button Rotation)
-## Notes: Minimal one-button rotation helper for Rogue (WoW 1.12.1). Suggest-only by default; secure-click mode supported.
-## Author: Generated
-## Version: 0.1
+## Author: feeder5 (vibe coding ftw)
+## Notes: Helps you with rotation as a rogue.
+## Version: 0.6.2
 ## SavedVariables: RoRotaDB
-RoRota.lua
-rotation.lua
-secure.lua
-options.lua
-RoRota.xml
-README.md
+Libs\AceLibrary\AceLibrary.lua
+Libs\AceOO-2.0\AceOO-2.0.lua
+Libs\AceAddon-2.0\AceAddon-2.0.lua
+Libs\AceDB-2.0\AceDB-2.0.lua
+Libs\AceConsole-2.0\AceConsole-2.0.lua
+Libs\AceEvent-2.0\AceEvent-2.0.lua
+Libs\AceLocale-2.2\AceLocale-2.2.lua
+Libs\Dewdrop-2.0\Dewdrop-2.0.lua
+modules\constants.lua
+modules\defaultprofile.lua
+Core.lua
+modules\debug.lua
+modules\state.lua
+modules\abilities.lua
+modules\talents.lua
+modules\buffs.lua
+modules\damage.lua
+modules\immunity.lua
+modules\casting.lua
+modules\integration.lua
+modules\swingtimer.lua
+modules\helpers.lua
+modules\rotation.lua
+modules\poisons.lua
+modules\profileswitcher.lua
+modules\gui_widgets.lua
+modules\gui_tab_about.lua
+modules\gui_tab_openers.lua
+modules\gui_tab_builders.lua
+modules\gui_tab_finishers.lua
+modules\gui_tab_defensive.lua
+modules\gui_tab_poisons.lua
+modules\gui_tab_profiles.lua
+modules\gui.lua
+modules\gui_minimap.lua
+modules\gui_preview.lua
+Bindings.xml

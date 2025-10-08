@@ -1,12 +1,42 @@
--- RoRota Core.lua
--- Minimal addon initialization and event registration
+--[[ core ]]--
+-- RoRota addon initialization, event registration, and slash commands.
+-- This is the main entry point that loads the Ace2 framework and coordinates all modules.
+--
+-- Initialization:
+--   OnInitialize()  - Register database and merge default profile
+--   OnEnable()      - Class check, event registration, slash commands, minimap button
+--   OnDisable()     - Cleanup on addon disable
+--
+-- Slash commands:
+--   /rr or /rorota           - Open settings GUI
+--   /rr preview              - Toggle rotation preview window
+--   /rr debug on/off         - Toggle debug mode
+--   /rr trace on/off         - Toggle rotation trace logging
+--   /rr state                - Show cached state values
+--   /rr logs                 - Show recent debug logs
+--   /rr perf                 - Show performance statistics
+--   /rr poison               - Test poison warnings
+--   /rr help                 - Show command list
 
 RoRota = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceDB-2.0", "AceEvent-2.0")
+
+-- Module State Variables
+RoRota.targetCasting = false
+RoRota.castingTimeout = 0
+RoRota.sapFailed = false
+RoRota.sapFailTime = 0
+RoRota.lastPoisonApply = 0
+RoRota.poisonApplyPending = nil
+RoRota.poisonApplyTime = 0
+RoRota.lastPoisonSlot = 17
+
+-- Initialization
 
 function RoRota:OnInitialize()
 	self:RegisterDB("RoRotaDB")
 	self:RegisterDefaults('profile', RoRotaDefaultProfile)
-    -- Ensure any existing profiles gain missing keys from DEFAULT_PROFILE
+    
+    -- deep merge existing profiles with default profile
     local function deepMerge(dst, src)
         if type(dst) ~= 'table' then dst = {} end
         if type(src) ~= 'table' then return dst end
@@ -26,18 +56,18 @@ function RoRota:OnInitialize()
     end
 end
 
-RoRota.targetCasting = false
-RoRota.castingTimeout = 0
-RoRota.sapFailed = false
-RoRota.sapFailTime = 0
-RoRota.lastPoisonApply = 0
-RoRota.poisonApplyPending = nil
-RoRota.poisonApplyTime = 0
-RoRota.lastPoisonSlot = 17
-
 function RoRota:OnEnable()
+    -- class check: disable if not rogue
+    local _, class = UnitClass("player")
+    if class ~= "ROGUE" then
+        self:Print("RoRota is only for Rogues. Addon disabled.")
+        self:Disable()
+        return
+    end
+    
     self:Print("RoRota enabled. Type /rorota or /rr to open settings.")
     
+    -- initialize database tables
     if not RoRotaDB.immunities then
         RoRotaDB.immunities = {}
     end
@@ -45,6 +75,7 @@ function RoRota:OnEnable()
         RoRotaDB.noPockets = {}
     end
     
+    -- event registration
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF")
@@ -54,12 +85,15 @@ function RoRota:OnEnable()
     self:RegisterEvent("UI_ERROR_MESSAGE")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("PARTY_MEMBERS_CHANGED")
     self:RegisterEvent("RAID_ROSTER_UPDATE")
     
+    -- slash command registration
     SLASH_ROROTA1 = "/rorota"
     SLASH_ROROTA2 = "/rr"
     SlashCmdList["ROROTA"] = function(msg)
+        -- debug commands
         if msg == "checkbuffs" then
             if RoRota.HasWeaponPoison then
                 local mh = RoRota:HasWeaponPoison(16)
@@ -108,7 +142,49 @@ function RoRota:OnEnable()
                 end
             end
             return
+        elseif msg == "debug on" then
+            if RoRota.Debug then RoRota.Debug:SetEnabled(true) end
+            return
+        elseif msg == "debug off" then
+            if RoRota.Debug then RoRota.Debug:SetEnabled(false) end
+            return
+        elseif msg == "trace on" then
+            if RoRota.Debug then RoRota.Debug:SetTrace(true) end
+            return
+        elseif msg == "trace off" then
+            if RoRota.Debug then RoRota.Debug:SetTrace(false) end
+            return
+        elseif msg == "state" then
+            if RoRota.Debug then RoRota.Debug:ShowState() end
+            return
+        elseif msg == "logs" then
+            if RoRota.Debug then RoRota.Debug:ShowLogs(20) end
+            return
+        elseif msg == "perf" then
+            if RoRota.Debug then RoRota.Debug:ShowPerformance() end
+            return
+        elseif msg == "integration" or msg == "int" then
+            if RoRota.Integration and RoRota.Integration.PrintStatus then
+                RoRota.Integration:PrintStatus()
+            else
+                RoRota:Print("Integration module not loaded")
+            end
+            return
+        elseif msg == "help" then
+            RoRota:Print("=== RoRota Commands ===")
+            RoRota:Print("/rr - Open settings")
+            RoRota:Print("/rr preview - Toggle rotation preview")
+            RoRota:Print("/rr integration - Show SuperWoW/Nampower status")
+            RoRota:Print("/rr debug on/off - Toggle debug mode")
+            RoRota:Print("/rr trace on/off - Toggle rotation trace")
+            RoRota:Print("/rr state - Show current state")
+            RoRota:Print("/rr logs - Show recent debug logs")
+            RoRota:Print("/rr perf - Show performance stats")
+            RoRota:Print("/rr poison - Test poison warnings")
+            return
         end
+        
+        -- default: open GUI
         if not RoRotaGUIFrame then
             if RoRota.CreateGUI then
                 RoRota:CreateGUI()
@@ -122,28 +198,25 @@ function RoRota:OnEnable()
         end
     end
     
+    -- minimap button
     if self.CreateMinimapButton then
         self:CreateMinimapButton()
     end
     
+    -- poison check timer
     if self.CheckWeaponPoisons then
         self:ScheduleRepeatingEvent("RoRotaPoisonCheck", self.CheckWeaponPoisons, 30, self)
     end
 
-    -- Install a defensive hook for GameTooltip:SetOwner to avoid other addons
-    -- leaving GameTooltip in an inconsistent state (owner == nil). We do this
-    -- non-invasively via hooksecurefunc so we don't change other libs.
+    -- tooltip fix: prevent nil owner crashes from other addons
     if GameTooltip and type(GameTooltip.SetOwner) == "function" then
-        -- use hooksecurefunc if available (safe); otherwise fallback to wrapping
         if hooksecurefunc then
             hooksecurefunc(GameTooltip, "SetOwner", function(self, owner, anchor)
-                -- if owner is nil, hide tooltip immediately to avoid downstream nil-owner usage
                 if not owner then
                     pcall(function() GameTooltip:Hide() end)
                 end
             end)
         else
-            -- Older environments without hooksecurefunc are rare; best-effort wrap
             local origSetOwner = GameTooltip.SetOwner
             GameTooltip.SetOwner = function(self, owner, anchor)
                 if not owner then
@@ -160,6 +233,8 @@ function RoRota:OnDisable()
     self:Print("RoRota disabled.")
 end
 
+-- Event Handlers
+
 function RoRota:PARTY_MEMBERS_CHANGED()
     if self.OnGroupStateChange then
         self:OnGroupStateChange()
@@ -172,8 +247,25 @@ function RoRota:RAID_ROSTER_UPDATE()
     end
 end
 
+function RoRota:PLAYER_REGEN_DISABLED()
+    if self.State then
+        self.State:OnCombatStart()
+    end
+end
+
 function RoRota:PLAYER_REGEN_ENABLED()
+    if self.State then
+        self.State:OnCombatEnd()
+    end
     if self.CheckPendingSwitch then
         self:CheckPendingSwitch()
+    end
+end
+
+function RoRota:UNIT_AURA()
+    if arg1 == "player" or arg1 == "target" then
+        if self.State then
+            self.State:OnAuraChange()
+        end
     end
 end

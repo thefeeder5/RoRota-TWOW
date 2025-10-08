@@ -5,27 +5,35 @@ RoRota.poisonCache = {}
 
 -- Scan bags for available poisons (highest rank of each type)
 function RoRota:ScanBagsForPoisons()
-	self.poisonCache = {}
-	for bag = 0, 4 do
-		for slot = 1, GetContainerNumSlots(bag) do
-			local link = GetContainerItemLink(bag, slot)
-			if link then
-				local s, e = string.find(link, "%[")
-				local s2, e2 = string.find(link, "%]")
-				if s and s2 then
-					local name = string.sub(link, e + 1, s2 - 1)
-					for poisonType, ranks in pairs(RoRotaConstants.POISON_SPELL_NAMES) do
-						for _, rankName in ipairs(ranks) do
-							if name == rankName then
-								if not self.poisonCache[poisonType] then
-									self.poisonCache[poisonType] = {bag = bag, slot = slot, name = name}
+	local success, err = pcall(function()
+		self.poisonCache = {}
+		for bag = 0, 4 do
+			for slot = 1, GetContainerNumSlots(bag) do
+				local link = GetContainerItemLink(bag, slot)
+				if link then
+					local s, e = string.find(link, "%[")
+					local s2, e2 = string.find(link, "%]")
+					if s and s2 then
+						local name = string.sub(link, e + 1, s2 - 1)
+						for poisonType, ranks in pairs(RoRotaConstants.POISON_SPELL_NAMES) do
+							for _, rankName in ipairs(ranks) do
+								if name == rankName then
+									if not self.poisonCache[poisonType] then
+										self.poisonCache[poisonType] = {bag = bag, slot = slot, name = name}
+									end
+									break
 								end
-								break
 							end
 						end
-					end
-					end
+						end
+				end
 			end
+		end
+	end)
+	
+	if not success then
+		if RoRota.Debug then
+			RoRota.Debug:Error("Poison bag scan failed", err)
 		end
 	end
 end
@@ -45,8 +53,18 @@ function RoRota:ApplyPoison(poisonType, weaponSlot)
 	local poison = self.poisonCache[poisonType]
 	if not poison then return false end
 	
-	UseContainerItem(poison.bag, poison.slot)
-	PickupInventoryItem(weaponSlot)
+	local success, err = pcall(function()
+		UseContainerItem(poison.bag, poison.slot)
+		PickupInventoryItem(weaponSlot)
+	end)
+	
+	if not success then
+		if RoRota.Debug then
+			RoRota.Debug:Error("Poison application failed", err)
+		end
+		return false
+	end
+	
 	return true
 end
 

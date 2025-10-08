@@ -1,6 +1,17 @@
--- RoRota Constants Module
--- All hardcoded values and data tables
--- Includes: Energy costs, damage tables, AP coefficients, ability icons, default profile
+--[[ constants ]]--
+-- RoRota constants and data tables for abilities, damage calculations, and poisons.
+-- This module contains all hardcoded values used throughout the addon.
+--
+-- Data tables:
+--   ENERGY_COSTS           - Energy cost per ability
+--   EVISCERATE_DAMAGE      - Base damage by rank and combo points
+--   RUPTURE_DAMAGE         - Base damage by rank and combo points
+--   EVISCERATE_AP_COEF     - Attack power coefficient by combo points
+--   RUPTURE_AP_COEF        - Attack power coefficient by combo points
+--   ARMOR_MITIGATION       - Armor reduction multiplier (0.75 = 25% reduction)
+--   ABILITY_ICONS          - Icon paths for abilities
+--   POISON_SPELL_NAMES     - Poison spell names by type and rank (Turtle WoW)
+--   POISON_BUFF_PATTERNS   - Pattern matching for poison weapon buffs
 
 RoRotaConstants = {
 	ENERGY_COSTS = {
@@ -55,10 +66,12 @@ RoRotaConstants = {
 		["Feint"] = "Interface\\Icons\\Ability_Rogue_Feint",
 		["Riposte"] = "Interface\\Icons\\Ability_Warrior_Challange",
 		["Surprise Attack"] = "Interface\\Icons\\Ability_Rogue_SurpriseAttack",
-		["No Target"] = "Interface\\Icons\\Ability_Rogue_Sprint",
-		["Pooling Energy"] = "Interface\\Icons\\Spell_Shadow_ShadowWordPain",
-		["Waiting for Energy"] = "Interface\\Icons\\Spell_Shadow_ShadowWordPain",
+		["Pick Pocket"] = "Interface\\Icons\\INV_Misc_Bag_11",
+		["No Target"] = "Interface\\Icons\\INV_Misc_QuestionMark",
+		["Pooling Energy"] = "Interface\\Icons\\Spell_Nature_Polymorph",
+		["Waiting for Energy"] = "Interface\\Icons\\Spell_Nature_Polymorph",
 		["Apply Poison"] = "Interface\\Icons\\Ability_Poisons",
+		["Smart Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
 	},
 	POISON_REAGENTS = {
 		["Instant Poison"] = {item = "Dust of Deterioration", count = 1},

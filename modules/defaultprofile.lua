@@ -16,6 +16,7 @@ RoRotaDefaultProfile = {
 	mainBuilder = "Sinister Strike",
 	secondaryBuilder = "Sinister Strike",
 	builderFailsafe = 3,
+	smartBuilders = false,
 	buffPriority = "SnD",
 	opener = {
 		ability = "Ambush",
