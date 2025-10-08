@@ -267,7 +267,7 @@ local function RoRotaRunRotationInternal()
     -- finisher priority loop
     if cp >= 1 then
         for _, finisher in ipairs(finisherPrio) do
-            if finisher == "SnD" and abilitiesCfg.SliceAndDice and abilitiesCfg.SliceAndDice.enabled then
+            if finisher == "Slice and Dice" and abilitiesCfg.SliceAndDice and abilitiesCfg.SliceAndDice.enabled then
                 if cp >= (abilitiesCfg.SliceAndDice.minCP or 1) and cp <= (abilitiesCfg.SliceAndDice.maxCP or 5) then
                     local sndTime = RoRota:GetBuffTimeRemaining("Slice and Dice")
                     if sndTime <= 2 and RoRota:HasEnoughEnergy("Slice and Dice") then
