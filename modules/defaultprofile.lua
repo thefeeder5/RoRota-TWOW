@@ -17,7 +17,7 @@ RoRotaDefaultProfile = {
 	secondaryBuilder = "Sinister Strike",
 	builderFailsafe = 3,
 	smartBuilders = false,
-	buffPriority = "SnD",
+	buffPriority = "Slice and Dice",
 	opener = {
 		ability = "Ambush",
 		secondaryAbility = "Sinister Strike",
@@ -31,7 +31,7 @@ RoRotaDefaultProfile = {
 		useKidneyShot = false,
 		kidneyMaxCP = 2,
 	},
-	finisherPriority = {"Envenom", "SnD", "Rupture", "ExposeArmor"},
+	finisherPriority = {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"},
 	overkillPrevention = true,
 	smartEviscerate = true,
 	smartRupture = true,

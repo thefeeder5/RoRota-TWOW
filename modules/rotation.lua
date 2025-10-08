@@ -120,7 +120,7 @@ local function RoRotaRunRotationInternal()
     local openerCfg = db.opener or {}
     local abilitiesCfg = db.abilities or {}
     local energyCfg = db.energyPooling or {}
-    local finisherPrio = db.finisherPriority or (RoRotaConstants and RoRotaConstants.DEFAULT_PROFILE and RoRotaConstants.DEFAULT_PROFILE.finisherPriority) or {"SnD","ExposeArmor","Eviscerate","Rupture"}
+    local finisherPrio = db.finisherPriority or (RoRotaConstants and RoRotaConstants.DEFAULT_PROFILE and RoRotaConstants.DEFAULT_PROFILE.finisherPriority) or {"Slice and Dice","Expose Armor","Eviscerate","Rupture"}
 
     -- Defensive Abilities
     
@@ -307,7 +307,7 @@ local function RoRotaRunRotationInternal()
                         end
                     end
                 end
-            elseif finisher == "ExposeArmor" and abilitiesCfg.ExposeArmor and abilitiesCfg.ExposeArmor.enabled then
+            elseif finisher == "Expose Armor" and abilitiesCfg.ExposeArmor and abilitiesCfg.ExposeArmor.enabled then
                 if cp >= (abilitiesCfg.ExposeArmor.minCP or 5) and cp <= (abilitiesCfg.ExposeArmor.maxCP or 5) then
                     if not RoRota:HasTargetDebuff("Expose Armor") and RoRota:HasEnoughEnergy("Expose Armor") then
                         cached_ability = "Expose Armor"
