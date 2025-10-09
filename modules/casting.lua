@@ -26,83 +26,45 @@ function RoRota:IsTargetCasting()
     return RoRota.targetCasting or false
 end
 
--- Event Handlers
+-- Event Handlers (called from events.lua router)
 
-function RoRota:CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF()
-    if UnitExists("target") and arg1 and string.find(arg1, UnitName("target")) and string.find(arg1, "begins to cast") then
+function RoRota:OnCastingEvent(eventType, msg)
+    if not UnitExists("target") or not msg then return end
+    if string.find(msg, UnitName("target")) and string.find(msg, "begins to cast") then
         self.targetCasting = true
         self.castingTimeout = GetTime() + 3
-        -- extract spell name
-        for spell in string.gmatch(arg1, "begins to cast (.+)%.") do
-            self.currentTargetSpell = spell
+        if eventType == "BUFF" then
+            for spell in string.gmatch(msg, "begins to cast (.+)%.") do
+                self.currentTargetSpell = spell
+            end
         end
     end
 end
 
-function RoRota:CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE()
-    if UnitExists("target") and arg1 and string.find(arg1, UnitName("target")) and string.find(arg1, "begins to cast") then
-        self.targetCasting = true
-        self.castingTimeout = GetTime() + 3
-    end
-end
-
-function RoRota:CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF()
-    if UnitExists("target") and arg1 and string.find(arg1, UnitName("target")) and string.find(arg1, "begins to cast") then
-        self.targetCasting = true
-        self.castingTimeout = GetTime() + 3
-    end
-end
-
-function RoRota:CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE()
-    if UnitExists("target") and arg1 and string.find(arg1, UnitName("target")) and string.find(arg1, "begins to cast") then
-        self.targetCasting = true
-        self.castingTimeout = GetTime() + 3
-    end
-end
-
-function RoRota:CHAT_MSG_SPELL_SELF_DAMAGE()
-    if not UnitExists("target") or not arg1 then return end
+function RoRota:OnSelfSpellEvent(msg)
+    if not UnitExists("target") or not msg then return end
     local targetName = UnitName("target")
     
-    -- detect successful interrupt
-    if string.find(arg1, "interrupts") and (string.find(arg1, "Kick") or string.find(arg1, "Gouge") or string.find(arg1, "Kidney Shot")) then
+    if string.find(msg, "interrupts") and (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot")) then
         self.targetCasting = false
         self.castingTimeout = 0
         self.currentTargetSpell = nil
     end
     
-    -- detect failed interrupt (spell still casting after kick)
-    if (string.find(arg1, "Kick") or string.find(arg1, "Gouge") or string.find(arg1, "Kidney Shot")) then
+    if (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot")) then
         self.lastInterruptAttempt = GetTime()
     end
     
-    -- detect immunity
-    if string.find(arg1, "failed") and string.find(arg1, "immune") then
-        for ability in string.gmatch(arg1, "Your (.+) failed") do
+    if string.find(msg, "failed") and string.find(msg, "immune") then
+        for ability in string.gmatch(msg, "Your (.+) failed") do
             self:ProcessImmunity(targetName, ability)
         end
     end
 end
 
-function RoRota:UI_ERROR_MESSAGE()
-    if not arg1 then return end
-    if UnitExists("target") and (string.find(arg1, "no pockets") or string.find(arg1, "can't be pick pocketed")) then
-        local targetName = UnitName("target")
-        RoRotaDB.noPockets[targetName] = true
-        self:Print(targetName.." has no pockets - will skip Pick Pocket")
-    end
-    if string.find(arg1, "immune") or string.find(arg1, "resist") then
-        if string.find(arg1, "Sap") or self.sapFailed then
-            self.sapFailed = true
-            self.sapFailTime = GetTime()
-        end
-    end
-end
-
-function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
-    if not arg1 then return end
+function RoRota:OnCreatureSpellEvent(msg)
+    if not msg then return end
     
-    -- detect spell completion after interrupt attempt (uninterruptible)
     if self.lastInterruptAttempt > 0 and GetTime() - self.lastInterruptAttempt < 1.5 then
         if self.currentTargetSpell and self.targetCasting then
             self:MarkSpellUninterruptible(self.currentTargetSpell)
@@ -116,7 +78,7 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     end
 end
 
-function RoRota:PLAYER_REGEN_DISABLED()
+function RoRota:OnCombatStart()
     if self.sapFailed and GetTime() - self.sapFailTime < 3 then
         local action = self.db.profile.opener.sapFailAction
         if action and action ~= "None" then

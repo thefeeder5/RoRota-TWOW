@@ -29,6 +29,8 @@ function RoRota:TargetHasNoPockets()
 end
 
 function RoRota:ProcessImmunity(targetName, ability)
+    if UnitIsPlayer("target") then return end
+    
     if not RoRotaDB.immunities[targetName] then
         RoRotaDB.immunities[targetName] = {}
     end
@@ -59,6 +61,22 @@ function RoRota:MarkTargetNoPockets()
         RoRotaDB.noPockets = {}
     end
     RoRotaDB.noPockets[targetName] = true
+    self:Print(targetName.." has no pockets - will skip Pick Pocket")
+end
+
+function RoRota:OnErrorMessage(msg)
+    if not msg then return end
+    
+    if UnitExists("target") and (string.find(msg, "no pockets") or string.find(msg, "can't be pick pocketed")) then
+        self:MarkTargetNoPockets()
+    end
+    
+    if string.find(msg, "immune") or string.find(msg, "resist") then
+        if string.find(msg, "Sap") or self.sapFailed then
+            self.sapFailed = true
+            self.sapFailTime = GetTime()
+        end
+    end
 end
 
 function RoRota:IsSpellUninterruptible(spellName)
@@ -73,8 +91,10 @@ function RoRota:MarkSpellUninterruptible(spellName)
     if not RoRotaDB.uninterruptible then
         RoRotaDB.uninterruptible = {}
     end
-    RoRotaDB.uninterruptible[spellName] = true
-    self:Print("Spell '"..spellName.."' cannot be interrupted - will skip")
+    if not RoRotaDB.uninterruptible[spellName] then
+        RoRotaDB.uninterruptible[spellName] = true
+        self:Print("Spell '"..spellName.."' cannot be interrupted - will skip")
+    end
 end
 
 -- mark module as loaded

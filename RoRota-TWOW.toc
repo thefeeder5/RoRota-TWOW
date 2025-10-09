@@ -23,6 +23,7 @@ modules\buffs.lua
 modules\damage.lua
 modules\immunity.lua
 modules\casting.lua
+modules\events.lua
 modules\integration.lua
 modules\swingtimer.lua
 modules\helpers.lua

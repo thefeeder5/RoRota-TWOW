@@ -78,7 +78,7 @@ function RoRota:OnEnable()
         RoRotaDB.uninterruptible = {}
     end
     
-    -- event registration
+    -- event registration (handlers in modules/events.lua)
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF")
@@ -234,50 +234,4 @@ end
 
 function RoRota:OnDisable()
     self:Print("RoRota disabled.")
-end
-
--- Event Handlers
-
-function RoRota:PARTY_MEMBERS_CHANGED()
-    if self.OnGroupStateChange then
-        self:OnGroupStateChange()
-    end
-end
-
-function RoRota:RAID_ROSTER_UPDATE()
-    if self.OnGroupStateChange then
-        self:OnGroupStateChange()
-    end
-end
-
-function RoRota:PLAYER_REGEN_DISABLED()
-    if self.State then
-        self.State:OnCombatStart()
-    end
-end
-
-function RoRota:PLAYER_REGEN_ENABLED()
-    if self.State then
-        self.State:OnCombatEnd()
-    end
-    if self.CheckPendingSwitch then
-        self:CheckPendingSwitch()
-    end
-end
-
-function RoRota:UNIT_AURA()
-    if arg1 == "player" or arg1 == "target" then
-        if self.State then
-            self.State:OnAuraChange()
-        end
-    end
-end
-
-function RoRota:UI_ERROR_MESSAGE()
-    local msg = arg1
-    if msg and (string.find(msg, "can't be pick pocketed") or string.find(msg, "no pockets") or string.find(msg, "nothing to steal")) then
-        if self.MarkTargetNoPockets then
-            self:MarkTargetNoPockets()
-        end
-    end
 end
