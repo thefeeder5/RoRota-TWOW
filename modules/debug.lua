@@ -12,7 +12,7 @@ RoRota.Debug = {
 function RoRota.Debug:SetEnabled(enabled)
     self.enabled = enabled
     if enabled then
-        RoRota:Print("Debug mode enabled. Use /rr debug off to disable.")
+        RoRota:Print("Debug mode enabled (preview window). Use /rr debug off to disable.")
     else
         RoRota:Print("Debug mode disabled.")
     end
@@ -21,11 +21,6 @@ end
 -- Enable/disable rotation trace
 function RoRota.Debug:SetTrace(enabled)
     self.traceEnabled = enabled
-    if enabled then
-        RoRota:Print("Rotation trace enabled.")
-    else
-        RoRota:Print("Rotation trace disabled.")
-    end
 end
 
 -- Log a debug message
@@ -41,7 +36,8 @@ function RoRota.Debug:Log(message, level)
         table.remove(self.logs, 1)
     end
     
-    DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[RoRota Debug]|r " .. message)
+    -- store last log for preview window
+    self.lastLog = message
 end
 
 -- Trace rotation decision

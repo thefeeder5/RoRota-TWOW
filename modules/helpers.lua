@@ -32,8 +32,8 @@ function RoRota:GetPlayerHealthPercent()
 end
 
 function RoRota:GetMaxEnergy()
-    local _, _, _, _, rank = GetTalentInfo(1, 16)
-    return 100 + (rank * 5)
+    if not RoRota.TalentCache then return 100 end
+    return 100 + (RoRota.TalentCache.vigor * 5)
 end
 
 function RoRota:IsInGroupOrRaid()
@@ -66,11 +66,18 @@ end
 
 -- Rotation Preview
 
+-- Rotation reason (for debug display)
+RoRota.rotationReason = ""
+
 function RoRota:GetNextAbility()
+    self.rotationReason = ""
+    
     if not UnitExists("target") or UnitIsDead("target") then
         if not UnitAffectingCombat("player") and self:NeedsPoisonApplication() then
+            self.rotationReason = "Poison missing"
             return "Apply Poison"
         end
+        self.rotationReason = "No valid target"
         return "No Target"
     end
     local cp = GetComboPoints("player", "target")
@@ -78,24 +85,31 @@ function RoRota:GetNextAbility()
     local isStealthed = self:HasPlayerBuff("Stealth")
     if isStealthed then
         if db.opener.pickPocket and not pick_pocket_used and self:HasSpell("Pick Pocket") and not self:TargetHasNoPockets() then
+            self.rotationReason = "Pick Pocket before opener"
             return "Pick Pocket"
         end
         local opener = db.opener.ability or "Ambush"
         if self:IsTargetImmune(opener) and db.opener.secondaryAbility then
+            self.rotationReason = "Opener (immune to "..opener..")"
             return db.opener.secondaryAbility
         end
+        self.rotationReason = "Stealth opener"
         return opener
     end
     if self:IsTargetCasting() then
         if db.interrupt.useKick and self:HasSpell("Kick") and self:HasEnoughEnergy("Kick") and not self:IsOnCooldown("Kick") and not self:IsTargetImmune("Kick") then
+            self.rotationReason = "Interrupt cast"
             return "Kick"
         elseif db.interrupt.useGouge and self:HasSpell("Gouge") and self:HasEnoughEnergy("Gouge") and not self:IsOnCooldown("Gouge") and not self:IsTargetImmune("Gouge") then
+            self.rotationReason = "Interrupt cast"
             return "Gouge"
         elseif db.interrupt.useKidneyShot and cp >= 1 and cp <= db.interrupt.kidneyMaxCP and self:HasSpell("Kidney Shot") and self:HasEnoughEnergy("Kidney Shot") and not self:IsTargetImmune("Kidney Shot") then
+            self.rotationReason = "Interrupt cast ("..cp.." CP)"
             return "Kidney Shot"
         end
     end
     if cp >= 1 and db.smartEviscerate and self:CanKillWithEviscerate(cp) and self:HasEnoughEnergy("Eviscerate") then
+        self.rotationReason = "Execute (will kill)"
         return "Smart Eviscerate"
     end
     if cp >= 1 then
@@ -104,6 +118,7 @@ function RoRota:GetNextAbility()
                 if cp >= db.abilities.SliceAndDice.minCP and cp <= db.abilities.SliceAndDice.maxCP then
                     local sndTime = self:GetBuffTimeRemaining("Slice and Dice")
                     if sndTime <= 2 and self:HasEnoughEnergy("Slice and Dice") then
+                        self.rotationReason = "SnD expiring ("..cp.." CP)"
                         return "Slice and Dice"
                     end
                 end
@@ -111,6 +126,7 @@ function RoRota:GetNextAbility()
                 if cp >= db.abilities.Envenom.minCP and cp <= db.abilities.Envenom.maxCP then
                     local envTime = self:GetBuffTimeRemaining("Envenom")
                     if envTime <= 2 and self:HasEnoughEnergy("Envenom") then
+                        self.rotationReason = "Envenom expiring ("..cp.." CP)"
                         return "Envenom"
                     end
                 end
@@ -119,6 +135,7 @@ function RoRota:GetNextAbility()
                     local ruptTime = self:GetDebuffTimeRemaining("Rupture")
                     if ruptTime <= 2 and self:HasEnoughEnergy("Rupture") then
                         if not (db.smartRupture and self:WouldOverkill("Rupture", cp)) then
+                            self.rotationReason = "Rupture expiring ("..cp.." CP)"
                             return "Rupture"
                         end
                     end
@@ -126,19 +143,22 @@ function RoRota:GetNextAbility()
             elseif finisher == "ExposeArmor" and db.abilities.ExposeArmor.enabled then
                 if cp >= db.abilities.ExposeArmor.minCP and cp <= db.abilities.ExposeArmor.maxCP then
                     if not self:HasTargetDebuff("Expose Armor") and self:HasEnoughEnergy("Expose Armor") then
+                        self.rotationReason = "Expose Armor missing ("..cp.." CP)"
                         return "Expose Armor"
                     end
                 end
             end
         end
     end
-    if cp >= 5 and self:HasEnoughEnergy("Eviscerate") then
+    if cp == 5 and self:HasEnoughEnergy("Eviscerate") then
+        self.rotationReason = "5 CP finisher"
         return "Eviscerate"
     end
-    if db.energyPooling.enabled and cp >= 4 and not self:HasAdrenalineRush() then
+    if db.energyPooling.enabled and cp == 4 and not self:HasAdrenalineRush() then
         local currentEnergy = UnitMana("player")
         local poolThreshold = db.energyPooling.threshold
         if currentEnergy < self:GetEnergyCost("Eviscerate") + poolThreshold then
+            self.rotationReason = "Pooling at 4 CP"
             return "Pooling Energy"
         end
     end
@@ -147,14 +167,17 @@ function RoRota:GetNextAbility()
             local targetHP = self:GetTargetHealthPercent()
             local playerHP = self:GetPlayerHealthPercent()
             if targetHP <= db.defensive.ghostlyTargetMaxHP and playerHP >= db.defensive.ghostlyPlayerMinHP and playerHP <= db.defensive.ghostlyPlayerMaxHP then
+                self.rotationReason = "Ghostly Strike (HP conditions)"
                 return "Ghostly Strike"
             end
         end
     end
     local builder = db.mainBuilder
     if builder and self:HasEnoughEnergy(builder) then
+        self.rotationReason = "Build CP ("..cp.."/5)"
         return builder
     end
+    self.rotationReason = "Not enough energy"
     return "Waiting for Energy"
 end
 
@@ -171,7 +194,7 @@ function RoRota:GetNextAbilityAfter(current_ability)
     
     -- if current is opener, next is builder or finisher
     if current_ability == db.opener.ability or current_ability == db.opener.secondaryAbility then
-        if cp >= 5 then
+        if cp == 5 then
             return "Eviscerate"
         end
         return db.mainBuilder or "Sinister Strike"
@@ -179,7 +202,7 @@ function RoRota:GetNextAbilityAfter(current_ability)
     
     -- if current is interrupt, next is normal rotation
     if current_ability == "Kick" or current_ability == "Gouge" or current_ability == "Kidney Shot" then
-        if cp >= 5 then
+        if cp == 5 then
             return "Eviscerate"
         end
         return db.mainBuilder or "Sinister Strike"
@@ -201,7 +224,7 @@ function RoRota:GetNextAbilityAfter(current_ability)
     
     -- if current is builder, check if we'll have 5 CP
     if current_ability == db.mainBuilder or current_ability == db.secondaryBuilder or current_ability == "Ghostly Strike" or current_ability == "Riposte" or current_ability == "Surprise Attack" then
-        if cp >= 4 then
+        if cp == 4 then
             return "Eviscerate"
         end
         return db.mainBuilder or "Sinister Strike"

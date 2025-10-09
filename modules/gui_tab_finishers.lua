@@ -112,6 +112,18 @@ function RoRotaGUI.CreateFinishersTab(parent, frame)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 20, y, "Use Cold Blood before Eviscerate")
+    frame.coldBloodEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodEvisCheck", parent, 350, y, "", function()
+        RoRota.db.profile.useColdBloodEviscerate = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Cold Blood Minimum CP")
+    frame.coldBloodMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaColdBloodMinDD", parent, 350, y, 1, 5, 1, function(value)
+        RoRota.db.profile.coldBloodMinCP = value
+    end)
+    y = y - 25
+    
     RoRotaGUI.CreateLabel(parent, 20, y, "Energy Pooling Enable")
     frame.energyPoolCheck = RoRotaGUI.CreateCheckbox("RoRotaEnergyPoolCheck", parent, 350, y, "", function()
         if not RoRota.db.profile.energyPooling then RoRota.db.profile.energyPooling = {} end
@@ -124,7 +136,13 @@ function RoRotaGUI.CreateFinishersTab(parent, frame)
         if not RoRota.db.profile.energyPooling then RoRota.db.profile.energyPooling = {} end
         RoRota.db.profile.energyPooling.threshold = value
     end)
-    y = y - 40
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Finisher Refresh Window (seconds)")
+    frame.refreshThresholdEB = RoRotaGUI.CreateDecimalEditBox("RoRotaRefreshThresholdEB", parent, 350, y, 50, 0, 3, function(value)
+        RoRota.db.profile.finisherRefreshThreshold = value
+    end)
+    y = y - 30
     
     RoRotaGUI.CreateLabel(parent, 20, y, "Finisher Priority (Eviscerate always last)")
     y = y - 25
@@ -239,6 +257,14 @@ function RoRotaGUI.LoadFinishersTab(frame)
     if frame.smartRuptCheck then
         frame.smartRuptCheck:SetChecked(p.smartRupture and 1 or nil)
     end
+    if frame.coldBloodEvisCheck then
+        frame.coldBloodEvisCheck:SetChecked(p.useColdBloodEviscerate and 1 or nil)
+    end
+    if frame.coldBloodMinDD then
+        local val = p.coldBloodMinCP or 4
+        UIDropDownMenu_SetSelectedValue(frame.coldBloodMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), frame.coldBloodMinDD)
+    end
     if frame.energyPoolCheck and p.energyPooling then
         frame.energyPoolCheck:SetChecked(p.energyPooling.enabled and 1 or nil)
     end
@@ -246,6 +272,10 @@ function RoRotaGUI.LoadFinishersTab(frame)
         local val = p.energyPooling.threshold or 10
         UIDropDownMenu_SetSelectedValue(frame.energyPoolDD, val)
         UIDropDownMenu_SetText(tostring(val), frame.energyPoolDD)
+    end
+    if frame.refreshThresholdEB then
+        local val = p.finisherRefreshThreshold or 2
+        frame.refreshThresholdEB:SetText(string.format("%.1f", val))
     end
 end
 

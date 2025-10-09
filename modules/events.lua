@@ -61,4 +61,13 @@ function RoRota:RAID_ROSTER_UPDATE()
     if self.OnGroupStateChange then self:OnGroupStateChange() end
 end
 
+-- Talent changes
+function RoRota:CHARACTER_POINTS_CHANGED()
+    if self.UpdateAllTalents then self:UpdateAllTalents() end
+end
+
+function RoRota:PLAYER_ENTERING_WORLD()
+    if self.UpdateAllTalents then self:UpdateAllTalents() end
+end
+
 RoRota.events = true

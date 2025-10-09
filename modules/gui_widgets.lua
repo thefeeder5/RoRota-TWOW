@@ -243,6 +243,48 @@ function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     return eb
 end
 
+-- create editbox for decimal input
+function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, callback)
+    local eb = CreateFrame("EditBox", name, parent)
+    eb:SetWidth(width or 50)
+    eb:SetHeight(20)
+    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    eb:SetAutoFocus(false)
+    eb:SetMaxLetters(3)
+    
+    RoRotaGUI.CreateBackdrop(eb)
+    eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    
+    eb:SetFontObject("GameFontHighlight")
+    eb:SetTextInsets(5, 5, 0, 0)
+    
+    local function validate()
+        local text = this:GetText()
+        local num = tonumber(text)
+        if num then
+            if num < min then num = min end
+            if num > max then num = max end
+            num = math.floor(num * 10 + 0.5) / 10
+            this:SetText(string.format("%.1f", num))
+            if callback then callback(num) end
+        else
+            this:SetText(string.format("%.1f", min))
+            if callback then callback(min) end
+        end
+    end
+    
+    eb:SetScript("OnEnterPressed", function()
+        validate()
+        this:ClearFocus()
+    end)
+    eb:SetScript("OnEditFocusLost", validate)
+    eb:SetScript("OnEscapePressed", function()
+        this:ClearFocus()
+    end)
+    
+    return eb
+end
+
 -- create setting row (label left, control right)
 function RoRotaGUI.CreateSettingRow(parent, y, labelText, controlX)
     local label = RoRotaGUI.CreateLabel(parent, 20, y, labelText)

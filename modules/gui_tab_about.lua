@@ -13,7 +13,7 @@ function RoRotaGUI.CreateAboutTab(parent, frame)
     
     local version = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     version:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
-    version:SetText("Version 0.6.3")
+    version:SetText("Version 0.7.0")
     y = y - 40
     
     local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")

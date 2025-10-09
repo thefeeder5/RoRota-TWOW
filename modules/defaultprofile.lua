@@ -24,6 +24,7 @@ RoRotaDefaultProfile = {
 		failsafeAttempts = 3,
 		pickPocket = false,
 		sapFailAction = "None",
+		useColdBlood = false,
 	},
 	interrupt = {
 		useKick = true,
@@ -35,10 +36,13 @@ RoRotaDefaultProfile = {
 	overkillPrevention = true,
 	smartEviscerate = true,
 	smartRupture = true,
+	useColdBloodEviscerate = false,
+	coldBloodMinCP = 4,
 	energyPooling = {
 		enabled = true,
 		threshold = 10,
 	},
+	finisherRefreshThreshold = 2,  -- refresh finishers when <= X seconds remaining (0-3s)
 	defensive = {
 		useVanish = false,
 		vanishHP = 20,

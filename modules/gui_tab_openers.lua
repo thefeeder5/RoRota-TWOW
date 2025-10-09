@@ -35,6 +35,13 @@ function RoRotaGUI.CreateOpenersTab(parent, frame)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 20, y, "Use Cold Blood before Ambush")
+    frame.coldBloodCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.useColdBlood = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 20, y, "After Failed Sap")
     frame.sapFailDD = RoRotaGUI.CreateDropdown("RoRotaSapFailDD", parent, 350, y, 120, sapActions, function(value)
         if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
@@ -62,6 +69,9 @@ function RoRotaGUI.LoadOpenersTab(frame)
     end
     if frame.ppCheck and p.opener then
         frame.ppCheck:SetChecked(p.opener.pickPocket and 1 or nil)
+    end
+    if frame.coldBloodCheck and p.opener then
+        frame.coldBloodCheck:SetChecked(p.opener.useColdBlood and 1 or nil)
     end
     if frame.sapFailDD and p.opener and p.opener.sapFailAction then
         UIDropDownMenu_SetSelectedValue(frame.sapFailDD, p.opener.sapFailAction)

@@ -13,8 +13,9 @@ function RoRota:CreateRotationPreview()
 	if RoRotaPreviewFrame then return end
 	
 	local pf = CreateFrame("Frame", "RoRotaPreviewFrame", UIParent)
-	pf:SetWidth(100)
-	pf:SetHeight(60)
+	pf:SetWidth(250)
+	pf:SetHeight(150)
+	pf.debugMode = false
 	pf:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
 	pf:SetMovable(true)
 	pf:EnableMouse(true)
@@ -29,6 +30,13 @@ function RoRota:CreateRotationPreview()
 	pf.icon:SetPoint("TOPLEFT", pf, "TOPLEFT", 5, -5)
 	pf.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
 	
+	-- current ability name
+	pf.abilityName = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	pf.abilityName:SetPoint("TOP", pf.icon, "BOTTOM", 0, -2)
+	pf.abilityName:SetWidth(60)
+	pf.abilityName:SetJustifyH("CENTER")
+	pf.abilityName:SetText("")
+	
 	-- next ability icon
 	pf.nextIcon = pf:CreateTexture(nil, "ARTWORK")
 	pf.nextIcon:SetWidth(32)
@@ -36,15 +44,46 @@ function RoRota:CreateRotationPreview()
 	pf.nextIcon:SetPoint("LEFT", pf.icon, "RIGHT", 3, 0)
 	pf.nextIcon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
 	
+	-- next ability name
+	pf.nextAbilityName = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	pf.nextAbilityName:SetPoint("TOP", pf.nextIcon, "BOTTOM", 0, -2)
+	pf.nextAbilityName:SetWidth(60)
+	pf.nextAbilityName:SetJustifyH("CENTER")
+	pf.nextAbilityName:SetText("")
+	
 	-- CP and Energy text
 	pf.cpText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.cpText:SetPoint("TOPLEFT", pf.icon, "BOTTOMLEFT", 0, -3)
+	pf.cpText:SetPoint("TOPLEFT", pf.abilityName, "BOTTOMLEFT", -5, -3)
 	pf.cpText:SetText("CP: 0")
 	
 	pf.energyText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	pf.energyText:SetPoint("LEFT", pf.cpText, "RIGHT", 8, 0)
 	pf.energyText:SetText("Energy: 0")
 	
+	-- reason text
+	pf.reasonText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	pf.reasonText:SetPoint("TOPLEFT", pf.cpText, "BOTTOMLEFT", 0, -2)
+	pf.reasonText:SetWidth(190)
+	pf.reasonText:SetJustifyH("LEFT")
+	pf.reasonText:SetText("")
+	pf.reasonText:SetTextColor(0.7, 0.7, 0.7)
+	
+	-- debuff info text
+	pf.debuffText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	pf.debuffText:SetPoint("TOPLEFT", pf.reasonText, "BOTTOMLEFT", 0, -2)
+	pf.debuffText:SetWidth(190)
+	pf.debuffText:SetJustifyH("LEFT")
+	pf.debuffText:SetText("")
+	pf.debuffText:SetTextColor(1, 0.8, 0)
+	
+	-- debug info text (multi-line)
+	pf.debugText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	pf.debugText:SetPoint("TOPLEFT", pf.debuffText, "BOTTOMLEFT", 0, -2)
+	pf.debugText:SetWidth(240)
+	pf.debugText:SetJustifyH("LEFT")
+	pf.debugText:SetText("")
+	pf.debugText:SetTextColor(0.5, 1, 0.5)
+	pf.debugText:SetJustifyV("TOP")
 	
 	pf.lastUpdate = 0
 	pf:SetScript("OnUpdate", function()
@@ -60,6 +99,120 @@ function RoRota:CreateRotationPreview()
 				this.cpText:SetText("CP: "..cp)
 				this.energyText:SetText("Energy: "..energy)
 				
+				-- update reason (only in debug mode)
+				if this.debugMode and RoRota.rotationReason and RoRota.rotationReason ~= "" then
+					this.reasonText:SetText(RoRota.rotationReason)
+				else
+					this.reasonText:SetText("")
+				end
+				
+				-- always hide debuff summary line
+				this.debuffText:SetText("")
+				
+				-- update debug info
+				if this.debugMode and RoRota.db and RoRota.db.profile then
+					local db = RoRota.db.profile
+					local abilitiesCfg = db.abilities or {}
+					local finisherPrio = db.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"}
+					local debugLines = {}
+					local refreshThreshold = db.finisherRefreshThreshold or 2
+					
+					-- Calculate energy regen rate for predictions (do this first)
+					local energyPerTick = RoRotaConstants.ENERGY_PER_TICK
+					local tickTime = RoRotaConstants.ENERGY_TICK_TIME
+					if RoRota.TalentCache and RoRota.TalentCache.bladeRush and RoRota.TalentCache.bladeRush > 0 then
+						local _, agility = UnitStat("player", 2)
+						local agiReduction = agility * 0.001
+						tickTime = math.max(0.5, tickTime - agiReduction)
+					end
+					if RoRota:HasAdrenalineRush() then
+						energyPerTick = 40
+					end
+					local energyPerSec = energyPerTick / tickTime
+					
+					-- predicted state (show when planner has a recommendation)
+					if RoRota.Planner and RoRota.Planner.recommendation and RoRota.Planner.recommendation ~= "Pool" then
+						local cpStr = string.format("%.2f", RoRota.Planner.predictedCP)
+						if RoRota.Planner.predictedCP == math.floor(RoRota.Planner.predictedCP) then
+							cpStr = string.format("%d", RoRota.Planner.predictedCP)
+						end
+						local pred = string.format("After: %sCP %.0fE", cpStr, RoRota.Planner.predictedEnergy)
+						if RoRota.Planner.nextAbility then
+							pred = pred .. " -> " .. RoRota.Planner.nextAbility
+						end
+						table.insert(debugLines, pred)
+					end
+					-- Also show prediction for Eviscerate at 5 CP (fallback finisher)
+					if cp == 5 and (not RoRota.Planner or not RoRota.Planner.recommendation or RoRota.Planner.recommendation == "Sinister Strike") then
+						-- Simulate Eviscerate
+						local evisCost = RoRota:GetEnergyCost("Eviscerate")
+						local newEnergy = energy - evisCost + (energyPerSec * 2)
+						newEnergy = math.min(100, math.max(0, newEnergy))
+						local ruthChance = RoRota:GetRuthlessnessChance()
+						local newCP = ruthChance >= 1.0 and 1 or (ruthChance > 0 and ruthChance or 0)
+						local cpStr = newCP == math.floor(newCP) and string.format("%d", newCP) or string.format("%.2f", newCP)
+						local pred = string.format("After: %sCP %.0fE (Evis)", cpStr, newEnergy)
+						table.insert(debugLines, pred)
+					end
+					
+					for i, finisher in ipairs(finisherPrio) do
+						local line = ""
+						if finisher == "Slice and Dice" then
+							local enabled = abilitiesCfg.SliceAndDice and abilitiesCfg.SliceAndDice.enabled
+							if enabled then
+								local time = RoRota:GetBuffTimeRemaining("Slice and Dice")
+								local shouldUse = time <= refreshThreshold
+								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
+								line = string.format("%d.SnD: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+							else
+								line = i.."SnD: disabled"
+							end
+						elseif finisher == "Envenom" then
+							local enabled = abilitiesCfg.Envenom and abilitiesCfg.Envenom.enabled
+							if enabled then
+								local time = RoRota:GetBuffTimeRemaining("Envenom")
+								local shouldUse = time <= refreshThreshold
+								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
+								line = string.format("%d.Env: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+							else
+								line = i.."Env: disabled"
+							end
+						elseif finisher == "Rupture" then
+							local enabled = abilitiesCfg.Rupture and abilitiesCfg.Rupture.enabled
+							if enabled then
+								local time = RoRota:GetDebuffTimeRemaining("Rupture")
+								local shouldUse = time <= refreshThreshold
+								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
+								line = string.format("%d.Rupt: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+							else
+								line = i.."Rupt: disabled"
+							end
+						elseif finisher == "Expose Armor" then
+							local enabled = abilitiesCfg.ExposeArmor and abilitiesCfg.ExposeArmor.enabled
+							if enabled then
+								local time = RoRota:GetDebuffTimeRemaining("Expose Armor")
+								local shouldUse = time <= refreshThreshold
+								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
+								line = string.format("%d.EA: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+							else
+								line = i.."EA: disabled"
+							end
+						end
+						table.insert(debugLines, line)
+					end
+					
+					this.debugText:SetText(table.concat(debugLines, "\n"))
+				else
+					this.debugText:SetText("")
+				end
+				
+				-- update current ability name
+				if current_ability then
+					this.abilityName:SetText(current_ability)
+				else
+					this.abilityName:SetText("")
+				end
+				
 				-- update current ability icon
 				if current_ability and RoRotaConstants and RoRotaConstants.ABILITY_ICONS then
 					local icon_path = RoRotaConstants.ABILITY_ICONS[current_ability]
@@ -70,6 +223,13 @@ function RoRota:CreateRotationPreview()
 					end
 				else
 					this.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+				end
+				
+				-- update next ability name
+				if next_ability then
+					this.nextAbilityName:SetText(next_ability)
+				else
+					this.nextAbilityName:SetText("")
 				end
 				
 				-- update next ability icon

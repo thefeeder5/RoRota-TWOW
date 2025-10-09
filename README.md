@@ -1,6 +1,6 @@
 # RoRota - Rogue One-Button Rotation
 
-**Version:** 0.6.2  
+**Version:** 0.7.0  
 **Target:** Vanilla WoW 1.12.1 (Turtle WoW)  
 **Author:** feeder5
 
@@ -13,6 +13,8 @@
 - **Smart opener system** - Automatic opener selection with failsafe fallback
 - **Finisher priority** - Customizable priority order (drag-and-drop)
 - **Builder failsafe** - Auto-switch to secondary builder if primary fails
+- **Strategic CP planning** - Talent-aware combo point calculations
+- **CP overflow prevention** - Early finisher at 4 CP with high Seal Fate crit chance
 - **Energy pooling** - Pool energy at 4+ CP for immediate finisher at 5 CP
 - **Smart Eviscerate** - Execute at any CP if it will kill target
 - **Smart Rupture** - Skip if it would overkill target
@@ -71,6 +73,7 @@ Use the macro creation buttons in the About tab:
 ### Slash Commands
 - `/rr` or `/rorota` - Open settings GUI
 - `/rr preview` - Toggle rotation preview window
+- `/rr talents` - Show combo point talent information
 - `/rr debug on/off` - Toggle debug mode
 - `/rr trace on/off` - Toggle rotation trace logging
 - `/rr state` - Show cached state values
@@ -147,7 +150,23 @@ The addon features a modern GUI with vertical sidebar navigation and scrollable 
 
 ## Version History
 
-### v0.6.2 (Current)
+### v0.7.0 (Current)
+- Strategic combo point planning system
+- Talent-aware CP calculations (Seal Fate, Ruthlessness, Initiative, etc.)
+- CP overflow prevention (early finisher at 4 CP with high crit)
+- `/rr talents` command to show CP talent info
+- Support for all Turtle WoW CP talents
+- Immunity tracking skips players (PvP fix)
+- Event handler refactoring (modules/events.lua)
+
+### v0.6.3
+- Profile auto-switching fixes
+- Pick Pocket blacklist system
+- Uninterruptible spell detection
+- Interrupt success detection
+- Poison application fixes
+
+### v0.6.2
 - Complete GUI redesign with vertical sidebar navigation
 - Scrollable content area
 - About tab with macro creation buttons

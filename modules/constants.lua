@@ -22,6 +22,7 @@ RoRotaConstants = {
 		["Hemorrhage"] = 40, ["Envenom"] = 20, ["Noxious Assault"] = 45,
 		["Pick Pocket"] = 0, ["Ghostly Strike"] = 40, ["Feint"] = 20,
 		["Expose Armor"] = 20, ["Riposte"] = 10, ["Surprise Attack"] = 40,
+		["Mark for Death"] = 40, ["Cold Blood"] = 0,
 	},
 	EVISCERATE_DAMAGE = {
 		[1] = {[1] = 8, [2] = 13, [3] = 18, [4] = 23, [5] = 28},
@@ -45,15 +46,26 @@ RoRotaConstants = {
 	EVISCERATE_AP_COEF = {[1] = 0.03, [2] = 0.06, [3] = 0.09, [4] = 0.12, [5] = 0.15},
 	RUPTURE_AP_COEF = {[1] = 0.04, [2] = 0.10, [3] = 0.18, [4] = 0.21, [5] = 0.24},
 	ARMOR_MITIGATION = 0.75,
+	-- Energy regeneration
+	ENERGY_PER_TICK = 20,  -- base energy per tick
+	ENERGY_TICK_TIME = 2.0,  -- base tick time in seconds
+	-- Finisher timing
+	FINISHER_REFRESH_THRESHOLD = 2,  -- refresh finishers when <= 2s remaining
 	ABILITY_ICONS = {
 		["Sinister Strike"] = "Interface\\Icons\\Spell_Shadow_RitualOfSacrifice",
 		["Backstab"] = "Interface\\Icons\\Ability_BackStab",
-		["Hemorrhage"] = "Interface\\Icons\\Spell_Shadow_LifeDrain",
-		["Noxious Assault"] = "Interface\\Icons\\Ability_Rogue_FeignDeath",
+		["Hemorrhage"] = "Interface\\Icons\\Ability_Rogue_Hemorrhage",
+		["Noxious Assault"] = "Interface\\Icons\\spell_double_dose_3",
 		["Ghostly Strike"] = "Interface\\Icons\\Spell_Shadow_Curse",
 		["Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
 		["Slice and Dice"] = "Interface\\Icons\\Ability_Rogue_SliceDice",
-		["Envenom"] = "Interface\\Icons\\Ability_Rogue_Dismantle",
+		["Blade Flurry"] = "Interface\\Icons\\Ability_Warrior_PunishingBlow",
+		["Envenom"] = "Interface\\Icons\\INV_Sword_31",
+		["Sprint"] = "Interface\\Icons\\Ability_Rogue_Sprint",
+		["Blind"] = "Interface\\Icons\\Spell_Shadow_MindSteal",
+		["Evasion"] = "Interface\\Icons\\Spell_Shadow_ShadowWard",
+		["Stealth"] = "Interface\\Icons\\Ability_Stealth",
+		["Sap"] = "Interface\\Icons\\Ability_Sap",
 		["Rupture"] = "Interface\\Icons\\Ability_Rogue_Rupture",
 		["Expose Armor"] = "Interface\\Icons\\Ability_Warrior_Riposte",
 		["Kick"] = "Interface\\Icons\\Ability_Kick",
@@ -72,6 +84,7 @@ RoRotaConstants = {
 		["Waiting for Energy"] = "Interface\\Icons\\Spell_Nature_Polymorph",
 		["Apply Poison"] = "Interface\\Icons\\Ability_Poisons",
 		["Smart Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
+		["Cold Blood"] = "Interface\\Icons\\Spell_Ice_Lament",
 	},
 	POISON_REAGENTS = {
 		["Instant Poison"] = {item = "Dust of Deterioration", count = 1},
@@ -125,5 +138,50 @@ RoRotaConstants = {
 		["Instant Poison"] = "^Instant Poison",
 		["Mind-numbing Poison"] = "^Mind%-numbing Poison",
 		["Wound Poison"] = "^Wound Poison",
+	},
+	-- Combo point generation per ability (Turtle WoW)
+	CP_GENERATION = {
+		-- Builders (generate CP)
+		["Sinister Strike"] = 1,
+		["Backstab"] = 1,
+		["Gouge"] = 1,
+		["Garrote"] = 1,
+		["Ambush"] = 1,
+		["Cheap Shot"] = 2,
+		["Hemorrhage"] = 1,
+		["Noxious Assault"] = 1,
+		["Ghostly Strike"] = 1,
+		["Surprise Attack"] = 1,
+		["Mark for Death"] = 2,
+		-- Non-CP abilities
+		["Sap"] = 0,
+		["Kick"] = 0,
+		["Feint"] = 0,
+		["Riposte"] = 0,
+		["Pick Pocket"] = 0,
+		["Vanish"] = 0,
+		["Sprint"] = 0,
+		["Evasion"] = 0,
+	},
+	-- Finishers
+	FINISHERS = {
+		["Eviscerate"] = true,
+		["Rupture"] = true,
+		["Slice and Dice"] = true,
+		["Envenom"] = true,
+		["Kidney Shot"] = true,
+		["Expose Armor"] = true,
+	},
+	-- CP Talent Info (Turtle WoW)
+	-- Talents are scanned dynamically by name, not hardcoded positions
+	CP_TALENT_NAMES = {
+		"Ruthlessness",
+		"Relentless Strikes",
+		"Seal Fate",
+		"Improved Backstab",
+		"Setup",
+		"Improved Ambush",
+		"Initiative",
+		"Mark for Death",
 	},
 }

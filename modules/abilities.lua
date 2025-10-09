@@ -18,16 +18,16 @@ end
 
 function RoRota:GetEnergyCost(spellName)
 	local baseCost = RoRotaConstants.ENERGY_COSTS[spellName] or 0
-	-- Improved Ghostly Strike talent (Subtlety tree)
+	if not RoRota.TalentCache then return baseCost end
+	
 	if spellName == "Ghostly Strike" then
-		local _, _, _, _, rank = GetTalentInfo(3, 8)
+		local rank = RoRota.TalentCache.improvedGhostlyStrike
 		if rank == 1 then baseCost = baseCost - 3
 		elseif rank == 2 then baseCost = baseCost - 6
 		elseif rank == 3 then baseCost = baseCost - 10
 		end
-	-- Improved Hemorrhage talent (Subtlety tree)
 	elseif spellName == "Hemorrhage" then
-		local _, _, _, _, rank = GetTalentInfo(3, 17)
+		local rank = RoRota.TalentCache.improvedHemorrhage
 		if rank == 1 then baseCost = baseCost - 2
 		elseif rank == 2 then baseCost = baseCost - 5
 		end
