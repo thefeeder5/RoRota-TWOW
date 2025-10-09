@@ -1,8 +1,8 @@
-## Interface: 11100
+## Interface: 11200
 ## Title: RoRota (Rogue One-Button Rotation)
 ## Author: feeder5 (vibe coding ftw)
 ## Notes: Helps you with rotation as a rogue.
-## Version: 0.6.2
+## Version: 0.6.3
 ## SavedVariables: RoRotaDB
 Libs\AceLibrary\AceLibrary.lua
 Libs\AceOO-2.0\AceOO-2.0.lua
