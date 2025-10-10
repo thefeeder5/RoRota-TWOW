@@ -26,6 +26,7 @@ local pick_pocket_used = false
 local last_target = nil
 local was_stealthed = false
 local last_cp = 0
+local cold_blood_used = false
 
 -- throttling cache
 local last_rotation_time = 0
@@ -254,7 +255,6 @@ local function RoRotaRunRotationInternal()
         end
         -- use Cold Blood before Ambush if enabled
         if openerCfg.useColdBlood and opener == "Ambush" and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") then
-            cached_ability = "Cold Blood"
             CastSpellByName("Cold Blood")
             if RoRota.Debug then RoRota.Debug:EndTimer() end
             return
@@ -277,7 +277,6 @@ local function RoRotaRunRotationInternal()
         if RoRota:CanKillWithEviscerate(cp) and RoRota:HasEnoughEnergy("Eviscerate") then
             -- use Cold Blood if: enabled, meets min CP, and target doesn't die without it
             if db.useColdBloodEviscerate and cp >= minCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") then
-                cached_ability = "Cold Blood"
                 CastSpellByName("Cold Blood")
                 if RoRota.Debug then RoRota.Debug:EndTimer() end
                 return
@@ -293,7 +292,7 @@ local function RoRotaRunRotationInternal()
     end
     
     -- strategic finisher planning
-    if cp >= 1 and RoRota.PlanRotation then
+    if cp >= 1 and cp < 5 and RoRota.PlanRotation then
         local plannedAbility, reason = RoRota:PlanRotation(cp, energy)
         
         if plannedAbility and RoRota:IsFinisher(plannedAbility) then
@@ -342,7 +341,7 @@ local function RoRotaRunRotationInternal()
             if RoRota.Debug then RoRota.Debug:EndTimer() end
             return
         end
-        -- if planner returned a builder, fall through to eviscerate at 5 CP or continue building
+        -- if planner returned a builder, fall through to continue building
     end
     
     -- eviscerate at 5 CP (or 4 CP if overflow risk)
@@ -354,12 +353,13 @@ local function RoRotaRunRotationInternal()
     if shouldFinish and RoRota:HasEnoughEnergy("Eviscerate") then
         -- use Cold Blood before Eviscerate if enabled and meets minimum CP
         local minCP = db.coldBloodMinCP or 4
-        if db.useColdBloodEviscerate and cp >= minCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") then
-            cached_ability = "Cold Blood"
+        if db.useColdBloodEviscerate and cp >= minCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") and not cold_blood_used then
             CastSpellByName("Cold Blood")
+            cold_blood_used = true
             if RoRota.Debug then RoRota.Debug:EndTimer() end
             return
         end
+        cold_blood_used = false
         cached_ability = "Eviscerate"
         if RoRota.Debug and cp == 4 then
             RoRota.Debug:Trace("Eviscerate", "Early finisher (CP overflow prevention)", string.format("CP: %d", cp))

@@ -150,22 +150,13 @@ function RoRota:ShouldPoolEnergy(cp, energy)
 		return false
 	end
 	
-	-- Check if we have enough energy for any finisher
-	local hasEnergyForFinisher = false
-	local finisherPrio = db.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"}
-	for _, f in ipairs(finisherPrio) do
-		if self:HasEnoughEnergy(f) then
-			hasEnergyForFinisher = true
-			break
-		end
+	-- Check if we have enough energy for Eviscerate (fallback finisher)
+	if not self:HasEnoughEnergy("Eviscerate") then
+		return true, "Pooling for Eviscerate energy"
 	end
 	
-	if not hasEnergyForFinisher then
-		return true, "Pooling for finisher energy"
-	end
-	
-	-- All buffs/debuffs active, pool to avoid wasting CP
-	return true, "All finishers active, pooling"
+	-- All buffs/debuffs active and have energy for Eviscerate, don't pool
+	return false
 end
 
 function RoRota:PlanRotation(cp, energy)
