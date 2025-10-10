@@ -6,43 +6,20 @@
 
 ---
 
+## About
+
+RoRota lets you configure your complete rogue rotation and execute it with a single macro button. Set up your openers, builders, finishers, and defensive abilities through an intuitive GUI, then let the addon handle the decision-making during combat.
+
 ## Features
 
-### Core Rotation
-- **One-button rotation** - Press keybind to execute optimal ability
-- **Smart opener system** - Automatic opener selection with failsafe fallback
-- **Finisher priority** - Customizable priority order (drag-and-drop)
-- **Builder failsafe** - Auto-switch to secondary builder if primary fails
-- **Strategic CP planning** - Talent-aware combo point calculations
-- **CP overflow prevention** - Early finisher at 4 CP with high Seal Fate crit chance
-- **Energy pooling** - Pool energy at 4+ CP for immediate finisher at 5 CP
-- **Smart Eviscerate** - Execute at any CP if it will kill target
-- **Smart Rupture** - Skip if it would overkill target
-
-### Interrupts & Defensive
-- **Interrupt priority** - Kick → Gouge → Kidney Shot
-- **Threat management** - Feint with multiple modes (Always/WhenTargeted/HighThreat)
-- **Emergency Vanish** - Auto-vanish at configurable HP threshold
-- **Reactive abilities** - Riposte (after parry), Surprise Attack (after dodge)
-- **Ghostly Strike** - Conditional usage based on HP thresholds
-
-### Poison Management
-- **Auto-apply poisons** - Automatically apply when missing
-- **Combat control** - Allow/disallow poison application in combat
-- **Sharpening Stone support** - Can use sharpening stones instead of poisons
-- **Separate MH/OH** - Different poison for each weapon
-- **8 Turtle WoW poisons** - Full support for all Turtle WoW poison types
-- **Poison warnings** - Alerts for low time/charges
-- **Manual application** - Button to manually apply poisons
-
-### Advanced Features
-- **Ability queue** - Preview shows current + next ability in rotation
-- **Macro generator** - One-click macro creation for rotation keybind
-- **Profile system** - Create, switch, and delete profiles
-- **Auto-profile switching** - Automatic switching for Solo/Group/Raid
-- **SuperWoW support** - Enhanced features when SuperWoW is available
-- **Performance optimized** - Throttling, caching, and state management
-- **Debug system** - Built-in debugging tools (/rr debug, /rr state, /rr perf)
+- **One-button rotation** with smart opener system and talent-aware combo point planning
+- **Finisher management** with customizable priority, CP thresholds, and energy pooling
+- **Interrupt support** for Kick, Gouge, and Kidney Shot with automatic target casting detection
+- **Defensive abilities** including Feint (threat management), Vanish (emergency), Riposte, and Surprise Attack
+- **Poison automation** with auto-apply, combat control, and support for all 8 Turtle WoW poisons
+- **Profile system** with auto-switching for Solo/Group/Raid scenarios
+- **Macro generator** for one-click setup
+- **Rotation preview** window showing current and next ability
 
 ---
 
@@ -51,91 +28,15 @@
 1. Download the latest release
 2. Extract `RoRota-TWOW` folder to `Interface\AddOns\`
 3. Login to WoW and enable the addon
-4. Type `/rr` to open settings
 
 ---
 
 ## Usage
 
-### Keybindings
-Set up keybindings in ESC → Key Bindings → RoRota:
-- **Run Rotation** - Execute rotation (main keybind)
-- **Show Options** - Open settings GUI
-- **Toggle Preview** - Show/hide rotation preview window
-
-### Macro Setup
-Use the macro creation buttons in the About tab:
-- **Create Rotation Macro** - Creates "RoRota" macro with `/script RoRotaRunRotation()`
-- **Create Poison Macro** - Creates "RoRotaPoison" macro with `/script RoRotaApplyPoison()`
-- Drag macros to action bar for easy access
-- Macros are character-specific and update if already created
-
-### Slash Commands
-- `/rr` or `/rorota` - Open settings GUI
-- `/rr preview` - Toggle rotation preview window
-- `/rr talents` - Show combo point talent information
-- `/rr debug on/off` - Toggle debug mode
-- `/rr trace on/off` - Toggle rotation trace logging
-- `/rr state` - Show cached state values
-- `/rr logs` - Show recent debug logs
-- `/rr perf` - Show performance statistics
-- `/rr poison` - Test poison warnings
-- `/rr help` - Show command list
-
----
-
-## Configuration
-
-The addon features a modern GUI with vertical sidebar navigation and scrollable content.
-
-### About Tab
-- Addon information and version
-- Macro creation buttons
-- Feature list and commands
-- GitHub link
-
-### Openers Tab
-- Primary opener ability
-- Secondary opener (failsafe)
-- Pick Pocket before opener
-- Sap fail emergency action
-
-### Finishers Tab
-- Enable/disable individual finishers
-- Min/Max CP per finisher (Slice and Dice, Envenom, Rupture, Expose Armor)
-- Finisher priority system with up/down buttons (Eviscerate always last)
-- Smart Eviscerate toggle (execute at any CP if it kills target)
-- Smart Rupture toggle (skip if it would overkill)
-- Energy pooling settings
-
-### Builders Tab
-- Main builder ability
-- Secondary builder (failsafe)
-- Failsafe attempt threshold
-- Riposte toggle
-- Surprise Attack toggle
-- Hemorrhage toggle
-- Ghostly Strike settings (enable, target max HP, player min/max HP)
-- Smart Combo Builders toggle
-
-### Defensive Tab
-- Interrupt settings (Kick, Gouge, Kidney Shot with max CP)
-- Vanish settings (enable, HP threshold)
-- Feint settings (enable, mode: Always/WhenTargeted/HighThreat)
-
-### Poisons Tab
-- Auto-apply toggle
-- Apply in combat toggle
-- Main hand poison/stone selection (9 options including Turtle WoW poisons)
-- Off hand poison/stone selection
-- Warning settings (enable, time threshold, charges threshold)
-- Test warning button
-
-### Profiles Tab
-- Create new profiles
-- Switch between profiles
-- Delete profiles
-- Auto-switch settings (Solo/Group/Raid)
+1. Type `/rr` to open settings
+2. Configure your rotation in the GUI tabs (Openers, Builders, Finishers, Defensive, Poisons)
+3. Click "Create Rotation Macro" in the About tab
+4. Drag the macro to your action bar and use it in combat
 
 ---
 
@@ -144,68 +45,7 @@ The addon features a modern GUI with vertical sidebar navigation and scrollable 
 - **WoW Version:** 1.12.1 (Vanilla)
 - **Class:** Rogue only
 - **Recommended:** SuperWoW for enhanced features
-- **Recommended:** Nampower for energy tracking
-
----
-
-## Version History
-
-### v0.7.0 (Current)
-- Strategic combo point planning system
-- Talent-aware CP calculations (Seal Fate, Ruthlessness, Initiative, etc.)
-- CP overflow prevention (early finisher at 4 CP with high crit)
-- `/rr talents` command to show CP talent info
-- Support for all Turtle WoW CP talents
-- Immunity tracking skips players (PvP fix)
-- Event handler refactoring (modules/events.lua)
-
-### v0.6.3
-- Profile auto-switching fixes
-- Pick Pocket blacklist system
-- Uninterruptible spell detection
-- Interrupt success detection
-- Poison application fixes
-
-### v0.6.2
-- Complete GUI redesign with vertical sidebar navigation
-- Scrollable content area
-- About tab with macro creation buttons
-- Finisher priority system with drag-to-reorder
-- Character-specific macro creation
-
-### v0.6.1
-- GUI layout improvements
-- Widget alignment fixes
-
-### v0.6.0
-- Modular GUI architecture
-- Dark theme design
-
-### v0.5.0
-- Ability queue (current + next ability preview)
-- Macro generator button
-- Improved rotation planning
-
-### v0.4.0
-- Modular architecture refactoring
-- Split helpers.lua into 6 focused modules
-- Improved code organization and maintainability
-
-### v0.3
-- Code quality improvements
-- Style guide creation
-- Class check on login
-
-### v0.2
-- Sharpening Stone support
-- Poison verification system
-- Bug fixes
-
-### v0.1
-- Initial release
-- Core rotation system
-- Poison management
-- Profile system
+- **Recommended:** Nampower for correct energy tracking
 
 ---
 
