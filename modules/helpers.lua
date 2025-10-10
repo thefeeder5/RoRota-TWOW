@@ -82,20 +82,17 @@ function RoRota:GetNextAbility()
     end
     local cp = GetComboPoints("player", "target")
     local db = self.db.profile
+    local defensive = db.defensive or {}
     local isStealthed = self:HasPlayerBuff("Stealth")
-    if isStealthed then
-        if db.opener.pickPocket and not pick_pocket_used and self:HasSpell("Pick Pocket") and not self:TargetHasNoPockets() then
-            self.rotationReason = "Pick Pocket before opener"
-            return "Pick Pocket"
-        end
-        local opener = db.opener.ability or "Ambush"
-        if self:IsTargetImmune(opener) and db.opener.secondaryAbility then
-            self.rotationReason = "Opener (immune to "..opener..")"
-            return db.opener.secondaryAbility
-        end
-        self.rotationReason = "Stealth opener"
-        return opener
+    
+    -- vanish check
+    local playerHP = self:GetPlayerHealthPercent()
+    if defensive.useVanish and playerHP <= (defensive.vanishHP or 0) and self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish") then
+        self.rotationReason = "Emergency vanish"
+        return "Vanish"
     end
+    
+    -- interrupts
     if self:IsTargetCasting() then
         if db.interrupt.useKick and self:HasSpell("Kick") and self:HasEnoughEnergy("Kick") and not self:IsOnCooldown("Kick") and not self:IsTargetImmune("Kick") then
             self.rotationReason = "Interrupt cast"
@@ -103,11 +100,42 @@ function RoRota:GetNextAbility()
         elseif db.interrupt.useGouge and self:HasSpell("Gouge") and self:HasEnoughEnergy("Gouge") and not self:IsOnCooldown("Gouge") and not self:IsTargetImmune("Gouge") then
             self.rotationReason = "Interrupt cast"
             return "Gouge"
-        elseif db.interrupt.useKidneyShot and cp >= 1 and cp <= db.interrupt.kidneyMaxCP and self:HasSpell("Kidney Shot") and self:HasEnoughEnergy("Kidney Shot") and not self:IsTargetImmune("Kidney Shot") then
+        elseif db.interrupt.useKidneyShot and cp >= 1 and cp <= (db.interrupt.kidneyMaxCP or 5) and self:HasSpell("Kidney Shot") and self:HasEnoughEnergy("Kidney Shot") and not self:IsTargetImmune("Kidney Shot") then
             self.rotationReason = "Interrupt cast ("..cp.." CP)"
             return "Kidney Shot"
         end
     end
+    
+    -- feint
+    if defensive.useFeint and self:IsInGroupOrRaid() and self:HasSpell("Feint") and self:HasEnoughEnergy("Feint") and not self:IsOnCooldown("Feint") then
+        if defensive.feintMode == "Always" or (defensive.feintMode == "WhenTargeted" and self:IsPlayerTargeted()) or (defensive.feintMode == "HighThreat" and self:GetThreatSituation() >= 2) then
+            self.rotationReason = "Threat management"
+            return "Feint"
+        end
+    end
+    
+    -- riposte
+    if defensive.useRiposte and self:CanUseRiposte() and self:HasSpell("Riposte") and self:HasEnoughEnergy("Riposte") then
+        self.rotationReason = "After parry"
+        return "Riposte"
+    end
+    
+    -- surprise attack
+    if defensive.useSurpriseAttack and self:CanUseSurpriseAttack() and self:HasSpell("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") then
+        self.rotationReason = "After dodge"
+        return "Surprise Attack"
+    end
+    
+    -- stealth opener (skip pick pocket and cold blood in preview)
+    if isStealthed then
+        local opener = db.opener.ability or "Ambush"
+        if self:IsTargetImmune(opener) and db.opener.secondaryAbility then
+            opener = db.opener.secondaryAbility
+        end
+        self.rotationReason = "Stealth opener"
+        return opener
+    end
+    -- smart eviscerate (execute, skip cold blood in preview)
     if cp >= 1 and db.smartEviscerate and self:CanKillWithEviscerate(cp) and self:HasEnoughEnergy("Eviscerate") then
         self.rotationReason = "Execute (will kill)"
         return "Smart Eviscerate"
@@ -150,9 +178,12 @@ function RoRota:GetNextAbility()
             end
         end
     end
-    if cp == 5 and self:HasEnoughEnergy("Eviscerate") then
-        self.rotationReason = "5 CP finisher"
-        return "Eviscerate"
+    -- eviscerate at 5 CP (skip cold blood in preview)
+    if cp == 5 then
+        if self:HasEnoughEnergy("Eviscerate") then
+            self.rotationReason = "5 CP finisher"
+            return "Eviscerate"
+        end
     end
     if db.energyPooling.enabled and cp == 4 and not self:HasAdrenalineRush() then
         local currentEnergy = UnitMana("player")
@@ -206,6 +237,22 @@ function RoRota:GetNextAbilityAfter(current_ability)
             return "Eviscerate"
         end
         return db.mainBuilder or "Sinister Strike"
+    end
+    
+    -- if current is Cold Blood, next is what it buffs
+    if current_ability == "Cold Blood" then
+        local isStealthed = self:HasPlayerBuff("Stealth")
+        if isStealthed then
+            -- Cold Blood before opener
+            local opener = db.opener.ability or "Ambush"
+            if self:IsTargetImmune(opener) and db.opener.secondaryAbility then
+                return db.opener.secondaryAbility
+            end
+            return opener
+        else
+            -- Cold Blood before Eviscerate
+            return "Eviscerate"
+        end
     end
     
     -- if current is Pick Pocket, next is opener

@@ -13,8 +13,8 @@ function RoRota:CreateRotationPreview()
 	if RoRotaPreviewFrame then return end
 	
 	local pf = CreateFrame("Frame", "RoRotaPreviewFrame", UIParent)
-	pf:SetWidth(250)
-	pf:SetHeight(150)
+	pf:SetWidth(74)
+	pf:SetHeight(38)
 	pf.debugMode = false
 	pf:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
 	pf:SetMovable(true)
@@ -23,17 +23,29 @@ function RoRota:CreateRotationPreview()
 	pf:SetScript("OnDragStart", function() this:StartMoving() end)
 	pf:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
 	
+	-- background
+	pf.bg = pf:CreateTexture(nil, "BACKGROUND")
+	pf.bg:SetAllPoints(pf)
+	pf.bg:SetTexture(0, 0, 0, 0.7)
+	
+	-- border
+	pf.border = pf:CreateTexture(nil, "BORDER")
+	pf.border:SetAllPoints(pf)
+	pf.border:SetTexture(0.3, 0.3, 0.3, 1)
+	pf.border:SetPoint("TOPLEFT", pf, "TOPLEFT", 1, -1)
+	pf.border:SetPoint("BOTTOMRIGHT", pf, "BOTTOMRIGHT", -1, 1)
+	
 	-- current ability icon
 	pf.icon = pf:CreateTexture(nil, "ARTWORK")
 	pf.icon:SetWidth(32)
 	pf.icon:SetHeight(32)
-	pf.icon:SetPoint("TOPLEFT", pf, "TOPLEFT", 5, -5)
+	pf.icon:SetPoint("TOPLEFT", pf, "TOPLEFT", 3, -3)
 	pf.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
 	
-	-- current ability name
+	-- current ability name (spans both icons)
 	pf.abilityName = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.abilityName:SetPoint("TOP", pf.icon, "BOTTOM", 0, -2)
-	pf.abilityName:SetWidth(60)
+	pf.abilityName:SetPoint("TOPLEFT", pf.icon, "BOTTOMLEFT", 0, -1)
+	pf.abilityName:SetWidth(68)
 	pf.abilityName:SetJustifyH("CENTER")
 	pf.abilityName:SetText("")
 	
@@ -41,45 +53,47 @@ function RoRota:CreateRotationPreview()
 	pf.nextIcon = pf:CreateTexture(nil, "ARTWORK")
 	pf.nextIcon:SetWidth(32)
 	pf.nextIcon:SetHeight(32)
-	pf.nextIcon:SetPoint("LEFT", pf.icon, "RIGHT", 3, 0)
+	pf.nextIcon:SetPoint("LEFT", pf.icon, "RIGHT", 2, 0)
 	pf.nextIcon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
 	
-	-- next ability name
+	-- next ability name (hidden to save space)
 	pf.nextAbilityName = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.nextAbilityName:SetPoint("TOP", pf.nextIcon, "BOTTOM", 0, -2)
-	pf.nextAbilityName:SetWidth(60)
+	pf.nextAbilityName:SetPoint("TOP", pf.nextIcon, "BOTTOM", 0, -1)
+	pf.nextAbilityName:SetWidth(32)
 	pf.nextAbilityName:SetJustifyH("CENTER")
 	pf.nextAbilityName:SetText("")
+	pf.nextAbilityName:Hide()
 	
 	-- CP and Energy text
 	pf.cpText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.cpText:SetPoint("TOPLEFT", pf.abilityName, "BOTTOMLEFT", -5, -3)
+	pf.cpText:SetPoint("TOPLEFT", pf.icon, "BOTTOMLEFT", 0, -2)
 	pf.cpText:SetText("CP: 0")
 	
 	pf.energyText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.energyText:SetPoint("LEFT", pf.cpText, "RIGHT", 8, 0)
-	pf.energyText:SetText("Energy: 0")
+	pf.energyText:SetPoint("TOPLEFT", pf.cpText, "BOTTOMLEFT", 0, -1)
+	pf.energyText:SetText("E: 0")
 	
 	-- reason text
 	pf.reasonText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.reasonText:SetPoint("TOPLEFT", pf.cpText, "BOTTOMLEFT", 0, -2)
-	pf.reasonText:SetWidth(190)
+	pf.reasonText:SetPoint("TOPLEFT", pf.energyText, "BOTTOMLEFT", 0, -2)
+	pf.reasonText:SetWidth(134)
 	pf.reasonText:SetJustifyH("LEFT")
 	pf.reasonText:SetText("")
 	pf.reasonText:SetTextColor(0.7, 0.7, 0.7)
 	
-	-- debuff info text
+	-- debuff info text (hidden, not used)
 	pf.debuffText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	pf.debuffText:SetPoint("TOPLEFT", pf.reasonText, "BOTTOMLEFT", 0, -2)
-	pf.debuffText:SetWidth(190)
+	pf.debuffText:SetWidth(134)
 	pf.debuffText:SetJustifyH("LEFT")
 	pf.debuffText:SetText("")
 	pf.debuffText:SetTextColor(1, 0.8, 0)
+	pf.debuffText:Hide()
 	
 	-- debug info text (multi-line)
 	pf.debugText = pf:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	pf.debugText:SetPoint("TOPLEFT", pf.debuffText, "BOTTOMLEFT", 0, -2)
-	pf.debugText:SetWidth(240)
+	pf.debugText:SetPoint("TOPLEFT", pf.reasonText, "BOTTOMLEFT", 0, -2)
+	pf.debugText:SetWidth(134)
 	pf.debugText:SetJustifyH("LEFT")
 	pf.debugText:SetText("")
 	pf.debugText:SetTextColor(0.5, 1, 0.5)
@@ -97,7 +111,7 @@ function RoRota:CreateRotationPreview()
 				local energy = UnitMana("player")
 				
 				this.cpText:SetText("CP: "..cp)
-				this.energyText:SetText("Energy: "..energy)
+				this.energyText:SetText("E: "..energy)
 				
 				-- update reason (only in debug mode)
 				if this.debugMode and RoRota.rotationReason and RoRota.rotationReason ~= "" then
@@ -109,8 +123,12 @@ function RoRota:CreateRotationPreview()
 				-- always hide debuff summary line
 				this.debuffText:SetText("")
 				
-				-- update debug info
+				-- update debug info and resize window
 				if this.debugMode and RoRota.db and RoRota.db.profile then
+					this:SetWidth(140)
+					this:SetHeight(120)
+					this.cpText:Show()
+					this.energyText:Show()
 					local db = RoRota.db.profile
 					local abilitiesCfg = db.abilities or {}
 					local finisherPrio = db.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"}
@@ -162,40 +180,36 @@ function RoRota:CreateRotationPreview()
 							if enabled then
 								local time = RoRota:GetBuffTimeRemaining("Slice and Dice")
 								local shouldUse = time <= refreshThreshold
-								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
-								line = string.format("%d.SnD: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+								line = string.format("%d.SnD: %.0fs %s", i, time, shouldUse and "USE" or "skip")
 							else
-								line = i.."SnD: disabled"
+								line = i.."SnD: OFF"
 							end
 						elseif finisher == "Envenom" then
 							local enabled = abilitiesCfg.Envenom and abilitiesCfg.Envenom.enabled
 							if enabled then
 								local time = RoRota:GetBuffTimeRemaining("Envenom")
 								local shouldUse = time <= refreshThreshold
-								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
-								line = string.format("%d.Env: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+								line = string.format("%d.Env: %.0fs %s", i, time, shouldUse and "USE" or "skip")
 							else
-								line = i.."Env: disabled"
+								line = i.."Env: OFF"
 							end
 						elseif finisher == "Rupture" then
 							local enabled = abilitiesCfg.Rupture and abilitiesCfg.Rupture.enabled
 							if enabled then
 								local time = RoRota:GetDebuffTimeRemaining("Rupture")
 								local shouldUse = time <= refreshThreshold
-								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
-								line = string.format("%d.Rupt: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+								line = string.format("%d.Rupt: %.0fs %s", i, time, shouldUse and "USE" or "skip")
 							else
-								line = i.."Rupt: disabled"
+								line = i.."Rupt: OFF"
 							end
 						elseif finisher == "Expose Armor" then
 							local enabled = abilitiesCfg.ExposeArmor and abilitiesCfg.ExposeArmor.enabled
 							if enabled then
 								local time = RoRota:GetDebuffTimeRemaining("Expose Armor")
 								local shouldUse = time <= refreshThreshold
-								local expectedEnergy = math.min(100, energy + (time * energyPerSec))
-								line = string.format("%d.EA: %.0fs %.0fE %s", i, time, expectedEnergy, shouldUse and "USE" or "skip")
+								line = string.format("%d.EA: %.0fs %s", i, time, shouldUse and "USE" or "skip")
 							else
-								line = i.."EA: disabled"
+								line = i.."EA: OFF"
 							end
 						end
 						table.insert(debugLines, line)
@@ -203,12 +217,28 @@ function RoRota:CreateRotationPreview()
 					
 					this.debugText:SetText(table.concat(debugLines, "\n"))
 				else
+					this:SetWidth(74)
+					this:SetHeight(38)
+					this.cpText:Hide()
+					this.energyText:Hide()
 					this.debugText:SetText("")
 				end
 				
 				-- update current ability name
 				if current_ability then
-					this.abilityName:SetText(current_ability)
+					if current_ability == "Pooling Energy" then
+						this.abilityName:SetText("Pooling")
+					elseif current_ability == "Waiting for Energy" then
+						this.abilityName:SetText("Wait Energy")
+					elseif current_ability == "No Target" then
+						this.abilityName:SetText("No Target")
+					elseif current_ability == "Apply Poison" then
+						this.abilityName:SetText("Poison")
+					elseif current_ability == "Smart Eviscerate" then
+						this.abilityName:SetText("Eviscerate")
+					else
+						this.abilityName:SetText(current_ability)
+					end
 				else
 					this.abilityName:SetText("")
 				end
