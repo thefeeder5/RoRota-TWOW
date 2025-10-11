@@ -2,7 +2,7 @@
 ## Title: RoRota (Rogue One-Button Rotation)
 ## Author: feeder5 (vibe coding ftw)
 ## Notes: Helps you with rotation as a rogue.
-## Version: 0.7.0
+## Version: 0.7.1
 ## SavedVariables: RoRotaDB
 
 Libs\acelibs.xml

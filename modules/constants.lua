@@ -85,6 +85,7 @@ RoRotaConstants = {
 		["Apply Poison"] = "Interface\\Icons\\Ability_Poisons",
 		["Smart Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
 		["Cold Blood"] = "Interface\\Icons\\Spell_Ice_Lament",
+		["Cold Blood Eviscerate"] = "Interface\\Icons\\Spell_Ice_Lament",
 	},
 	POISON_REAGENTS = {
 		["Instant Poison"] = {item = "Dust of Deterioration", count = 1},
@@ -171,6 +172,7 @@ RoRotaConstants = {
 		["Envenom"] = true,
 		["Kidney Shot"] = true,
 		["Expose Armor"] = true,
+		["Cold Blood Eviscerate"] = true,
 	},
 	-- CP Talent Info (Turtle WoW)
 	-- Talents are scanned dynamically by name, not hardcoded positions

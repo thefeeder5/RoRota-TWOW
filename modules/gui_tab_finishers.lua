@@ -100,27 +100,51 @@ function RoRotaGUI.CreateFinishersTab(parent, frame)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 20, y, "Cold Blood Eviscerate Enable")
+    frame.cbEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaCBEvisCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ColdBloodEviscerate then RoRota.db.profile.abilities.ColdBloodEviscerate = {} end
+        RoRota.db.profile.abilities.ColdBloodEviscerate.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Cold Blood Eviscerate Min CP")
+    frame.cbEvisMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaCBEvisMinDD", parent, 350, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ColdBloodEviscerate then RoRota.db.profile.abilities.ColdBloodEviscerate = {} end
+        RoRota.db.profile.abilities.ColdBloodEviscerate.minCP = value
+    end)
+    y = y - 25
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Cold Blood Eviscerate Max CP")
+    frame.cbEvisMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaCBEvisMaxDD", parent, 350, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ColdBloodEviscerate then RoRota.db.profile.abilities.ColdBloodEviscerate = {} end
+        RoRota.db.profile.abilities.ColdBloodEviscerate.maxCP = value
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 20, y, "Smart Eviscerate")
     frame.smartEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartEvisCheck", parent, 350, y, "", function()
         RoRota.db.profile.smartEviscerate = (this:GetChecked() == 1)
     end)
     y = y - 25
     
-    RoRotaGUI.CreateLabel(parent, 20, y, "Smart Rupture")
-    frame.smartRuptCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartRuptCheck", parent, 350, y, "", function()
-        RoRota.db.profile.smartRupture = (this:GetChecked() == 1)
-    end)
-    y = y - 30
-    
-    RoRotaGUI.CreateLabel(parent, 20, y, "Use Cold Blood before Eviscerate")
-    frame.coldBloodEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodEvisCheck", parent, 350, y, "", function()
+    RoRotaGUI.CreateLabel(parent, 20, y, "Allow Cold Blood before Smart Evis")
+    frame.coldBloodSmartEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodSmartEvisCheck", parent, 350, y, "", function()
         RoRota.db.profile.useColdBloodEviscerate = (this:GetChecked() == 1)
     end)
-    y = y - 30
+    y = y - 25
     
     RoRotaGUI.CreateLabel(parent, 20, y, "Cold Blood Minimum CP")
     frame.coldBloodMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaColdBloodMinDD", parent, 350, y, 1, 5, 1, function(value)
         RoRota.db.profile.coldBloodMinCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Smart Rupture")
+    frame.smartRuptCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartRuptCheck", parent, 350, y, "", function()
+        RoRota.db.profile.smartRupture = (this:GetChecked() == 1)
     end)
     y = y - 25
     
@@ -147,7 +171,7 @@ function RoRotaGUI.CreateFinishersTab(parent, frame)
     RoRotaGUI.CreateLabel(parent, 20, y, "Finisher Priority (Eviscerate always last)")
     y = y - 25
     
-    local finishers = {"Slice and Dice", "Envenom", "Rupture", "Expose Armor"}
+    local finishers = {"Slice and Dice", "Envenom", "Rupture", "Expose Armor", "Cold Blood Eviscerate"}
     frame.priorityButtons = {}
     for i, name in ipairs(finishers) do
         local btn = RoRotaGUI.CreateButton(nil, parent, 150, 25, name)
@@ -251,14 +275,27 @@ function RoRotaGUI.LoadFinishersTab(frame)
         UIDropDownMenu_SetSelectedValue(frame.exposeMaxDD, val)
         UIDropDownMenu_SetText(tostring(val), frame.exposeMaxDD)
     end
+    if frame.cbEvisCheck and p.abilities and p.abilities.ColdBloodEviscerate then
+        frame.cbEvisCheck:SetChecked(p.abilities.ColdBloodEviscerate.enabled and 1 or nil)
+    end
+    if frame.cbEvisMinDD and p.abilities and p.abilities.ColdBloodEviscerate then
+        local val = p.abilities.ColdBloodEviscerate.minCP or 4
+        UIDropDownMenu_SetSelectedValue(frame.cbEvisMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), frame.cbEvisMinDD)
+    end
+    if frame.cbEvisMaxDD and p.abilities and p.abilities.ColdBloodEviscerate then
+        local val = p.abilities.ColdBloodEviscerate.maxCP or 5
+        UIDropDownMenu_SetSelectedValue(frame.cbEvisMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), frame.cbEvisMaxDD)
+    end
     if frame.smartEvisCheck then
         frame.smartEvisCheck:SetChecked(p.smartEviscerate and 1 or nil)
     end
     if frame.smartRuptCheck then
         frame.smartRuptCheck:SetChecked(p.smartRupture and 1 or nil)
     end
-    if frame.coldBloodEvisCheck then
-        frame.coldBloodEvisCheck:SetChecked(p.useColdBloodEviscerate and 1 or nil)
+    if frame.coldBloodSmartEvisCheck then
+        frame.coldBloodSmartEvisCheck:SetChecked(p.useColdBloodEviscerate and 1 or nil)
     end
     if frame.coldBloodMinDD then
         local val = p.coldBloodMinCP or 4

@@ -85,11 +85,19 @@ function RoRota:ShouldRefreshFinisher(finisher, cp, energy, timeRemaining)
 	local finisherKey = finisher
 	if finisher == "Slice and Dice" then finisherKey = "SliceAndDice"
 	elseif finisher == "Expose Armor" then finisherKey = "ExposeArmor"
+	elseif finisher == "Cold Blood Eviscerate" then finisherKey = "ColdBloodEviscerate"
 	end
 	local cfg = abilitiesCfg[finisherKey]
 	
 	if not cfg or not cfg.enabled then return false end
 	if cp < (cfg.minCP or 1) or cp > (cfg.maxCP or 5) then return false end
+	if finisher == "Cold Blood Eviscerate" then
+		if not self:HasSpell("Cold Blood") then return false end
+		if self:IsOnCooldown("Cold Blood") then return false end
+		if self:HasPlayerBuff("Cold Blood") then return false end
+		if not self:HasEnoughEnergy("Eviscerate") then return false end
+		return true
+	end
 	if not self:HasEnoughEnergy(finisher) then return false end
 	
 	-- Priority 1: Finisher not active or about to expire
@@ -108,7 +116,35 @@ function RoRota:GetOptimalFinisher(cp, energy)
 	local db = self.db.profile
 	local abilitiesCfg = db.abilities or {}
 	local finisherPrio = db.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"}
+	local threshold = db.finisherRefreshThreshold or 2
 	
+	-- First pass: check if any higher-priority finisher needs refresh but requires more CP
+	for i, finisher in ipairs(finisherPrio) do
+		local finisherKey = finisher
+		if finisher == "Slice and Dice" then finisherKey = "SliceAndDice"
+		elseif finisher == "Expose Armor" then finisherKey = "ExposeArmor"
+		end
+		local cfg = abilitiesCfg[finisherKey]
+		
+		if cfg and cfg.enabled then
+			local timeRemaining = 0
+			if finisher == "Slice and Dice" then
+				timeRemaining = self:GetBuffTimeRemaining("Slice and Dice")
+			elseif finisher == "Envenom" then
+				timeRemaining = self:GetBuffTimeRemaining("Envenom")
+			elseif finisher == "Rupture" then
+				timeRemaining = self:GetDebuffTimeRemaining("Rupture")
+			elseif finisher == "Expose Armor" then
+				timeRemaining = self:GetDebuffTimeRemaining("Expose Armor")
+			end
+			
+			if timeRemaining <= threshold and cp < (cfg.minCP or 1) then
+				return nil, string.format("Building for %s (%d/%d CP)", finisher, cp, cfg.minCP or 1)
+			end
+		end
+	end
+	
+	-- Second pass: find usable finisher at current CP
 	for i, finisher in ipairs(finisherPrio) do
 		local timeRemaining = 0
 		
@@ -120,6 +156,8 @@ function RoRota:GetOptimalFinisher(cp, energy)
 			timeRemaining = self:GetDebuffTimeRemaining("Rupture")
 		elseif finisher == "Expose Armor" then
 			timeRemaining = self:GetDebuffTimeRemaining("Expose Armor")
+		elseif finisher == "Cold Blood Eviscerate" then
+			timeRemaining = 999
 		end
 		
 		local shouldUse = self:ShouldRefreshFinisher(finisher, cp, energy, timeRemaining)
@@ -128,7 +166,11 @@ function RoRota:GetOptimalFinisher(cp, energy)
 		end
 		
 		if shouldUse then
-			return finisher, string.format("%s expires in %.0fs", finisher, timeRemaining)
+			if finisher == "Cold Blood Eviscerate" then
+				return finisher, "Cold Blood Eviscerate ready"
+			else
+				return finisher, string.format("%s expires in %.0fs", finisher, timeRemaining)
+			end
 		end
 	end
 	

@@ -40,7 +40,6 @@ RoRota.ruptureExpiry = 0
 RoRota.ruptureTarget = nil
 RoRota.exposeArmorExpiry = 0
 RoRota.exposeArmorTarget = nil
-RoRota.ghostlyStrikeCooldown = 0
 
 -- Internal Rotation Logic
 local function RoRotaRunRotationInternal()
@@ -131,9 +130,9 @@ local function RoRotaRunRotationInternal()
     local defensive = db.defensive or {}
     local interrupt = db.interrupt or {}
     local openerCfg = db.opener or {}
-    local abilitiesCfg = db.abilities or {}
-    local energyCfg = db.energyPooling or {}
-    local finisherPrio = db.finisherPriority or (RoRotaConstants and RoRotaConstants.DEFAULT_PROFILE and RoRotaConstants.DEFAULT_PROFILE.finisherPriority) or {"Slice and Dice","Expose Armor","Eviscerate","Rupture"}
+    
+    -- cache frequently used values
+    local coldBloodMinCP = db.coldBloodMinCP or 4
 
     -- Defensive Abilities
     
@@ -141,7 +140,7 @@ local function RoRotaRunRotationInternal()
     local playerHP = state.healthPercent or RoRota:GetPlayerHealthPercent()
     if defensive.useVanish and playerHP <= (defensive.vanishHP or 0) then
         if RoRota:HasSpell("Vanish") and not RoRota:IsOnCooldown("Vanish") then
-            cachedAbility = "Vanish"
+            cached_ability = "Vanish"
             CastSpellByName("Vanish")
             if RoRota.Debug then RoRota.Debug:EndTimer() end
             return
@@ -272,11 +271,10 @@ local function RoRotaRunRotationInternal()
     
     -- smart eviscerate (execute)
     if cp >= 1 and db.smartEviscerate then
-        local minCP = db.coldBloodMinCP or 4
         -- check if can kill with current CP
         if RoRota:CanKillWithEviscerate(cp) and RoRota:HasEnoughEnergy("Eviscerate") then
             -- use Cold Blood if: enabled, meets min CP, and target doesn't die without it
-            if db.useColdBloodEviscerate and cp >= minCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") then
+            if db.useColdBloodEviscerate and cp >= coldBloodMinCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") then
                 CastSpellByName("Cold Blood")
                 if RoRota.Debug then RoRota.Debug:EndTimer() end
                 return
@@ -292,18 +290,29 @@ local function RoRotaRunRotationInternal()
     end
     
     -- strategic finisher planning
-    if cp >= 1 and cp < 5 and RoRota.PlanRotation then
+    if cp >= 1 and cp <= 5 and RoRota.PlanRotation then
         local plannedAbility, reason = RoRota:PlanRotation(cp, energy)
         
         if plannedAbility and RoRota:IsFinisher(plannedAbility) then
             RoRota.rotationReason = reason or ""
             
-            -- smart rupture check
+            -- smart rupture check: skip if would overkill
             if plannedAbility == "Rupture" and db.smartRupture and RoRota:WouldOverkill("Rupture", cp) then
                 if RoRota.Debug and RoRota.Debug.enabled then
                     RoRota.Debug:Log("Rupture skipped: would overkill", "TRACE")
                 end
-                -- continue to eviscerate fallback
+                -- skip to fallback section (don't use Rupture)
+            elseif plannedAbility == "Cold Blood Eviscerate" then
+                if not RoRota:HasPlayerBuff("Cold Blood") then
+                    CastSpellByName("Cold Blood")
+                    if RoRota.Debug then RoRota.Debug:EndTimer() end
+                    return
+                else
+                    cached_ability = "Eviscerate"
+                    CastSpellByName("Eviscerate")
+                    if RoRota.Debug then RoRota.Debug:EndTimer() end
+                    return
+                end
             else
                 cached_ability = plannedAbility
                 CastSpellByName(plannedAbility)
@@ -316,19 +325,19 @@ local function RoRotaRunRotationInternal()
                     if RoRota.TalentCache and RoRota.TalentCache.improvedBladeTactics then
                         duration = duration * (1 + (RoRota.TalentCache.improvedBladeTactics * 0.15))
                     end
-                    RoRota.sndExpiry = GetTime() + duration
+                    RoRota.sndExpiry = now + duration
                 elseif plannedAbility == "Envenom" then
                     -- Turtle WoW: 12/16/20/24/28 seconds (base 8 + cp * 4)
-                    RoRota.envenomExpiry = GetTime() + 8 + (cp * 4)
+                    RoRota.envenomExpiry = now + 8 + (cp * 4)
                 elseif plannedAbility == "Rupture" then
                     local duration = 6 + (cp * 2)
                     if RoRota.TalentCache and RoRota.TalentCache.tasteForBlood then
                         duration = duration + (RoRota.TalentCache.tasteForBlood * 2)
                     end
-                    RoRota.ruptureExpiry = GetTime() + duration
+                    RoRota.ruptureExpiry = now + duration
                     RoRota.ruptureTarget = targetName
                 elseif plannedAbility == "Expose Armor" then
-                    RoRota.exposeArmorExpiry = GetTime() + 30
+                    RoRota.exposeArmorExpiry = now + 30
                     RoRota.exposeArmorTarget = targetName
                 end
                 
@@ -352,8 +361,7 @@ local function RoRotaRunRotationInternal()
     
     if shouldFinish and RoRota:HasEnoughEnergy("Eviscerate") then
         -- use Cold Blood before Eviscerate if enabled and meets minimum CP
-        local minCP = db.coldBloodMinCP or 4
-        if db.useColdBloodEviscerate and cp >= minCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") and not cold_blood_used then
+        if db.useColdBloodEviscerate and cp >= coldBloodMinCP and RoRota:HasSpell("Cold Blood") and not RoRota:IsOnCooldown("Cold Blood") and not RoRota:HasPlayerBuff("Cold Blood") and not cold_blood_used then
             CastSpellByName("Cold Blood")
             cold_blood_used = true
             if RoRota.Debug then RoRota.Debug:EndTimer() end
@@ -371,22 +379,17 @@ local function RoRotaRunRotationInternal()
     
     -- Builders
     
-
-    
     -- ghostly strike (conditional builder)
-    if defensive.useGhostlyStrike and RoRota:HasSpell("Ghostly Strike") and RoRota:HasEnoughEnergy("Ghostly Strike") then
-        if GetTime() >= RoRota.ghostlyStrikeCooldown then
-            local targetHP = state.targetHealthPercent or RoRota:GetTargetHealthPercent()
-            if targetHP <= (defensive.ghostlyTargetMaxHP or 100) and playerHP >= (defensive.ghostlyPlayerMinHP or 0) and playerHP <= (defensive.ghostlyPlayerMaxHP or 100) then
-                if RoRota.Debug then
-                    RoRota.Debug:Trace("Ghostly Strike", "Conditions met", string.format("Target HP: %.1f%%, Player HP: %.1f%%", targetHP, playerHP))
-                end
-                cached_ability = "Ghostly Strike"
-                CastSpellByName("Ghostly Strike")
-                RoRota.ghostlyStrikeCooldown = GetTime() + 20
-                if RoRota.Debug then RoRota.Debug:EndTimer() end
-                return
+    if defensive.useGhostlyStrike and RoRota:HasSpell("Ghostly Strike") and RoRota:HasEnoughEnergy("Ghostly Strike") and not RoRota:IsOnCooldown("Ghostly Strike") then
+        local targetHP = state.targetHealthPercent or RoRota:GetTargetHealthPercent()
+        if targetHP <= (defensive.ghostlyTargetMaxHP or 100) and playerHP >= (defensive.ghostlyPlayerMinHP or 0) and playerHP <= (defensive.ghostlyPlayerMaxHP or 100) then
+            if RoRota.Debug then
+                RoRota.Debug:Trace("Ghostly Strike", "Conditions met", string.format("Target HP: %.1f%%, Player HP: %.1f%%", targetHP, playerHP))
             end
+            cached_ability = "Ghostly Strike"
+            CastSpellByName("Ghostly Strike")
+            if RoRota.Debug then RoRota.Debug:EndTimer() end
+            return
         end
     end
     

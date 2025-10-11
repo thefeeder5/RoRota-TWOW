@@ -23,17 +23,19 @@ function RoRota:CreateRotationPreview()
 	pf:SetScript("OnDragStart", function() this:StartMoving() end)
 	pf:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
 	
-	-- background
+	-- background (hidden)
 	pf.bg = pf:CreateTexture(nil, "BACKGROUND")
 	pf.bg:SetAllPoints(pf)
 	pf.bg:SetTexture(0, 0, 0, 0.7)
+	pf.bg:Hide()
 	
-	-- border
+	-- border (hidden)
 	pf.border = pf:CreateTexture(nil, "BORDER")
 	pf.border:SetAllPoints(pf)
 	pf.border:SetTexture(0.3, 0.3, 0.3, 1)
 	pf.border:SetPoint("TOPLEFT", pf, "TOPLEFT", 1, -1)
 	pf.border:SetPoint("BOTTOMRIGHT", pf, "BOTTOMRIGHT", -1, 1)
+	pf.border:Hide()
 	
 	-- current ability icon
 	pf.icon = pf:CreateTexture(nil, "ARTWORK")
@@ -127,8 +129,8 @@ function RoRota:CreateRotationPreview()
 				if this.debugMode and RoRota.db and RoRota.db.profile then
 					this:SetWidth(140)
 					this:SetHeight(120)
-					this.cpText:Show()
-					this.energyText:Show()
+					this.cpText:Hide()
+					this.energyText:Hide()
 					local db = RoRota.db.profile
 					local abilitiesCfg = db.abilities or {}
 					local finisherPrio = db.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"}
