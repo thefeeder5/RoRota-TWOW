@@ -14,6 +14,9 @@
 --   POISON_BUFF_PATTERNS   - Pattern matching for poison weapon buffs
 
 RoRotaConstants = {
+	ENERGY_TICK_TIME = 2.0,
+	ENERGY_PER_TICK = 20,
+	COLD_BLOOD_TEXTURE = "Spell_Ice_Lament",
 	ENERGY_COSTS = {
 		["Sinister Strike"] = 40, ["Eviscerate"] = 30, ["Backstab"] = 60,
 		["Gouge"] = 45, ["Slice and Dice"] = 20, ["Sap"] = 65,
@@ -59,13 +62,7 @@ RoRotaConstants = {
 		["Ghostly Strike"] = "Interface\\Icons\\Spell_Shadow_Curse",
 		["Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
 		["Slice and Dice"] = "Interface\\Icons\\Ability_Rogue_SliceDice",
-		["Blade Flurry"] = "Interface\\Icons\\Ability_Warrior_PunishingBlow",
 		["Envenom"] = "Interface\\Icons\\INV_Sword_31",
-		["Sprint"] = "Interface\\Icons\\Ability_Rogue_Sprint",
-		["Blind"] = "Interface\\Icons\\Spell_Shadow_MindSteal",
-		["Evasion"] = "Interface\\Icons\\Spell_Shadow_ShadowWard",
-		["Stealth"] = "Interface\\Icons\\Ability_Stealth",
-		["Sap"] = "Interface\\Icons\\Ability_Sap",
 		["Rupture"] = "Interface\\Icons\\Ability_Rogue_Rupture",
 		["Expose Armor"] = "Interface\\Icons\\Ability_Warrior_Riposte",
 		["Kick"] = "Interface\\Icons\\Ability_Kick",
@@ -85,7 +82,6 @@ RoRotaConstants = {
 		["Apply Poison"] = "Interface\\Icons\\Ability_Poisons",
 		["Smart Eviscerate"] = "Interface\\Icons\\Ability_Rogue_Eviscerate",
 		["Cold Blood"] = "Interface\\Icons\\Spell_Ice_Lament",
-		["Cold Blood Eviscerate"] = "Interface\\Icons\\Spell_Ice_Lament",
 	},
 	POISON_REAGENTS = {
 		["Instant Poison"] = {item = "Dust of Deterioration", count = 1},

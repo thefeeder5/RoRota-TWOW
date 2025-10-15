@@ -2,12 +2,12 @@
 ## Title: RoRota (Rogue One-Button Rotation)
 ## Author: feeder5 (vibe coding ftw)
 ## Notes: Helps you with rotation as a rogue.
-## Version: 0.7.1
+## Version: 0.8.0 Release
 ## SavedVariables: RoRotaDB
 
 Libs\acelibs.xml
 modules\constants.lua
 modules\defaultprofile.lua
 Core.lua
-modules\init.xml
+init.xml
 Bindings.xml

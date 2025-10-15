@@ -1,6 +1,6 @@
 # RoRota - Rogue One-Button Rotation
 
-**Version:** 0.7.1  
+**Version:** 0.8.0 Release
 **Target:** Vanilla WoW 1.12.1 (Turtle WoW)  
 **Author:** feeder5
 

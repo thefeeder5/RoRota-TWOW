@@ -114,21 +114,16 @@ RoRota.Debug.Performance = {
 }
 
 function RoRota.Debug:StartTimer()
-    if not self.enabled then return end
     self.Performance.startTime = GetTime()
 end
 
 function RoRota.Debug:EndTimer()
-    if not self.enabled or not self.Performance.startTime then return end
+    if not self.Performance.startTime then return end
     
     local elapsed = GetTime() - self.Performance.startTime
     self.Performance.rotationTime = self.Performance.rotationTime + elapsed
     self.Performance.rotationCalls = self.Performance.rotationCalls + 1
     self.Performance.avgTime = self.Performance.rotationTime / self.Performance.rotationCalls
-    
-    if elapsed > 0.01 then
-        self:Log(string.format("Rotation took %.3fms (slow!)", elapsed * 1000), "WARN")
-    end
 end
 
 function RoRota.Debug:ShowPerformance()

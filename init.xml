@@ -1,0 +1,34 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+	<Script file="modules\debug.lua"/>
+	<Script file="modules\state.lua"/>
+	<Script file="modules\abilities.lua"/>
+	<Script file="modules\talents.lua"/>
+	<Script file="modules\buffs.lua"/>
+	<Script file="modules\damage.lua"/>
+	<Script file="modules\immunity.lua"/>
+	<Script file="modules\casting.lua"/>
+	<Script file="modules\events.lua"/>
+	<Script file="modules\integration.lua"/>
+	<Script file="modules\swingtimer.lua"/>
+	<Script file="modules\helpers.lua"/>
+	<Script file="modules\planner.lua"/>
+	<Script file="modules\timeline.lua"/>
+	<Script file="modules\opener.lua"/>
+	<Script file="modules\interrupt.lua"/>
+	<Script file="modules\defensive.lua"/>
+	<Script file="modules\simstate.lua"/>
+	<Script file="modules\cppacing.lua"/>
+	<Script file="modules\energytick.lua"/>
+	<Script file="modules\rotationlog.lua"/>
+	<Script file="modules\rotation.lua"/>
+	<Script file="modules\poisons.lua"/>
+	<Script file="modules\commands.lua"/>
+	<Script file="modules\profileswitcher.lua"/>
+	<Script file="modules\gui_widgets.lua"/>
+	<Script file="modules\gui_menu.lua"/>
+	<Script file="modules\gui_cpdebug.lua"/>
+	<Script file="modules\gui.lua"/>
+	<Script file="modules\gui_minimap.lua"/>
+	<Script file="modules\gui_preview.lua"/>
+	<Script file="modules\combopoints.lua"/>
+</Ui>

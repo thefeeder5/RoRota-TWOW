@@ -19,3 +19,8 @@ desktop.ini
 
 # Amazon Q
 .amazonq/
+CHANGELOG.txt
+*.txt
+*.puml
+*.md
+*.code-workspace

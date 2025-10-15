@@ -5,6 +5,13 @@
 -- return instantly if already loaded
 if RoRota.immunity then return end
 
+-- NPCs to ignore for immunity tracking (training dummies)
+local ignored_npcs = {
+    ["Apprentice Training Dummy"] = true,
+    ["Expert Training Dummy"] = true,
+    ["Heroic Training Dummy"] = true,
+}
+
 -- shared immunity groups
 local immunity_groups = {
     bleed = {"Garrote", "Rupture"},
@@ -29,7 +36,7 @@ function RoRota:TargetHasNoPockets()
 end
 
 function RoRota:ProcessImmunity(targetName, ability)
-    if UnitIsPlayer("target") then return end
+    if UnitIsPlayer("target") or ignored_npcs[targetName] then return end
     
     if not RoRotaDB.immunities[targetName] then
         RoRotaDB.immunities[targetName] = {}
@@ -57,6 +64,7 @@ end
 function RoRota:MarkTargetNoPockets()
     if not UnitExists("target") then return end
     local targetName = UnitName("target")
+    if ignored_npcs[targetName] then return end
     if not RoRotaDB.noPockets then
         RoRotaDB.noPockets = {}
     end
@@ -77,6 +85,14 @@ function RoRota:OnErrorMessage(msg)
             self.sapFailTime = GetTime()
         end
     end
+    
+    if self.OnOpenerError then
+        self:OnOpenerError(msg)
+    end
+    
+    if self.OnBuilderError then
+        self:OnBuilderError(msg)
+    end
 end
 
 function RoRota:IsSpellUninterruptible(spellName)
@@ -94,6 +110,20 @@ function RoRota:MarkSpellUninterruptible(spellName)
     if not RoRotaDB.uninterruptible[spellName] then
         RoRotaDB.uninterruptible[spellName] = true
         self:Print("Spell '"..spellName.."' cannot be interrupted - will skip")
+    end
+end
+
+function RoRota:CleanupIgnoredNPCs()
+    if not RoRotaDB then return end
+    if RoRotaDB.immunities then
+        for npcName in pairs(ignored_npcs) do
+            RoRotaDB.immunities[npcName] = nil
+        end
+    end
+    if RoRotaDB.noPockets then
+        for npcName in pairs(ignored_npcs) do
+            RoRotaDB.noPockets[npcName] = nil
+        end
     end
 end
 

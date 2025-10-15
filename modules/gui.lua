@@ -56,7 +56,7 @@ function RoRota:CreateGUI()
     
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", f, "TOP", 0, -10)
-    title:SetText("RoRota v0.7.0")
+    title:SetText("RoRota")
     
     local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)

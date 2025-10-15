@@ -115,4 +115,14 @@ function RoRota:HasAdrenalineRush()
 	return self:HasPlayerBuff("Adrenaline Rush")
 end
 
+function RoRota:GetRuthlessnessChance()
+    local _, _, _, _, rank = GetTalentInfo(1, 9)
+    if rank == 1 then return 0.33
+    elseif rank == 2 then return 0.66
+    elseif rank == 3 then return 1.0
+    end
+    return 0
+end
+
+-- mark module as loaded
 RoRota.talents = true

@@ -48,6 +48,25 @@ function RoRota:IsOnCooldown(spellIdOrName)
     return false
 end
 
+function RoRota:GetCooldownRemaining(spellName)
+    -- Find spell in spellbook first
+    local i = 1
+    while true do
+        local name = GetSpellName(i, BOOKTYPE_SPELL)
+        if not name then break end
+        if name == spellName then
+            local start, duration = GetSpellCooldown(i, BOOKTYPE_SPELL)
+            if start and start > 0 and duration and duration > 1.5 then
+                local remaining = duration - (GetTime() - start)
+                return math.max(0, remaining)
+            end
+            return 0
+        end
+        i = i + 1
+    end
+    return 0
+end
+
 function RoRota:GetSpellRank(spellName)
     local i = 1
     while true do

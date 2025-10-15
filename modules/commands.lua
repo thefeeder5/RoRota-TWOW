@@ -55,34 +55,9 @@ function RoRota:HandleSlashCommand(msg)
             end
         end
         return
-    elseif msg == "debug on" or msg == "debug" then
-        if self.Debug then
-            self.Debug:SetEnabled(true)
-            self.Debug:SetTrace(true)
-            if RoRotaPreviewFrame then
-                RoRotaPreviewFrame.debugMode = true
-                RoRotaPreviewFrame:SetHeight(220)
-            end
-        end
-        return
-    elseif msg == "debug off" then
-        if self.Debug then
-            self.Debug:SetEnabled(false)
-            self.Debug:SetTrace(false)
-            if RoRotaPreviewFrame then
-                RoRotaPreviewFrame.debugMode = false
-                RoRotaPreviewFrame:SetHeight(150)
-            end
-        end
-        return
-    elseif msg == "state" then
-        if self.Debug then self.Debug:ShowState() end
-        return
+
     elseif msg == "logs" then
         if self.Debug then self.Debug:ShowLogs(20) end
-        return
-    elseif msg == "perf" then
-        if self.Debug then self.Debug:ShowPerformance() end
         return
     elseif msg == "integration" or msg == "int" then
         if self.Integration and self.Integration.PrintStatus then
@@ -173,19 +148,147 @@ function RoRota:HandleSlashCommand(msg)
             self:Print("RoRota.planner="..tostring(self.planner).." RoRota.PlanRotation="..tostring(self.PlanRotation))
         end
         return
+    elseif msg == "debug" or msg == "cpdebug" then
+        if self.ToggleCPDebugWindow then
+            self:ToggleCPDebugWindow()
+        else
+            self:Print("CP Debug window not loaded")
+        end
+        return
+    elseif msg == "log" then
+        if self.ShowRotationLog then
+            self:ShowRotationLog()
+        else
+            self:Print("Rotation log not loaded")
+        end
+        return
+    elseif msg == "clearlog" then
+        if self.ClearRotationLog then
+            self:ClearRotationLog()
+        else
+            self:Print("Rotation log not loaded")
+        end
+        return
+    elseif msg == "cpplan" or msg == "timeline" then
+        if not UnitExists("target") then
+            self:Print("No target selected")
+            return
+        end
+        self:Print("=== CP Planning System ===")
+        
+        if self.UpdateTimeline then
+            self:UpdateTimeline()
+            self:Print("\n--- Timeline ---")
+            if table.getn(self.Timeline.finishers) == 0 then
+                self:Print("No active finishers")
+            else
+                for i, f in ipairs(self.Timeline.finishers) do
+                    self:Print(string.format("%d. %s: %.1fs (prio %d, window %.1fs, %s)",
+                        i, f.name, f.expiresIn, f.priority, f.planningWindow,
+                        f.inPlanningWindow and "IN WINDOW" or "outside"))
+                end
+            end
+            if self.Timeline.nextDeadline then
+                self:Print(string.format("\nNext Deadline: %s in %.1fs",
+                    self.Timeline.nextDeadline.name, self.Timeline.nextDeadline.expiresIn))
+            end
+        end
+        
+        if self.CalculateCPPacing and self.CreateSimulatedState then
+            local state = self:CreateSimulatedState()
+            local pacing = self:CalculateCPPacing(state)
+            self:Print("\n--- CP Pacing ---")
+            self:Print("Current CP: "..state.cp)
+            self:Print("In Planning Window: "..(pacing.inPlanningWindow and "YES" or "NO"))
+            if pacing.cpNeeded then
+                self:Print("CP Needed: "..pacing.cpNeeded)
+            end
+            if pacing.gcdsAvailable then
+                self:Print("GCDs Available: "..pacing.gcdsAvailable)
+            end
+            if pacing.isAheadOfSchedule then
+                self:Print("Status: AHEAD - Should DUMP CP")
+            elseif pacing.isBehindSchedule then
+                self:Print("Status: BEHIND - Should BUILD NOW")
+            elseif pacing.inPlanningWindow then
+                self:Print("Status: ON SCHEDULE")
+            else
+                self:Print("Status: FREE BUILDING")
+            end
+        end
+        return
+    elseif msg == "opener" then
+        if not UnitExists("target") then
+            self:Print("No target selected")
+            return
+        end
+        local openerCfg = self.db.profile.opener or {}
+        self:Print("=== Opener Config ===")
+        self:Print("Primary: "..(openerCfg.ability or "None"))
+        self:Print("Secondary: "..(openerCfg.secondaryAbility or "None"))
+        self:Print("Failsafe Attempts: "..(openerCfg.failsafeAttempts or -1))
+        self:Print("Pick Pocket: "..(openerCfg.pickPocket and "Yes" or "No"))
+        self:Print("Cold Blood: "..(openerCfg.useColdBlood and "Yes" or "No"))
+        local targetName = UnitName("target")
+        self:Print("Target: "..targetName)
+        
+        local primaryImmune = self:IsTargetImmune(openerCfg.ability)
+        self:Print("Is Immune to Primary: "..(primaryImmune and "YES" or "NO"))
+        if openerCfg.secondaryAbility then
+            local secondaryImmune = self:IsTargetImmune(openerCfg.secondaryAbility)
+            self:Print("Is Immune to Secondary: "..(secondaryImmune and "YES" or "NO"))
+        end
+        
+        self:Print("\n=== Logic Trace ===")
+        local opener = openerCfg.ability
+        self:Print("1. Initial opener: "..(opener or "nil"))
+        
+        if opener and primaryImmune and openerCfg.secondaryAbility then
+            self:Print("2. Immunity check: Switching to secondary")
+            opener = openerCfg.secondaryAbility
+        else
+            self:Print("2. Immunity check: No switch")
+        end
+        self:Print("   Current opener: "..(opener or "nil"))
+        
+        if self.GetOpenerAbility then
+            local result = self:GetOpenerAbility()
+            self:Print("\nGetOpenerAbility() returns: "..(result or "nil"))
+        end
+        return
+    elseif msg == "immunity" then
+        if not UnitExists("target") then
+            self:Print("No target selected")
+            return
+        end
+        local targetName = UnitName("target")
+        self:Print("=== Immunity Check: "..targetName.." ===")
+        if RoRotaDB and RoRotaDB.immunities and RoRotaDB.immunities[targetName] then
+            self:Print("Immune to:")
+            for ability in pairs(RoRotaDB.immunities[targetName]) do
+                self:Print("  - "..ability)
+            end
+        else
+            self:Print("No immunities recorded")
+        end
+        if RoRotaDB and RoRotaDB.noPockets and RoRotaDB.noPockets[targetName] then
+            self:Print("Has no pockets: YES")
+        end
+        return
     elseif msg == "help" then
         self:Print("=== RoRota Commands ===")
         self:Print("/rr - Open settings")
         self:Print("/rr preview - Toggle rotation preview")
+        self:Print("/rr debug - Toggle CP planning debug window")
+        self:Print("/rr cpplan - Show CP planning timeline & pacing")
+        self:Print("/rr log - Show rotation decision log (last 15)")
+        self:Print("/rr clearlog - Clear rotation log")
         self:Print("/rr debuffs - Show target debuffs (debug)")
         self:Print("/rr icons - Show all ability icons")
         self:Print("/rr talents - Show CP talent info")
         self:Print("/rr plan - Show planner recommendation")
         self:Print("/rr integration - Show SuperWoW/Nampower status")
-        self:Print("/rr debug - Toggle debug mode (shows in preview)")
-        self:Print("/rr state - Show current state")
-        self:Print("/rr logs - Show recent debug logs")
-        self:Print("/rr perf - Show performance stats")
+        self:Print("/rr immunity - Check target immunity database")
         self:Print("/rr poison - Test poison warnings")
         return
     end

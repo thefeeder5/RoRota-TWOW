@@ -7,10 +7,10 @@ RoRotaDefaultProfile = {
 		Eviscerate = {enabled = true, maxCP = 5},
 		SinisterStrike = {enabled = true},
 		NoxiousAssault = {enabled = false},
-		Envenom = {enabled = false, minCP = 1, maxCP = 2},
-		Rupture = {enabled = false, minCP = 1, maxCP = 5},
-		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5},
-		ColdBloodEviscerate = {enabled = false, minCP = 4, maxCP = 5},
+		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
+		Rupture = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
+		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
+		ColdBloodEviscerate = {enabled = false, minCP = 4, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
 		Hemorrhage = {enabled = false},
 		Backstab = {enabled = false, failsafeAttempts = 3},
 	},
@@ -34,8 +34,6 @@ RoRotaDefaultProfile = {
 		kidneyMaxCP = 2,
 	},
 	finisherPriority = {"Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Cold Blood Eviscerate"},
-	overkillPrevention = true,
-	smartEviscerate = true,
 	smartRupture = true,
 	useColdBloodEviscerate = false,
 	coldBloodMinCP = 4,
@@ -44,6 +42,7 @@ RoRotaDefaultProfile = {
 		threshold = 10,
 	},
 	finisherRefreshThreshold = 2,  -- refresh finishers when <= X seconds remaining (0-3s)
+	previewDepth = 1,  -- show 1-3 abilities in preview window
 	defensive = {
 		useVanish = false,
 		vanishHP = 20,

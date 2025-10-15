@@ -243,14 +243,15 @@ function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     return eb
 end
 
--- create editbox for decimal input
+-- create editbox for decimal input (0.1 precision)
 function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, callback)
     local eb = CreateFrame("EditBox", name, parent)
     eb:SetWidth(width or 50)
     eb:SetHeight(20)
-    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
     eb:SetAutoFocus(false)
-    eb:SetMaxLetters(3)
+    eb:SetNumeric(false)
+    eb:SetMaxLetters(4)
     
     RoRotaGUI.CreateBackdrop(eb)
     eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
@@ -278,6 +279,20 @@ function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, cal
         this:ClearFocus()
     end)
     eb:SetScript("OnEditFocusLost", validate)
+
+    local font = eb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    eb:SetFontObject("GameFontHighlight")
+    eb:SetTextInsets(5, 5, 0, 0)
+    
+    eb:SetScript("OnEnterPressed", function()
+        this:ClearFocus()
+        local val = tonumber(this:GetText()) or (min or 0)
+        if min and val < min then val = min end
+        if max and val > max then val = max end
+        this:SetText(string.format("%.1f", val))
+        if callback then callback(val) end
+    end)
+
     eb:SetScript("OnEscapePressed", function()
         this:ClearFocus()
     end)

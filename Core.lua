@@ -13,6 +13,11 @@
 
 RoRota = AceLibrary("AceAddon-2.0"):new("AceConsole-2.0", "AceDB-2.0", "AceEvent-2.0")
 
+-- Get addon version from TOC
+function RoRota:GetVersion()
+	return GetAddOnMetadata("RoRota-TWOW", "Version") or "Unknown"
+end
+
 -- Module State Variables
 RoRota.targetCasting = false
 RoRota.castingTimeout = 0
@@ -72,6 +77,11 @@ function RoRota:OnEnable()
         RoRotaDB.uninterruptible = {}
     end
     
+    -- cleanup ignored NPCs from database
+    if self.CleanupIgnoredNPCs then
+        self:CleanupIgnoredNPCs()
+    end
+    
     -- event registration (handlers in modules/events.lua)
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE")
@@ -88,9 +98,9 @@ function RoRota:OnEnable()
     self:RegisterEvent("CHARACTER_POINTS_CHANGED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     
-    -- initial talent scan
-    if self.UpdateAllTalents then
-        self:UpdateAllTalents()
+    -- initialize rotation cache
+    if self.UpdateRotationCache then
+        self:UpdateRotationCache()
     end
     
     -- minimap button
