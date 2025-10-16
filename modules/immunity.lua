@@ -1,22 +1,27 @@
 --[[ immunity ]]--
--- Immunity tracking and Sap fail handling.
+-- Read-only immunity detection.
 -- Tracks which targets are immune to which abilities.
+--
+-- Key functions:
+--   IsTargetImmune(ability) - Check if target is immune
+--   TargetHasNoPockets() - Check if target has no pockets
+--   IsSpellUninterruptible(spell) - Check if spell cannot be interrupted
 
--- return instantly if already loaded
+if not RoRota then return end
 if RoRota.immunity then return end
-
--- NPCs to ignore for immunity tracking (training dummies)
-local ignored_npcs = {
-    ["Apprentice Training Dummy"] = true,
-    ["Expert Training Dummy"] = true,
-    ["Heroic Training Dummy"] = true,
-}
 
 -- shared immunity groups
 local immunity_groups = {
     bleed = {"Garrote", "Rupture"},
-    stun = {"Cheap Shot", "Kidney Shot"},
+    stun = {"Kidney Shot"},
     incapacitate = {"Gouge", "Sap"},
+}
+
+-- targets that should not trigger immunity tracking
+local banned_targets = {
+    ["Apprentice Training Dummy"] = true,
+    ["Expert Training Dummy"] = true,
+    ["Heroic Training Dummy"] = true,
 }
 
 function RoRota:IsTargetImmune(abilityName)
@@ -36,7 +41,8 @@ function RoRota:TargetHasNoPockets()
 end
 
 function RoRota:ProcessImmunity(targetName, ability)
-    if UnitIsPlayer("target") or ignored_npcs[targetName] then return end
+    if UnitIsPlayer("target") then return end
+    if banned_targets[targetName] then return end
     
     if not RoRotaDB.immunities[targetName] then
         RoRotaDB.immunities[targetName] = {}
@@ -64,7 +70,7 @@ end
 function RoRota:MarkTargetNoPockets()
     if not UnitExists("target") then return end
     local targetName = UnitName("target")
-    if ignored_npcs[targetName] then return end
+    if banned_targets[targetName] then return end
     if not RoRotaDB.noPockets then
         RoRotaDB.noPockets = {}
     end
@@ -84,14 +90,6 @@ function RoRota:OnErrorMessage(msg)
             self.sapFailed = true
             self.sapFailTime = GetTime()
         end
-    end
-    
-    if self.OnOpenerError then
-        self:OnOpenerError(msg)
-    end
-    
-    if self.OnBuilderError then
-        self:OnBuilderError(msg)
     end
 end
 
@@ -113,17 +111,28 @@ function RoRota:MarkSpellUninterruptible(spellName)
     end
 end
 
-function RoRota:CleanupIgnoredNPCs()
+-- clean banned targets from immunity database
+function RoRota:CleanBannedTargets()
     if not RoRotaDB then return end
+    local cleaned = false
     if RoRotaDB.immunities then
-        for npcName in pairs(ignored_npcs) do
-            RoRotaDB.immunities[npcName] = nil
+        for targetName in pairs(banned_targets) do
+            if RoRotaDB.immunities[targetName] then
+                RoRotaDB.immunities[targetName] = nil
+                cleaned = true
+            end
         end
     end
     if RoRotaDB.noPockets then
-        for npcName in pairs(ignored_npcs) do
-            RoRotaDB.noPockets[npcName] = nil
+        for targetName in pairs(banned_targets) do
+            if RoRotaDB.noPockets[targetName] then
+                RoRotaDB.noPockets[targetName] = nil
+                cleaned = true
+            end
         end
+    end
+    if cleaned then
+        self:Print("Cleaned training dummies from immunity database")
     end
 end
 

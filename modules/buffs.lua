@@ -1,120 +1,94 @@
 --[[ buffs ]]--
--- Buff and debuff scanning functions.
--- Handles player buffs, target debuffs, and duration tracking.
+-- Read-only buff and debuff queries.
+-- Scans player buffs and target debuffs with duration tracking.
+--
+-- Key functions:
+--   HasPlayerBuff(name) - Check if player has buff
+--   HasTargetDebuff(name) - Check if target has debuff
+--   GetBuffTimeRemaining(name) - Get buff duration remaining
+--   GetDebuffTimeRemaining(name) - Get debuff duration remaining
 
--- return instantly if already loaded
+if not RoRota then return end
 if RoRota.buffs then return end
 
 function RoRota:HasPlayerBuff(buffName)
-    for i = 1, 32 do
-        local name = UnitBuff("player", i)
-        if not name then break end
-        if string.find(name, buffName) then
-            return true
+    -- Create tooltip if it doesn't exist
+    if not RoRotaBuffTooltip then
+        CreateFrame("GameTooltip", "RoRotaBuffTooltip", nil, "GameTooltipTemplate")
+        RoRotaBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+    end
+    
+    local i = 1
+    while UnitBuff("player", i) do
+        local texture = UnitBuff("player", i)
+        if texture then
+            -- Check texture path first (fast)
+            if string.find(texture, buffName) then
+                return true
+            end
+            -- Check actual buff name via tooltip (slower but accurate)
+            RoRotaBuffTooltip:ClearLines()
+            RoRotaBuffTooltip:SetUnitBuff("player", i)
+            local tooltipText = RoRotaBuffTooltipTextLeft1:GetText()
+            if tooltipText and string.find(tooltipText, buffName) then
+                return true
+            end
         end
+        i = i + 1
+        if i > 40 then break end
     end
     return false
 end
 
 function RoRota:HasTargetDebuff(debuffName)
-    if not RoRotaTooltip then
-        CreateFrame("GameTooltip", "RoRotaTooltip", nil, "GameTooltipTemplate")
-        RoRotaTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    for i = 1, 32 do
-        if not UnitDebuff("target", i) then break end
-        RoRotaTooltip:SetUnitDebuff("target", i)
-        local tooltipText = RoRotaTooltipTextLeft1:GetText()
-        if tooltipText and string.find(tooltipText, debuffName) then
+    local i = 1
+    while UnitDebuff("target", i) do
+        local name = UnitDebuff("target", i)
+        if name and string.find(name, debuffName) then
             return true
         end
+        i = i + 1
     end
     return false
 end
 
 function RoRota:GetBuffTimeRemaining(buffName)
-    if not RoRotaTooltip then
-        CreateFrame("GameTooltip", "RoRotaTooltip", nil, "GameTooltipTemplate")
-        RoRotaTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    for i = 1, 32 do
-        if not UnitBuff("player", i) then break end
-        RoRotaTooltip:SetUnitBuff("player", i)
-        local tooltipText = RoRotaTooltipTextLeft1:GetText()
-        if tooltipText and string.find(tooltipText, buffName) then
-            local texture, stacks, debuffType, duration, timeLeft = UnitBuff("player", i)
-            if timeLeft and timeLeft > 0 then
-                return timeLeft
-            end
-            -- fallback: manual timer tracking
-            if buffName == "Slice and Dice" then
-                if not RoRota.sndExpiry or RoRota.sndExpiry == 0 then return 0 end
-                return math.max(0, RoRota.sndExpiry - GetTime())
-            elseif buffName == "Envenom" then
-                if not RoRota.envenomExpiry or RoRota.envenomExpiry == 0 then return 0 end
-                return math.max(0, RoRota.envenomExpiry - GetTime())
-            end
-            return 30
+    local i = 1
+    while UnitBuff("player", i) do
+        local texture, stacks, debuffType, duration, timeLeft = UnitBuff("player", i)
+        if texture and string.find(texture, buffName) and timeLeft then
+            return timeLeft
         end
+        i = i + 1
+    end
+    -- fallback: manual timer tracking
+    if buffName == "Slice and Dice" then
+        if not RoRota.sndExpiry or RoRota.sndExpiry == 0 then return 0 end
+        return math.max(0, RoRota.sndExpiry - GetTime())
+    elseif buffName == "Envenom" then
+        if not RoRota.envenomExpiry or RoRota.envenomExpiry == 0 then return 0 end
+        return math.max(0, RoRota.envenomExpiry - GetTime())
     end
     return 0
 end
 
 function RoRota:GetDebuffTimeRemaining(debuffName)
-    if not UnitExists("target") then return 0 end
-    
-    if not RoRotaTooltip then
-        CreateFrame("GameTooltip", "RoRotaTooltip", nil, "GameTooltipTemplate")
-        RoRotaTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    -- check if debuff exists
-    local debuffExists = false
-    for i = 1, 32 do
+    local i = 1
+    while UnitDebuff("target", i) do
         local texture, stacks, debuffType, duration, timeLeft = UnitDebuff("target", i)
-        if not texture then break end
-        RoRotaTooltip:ClearLines()
-        RoRotaTooltip:SetUnitDebuff("target", i)
-        local tooltipText = RoRotaTooltipTextLeft1:GetText()
-        if tooltipText and string.find(tooltipText, debuffName) then
-            debuffExists = true
-            -- SuperWoW provides timeLeft, use it if available
-            if timeLeft and timeLeft > 0 then
-                return timeLeft
-            end
-            break
+        if texture and string.find(texture, debuffName) and timeLeft then
+            return timeLeft
         end
+        i = i + 1
     end
-    
-    -- use manual timers (set when abilities are cast)
-    if debuffExists then
-        local targetName = UnitName("target")
-        if debuffName == "Rupture" and RoRota.ruptureTarget == targetName and RoRota.ruptureExpiry then
+    -- fallback: manual timer tracking (only for Rupture, target-specific)
+    if debuffName == "Rupture" then
+        if UnitExists("target") and UnitName("target") == RoRota.ruptureTarget then
+            if not RoRota.ruptureExpiry or RoRota.ruptureExpiry == 0 then return 0 end
             return math.max(0, RoRota.ruptureExpiry - GetTime())
-        elseif debuffName == "Expose Armor" and RoRota.exposeArmorTarget == targetName and RoRota.exposeArmorExpiry then
-            return math.max(0, RoRota.exposeArmorExpiry - GetTime())
         end
-        -- debuff exists but no timer, return high value to prevent recasting
-        -- EA is always 30s, Rupture varies by CP (assume max duration)
-        if debuffName == "Expose Armor" then
-            return 30
-        elseif debuffName == "Rupture" then
-            return 22  -- max duration at 5 CP
-        end
-        return 30
     end
-    
     return 0
-end
-
-function RoRota:CanUseRiposte()
-    return self:HasPlayerBuff("Riposte")
-end
-
-function RoRota:CanUseSurpriseAttack()
-    return self:HasPlayerBuff("Surprise Attack")
 end
 
 -- mark module as loaded

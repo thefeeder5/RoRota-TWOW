@@ -1,0 +1,1733 @@
+--[[ gui_menu ]]--
+-- Consolidated GUI menu file containing all tabs and subtabs
+
+-- ============================================================================
+-- ABOUT TAB
+-- ============================================================================
+
+function RoRotaGUI.CreateAboutTab(parent, frame)
+    parent:Show()
+    parent:EnableMouse(false)
+    local y = -40
+    
+    local title = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    title:SetText("RoRota - Rogue One-Button Rotation")
+    y = y - 30
+    
+    local version = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    version:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    version:SetText("Version " .. (RoRota.version or "Unknown"))
+    y = y - 40
+    
+    local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    desc:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    desc:SetText("A rotation helper addon for Rogues in Vanilla WoW.")
+    y = y - 30
+    
+    local setupMsg = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    setupMsg:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    setupMsg:SetText("For the addon to work you need to set up macros:")
+    y = y - 30
+    
+    local rotationBtn = RoRotaGUI.CreateButton(nil, parent, 180, 25, "Create Rotation Macro")
+    rotationBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    rotationBtn:SetScript("OnClick", function()
+        local macroIndex = GetMacroIndexByName("RoRota")
+        if macroIndex == 0 then
+            CreateMacro("RoRota", 1, "/script RoRotaRunRotation()", 1, 1)
+            RoRota:Print("Macro 'RoRota' created!")
+        else
+            EditMacro(macroIndex, "RoRota", 1, "/script RoRotaRunRotation()")
+            RoRota:Print("Macro 'RoRota' updated!")
+        end
+    end)
+    
+    local poisonBtn = RoRotaGUI.CreateButton(nil, parent, 180, 25, "Create Poison Macro")
+    poisonBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 210, y)
+    poisonBtn:SetScript("OnClick", function()
+        local macroIndex = GetMacroIndexByName("RoRotaPoison")
+        if macroIndex == 0 then
+            CreateMacro("RoRotaPoison", 1, "/script RoRotaApplyPoison()", 1, 1)
+            RoRota:Print("Macro 'RoRotaPoison' created!")
+        else
+            EditMacro(macroIndex, "RoRotaPoison", 1, "/script RoRotaApplyPoison()")
+            RoRota:Print("Macro 'RoRotaPoison' updated!")
+        end
+    end)
+    y = y - 40
+    
+    local featuresTitle = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    featuresTitle:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    featuresTitle:SetText("Features:")
+    y = y - 25
+    
+    local features = {
+        "One-button rotation with smart ability selection",
+        "Stealth opener system with failsafe",
+        "Customizable finisher priority",
+        "Energy pooling and smart features",
+        "Poison management",
+        "Profile system"
+    }
+    
+    for _, feature in ipairs(features) do
+        local f = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        f:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+        f:SetText("• " .. feature)
+        y = y - 20
+    end
+    
+    y = y - 20
+    local commandsTitle = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    commandsTitle:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    commandsTitle:SetText("Commands:")
+    y = y - 25
+    
+    local cmd1 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    cmd1:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+    cmd1:SetText("/rr - Open settings")
+    y = y - 20
+    
+    local cmd2 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    cmd2:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+    cmd2:SetText("/rr preview - Toggle ability preview")
+    y = y - 40
+    
+    local link = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    link:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    link:SetText("For more information, visit:")
+    y = y - 20
+    
+    local github = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    github:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    github:SetText("github.com/thefeeder5/RoRota-TWOW")
+    github:SetTextColor(0.2, 1, 0.8)
+end
+
+function RoRotaApplyPoison()
+    if RoRota and RoRota.ApplyPoisonsManual then
+        RoRota:ApplyPoisonsManual()
+    end
+end
+
+function RoRotaGUI.LoadAboutTab(frame)
+end
+
+-- ============================================================================
+-- OPENERS TAB
+-- ============================================================================
+
+function RoRotaGUI.CreateOpenersTab(parent, frame)
+    local abilities = {"Ambush", "Garrote", "Cheap Shot", "Backstab", "Sinister Strike"}
+    local sapActions = {"None", "Vanish", "Sprint", "Evasion"}
+    local failsafeOptions = {"Disabled", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
+    local y = -40
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Main Opener")
+    frame.openerDD = RoRotaGUI.CreateDropdown("RoRotaOpenerDD", parent, 350, y, 150, abilities, function(value)
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.ability = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Secondary Opener")
+    frame.secondaryDD = RoRotaGUI.CreateDropdown("RoRotaSecondaryDD", parent, 350, y, 150, abilities, function(value)
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.secondaryAbility = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Failsafe Attempts")
+    frame.openerFailDD = RoRotaGUI.CreateDropdown("RoRotaOpenerFailDD", parent, 350, y, 100, failsafeOptions, function(value)
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.failsafeAttempts = value == "Disabled" and -1 or tonumber(value)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Pick Pocket Before Opener")
+    frame.ppCheck = RoRotaGUI.CreateCheckbox("RoRotaPPCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.pickPocket = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Use Cold Blood before Ambush")
+    frame.coldBloodCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.useColdBlood = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "After Failed Sap")
+    frame.sapFailDD = RoRotaGUI.CreateDropdown("RoRotaSapFailDD", parent, 350, y, 120, sapActions, function(value)
+        if not RoRota.db.profile.opener then RoRota.db.profile.opener = {} end
+        RoRota.db.profile.opener.sapFailAction = value
+    end)
+end
+
+function RoRotaGUI.LoadOpenersTab(frame)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if frame.openerDD and p.opener and p.opener.ability then
+        UIDropDownMenu_SetSelectedValue(frame.openerDD, p.opener.ability)
+        UIDropDownMenu_SetText(p.opener.ability, frame.openerDD)
+    end
+    if frame.openerFailDD and p.opener then
+        local val = p.opener.failsafeAttempts or -1
+        local text = val == -1 and "Disabled" or tostring(val)
+        UIDropDownMenu_SetSelectedValue(frame.openerFailDD, text)
+        UIDropDownMenu_SetText(text, frame.openerFailDD)
+    end
+    if frame.secondaryDD and p.opener and p.opener.secondaryAbility then
+        UIDropDownMenu_SetSelectedValue(frame.secondaryDD, p.opener.secondaryAbility)
+        UIDropDownMenu_SetText(p.opener.secondaryAbility, frame.secondaryDD)
+    end
+    if frame.ppCheck and p.opener then
+        frame.ppCheck:SetChecked(p.opener.pickPocket and 1 or nil)
+    end
+    if frame.coldBloodCheck and p.opener then
+        frame.coldBloodCheck:SetChecked(p.opener.useColdBlood and 1 or nil)
+    end
+    if frame.sapFailDD and p.opener and p.opener.sapFailAction then
+        UIDropDownMenu_SetSelectedValue(frame.sapFailDD, p.opener.sapFailAction)
+        UIDropDownMenu_SetText(p.opener.sapFailAction, frame.sapFailDD)
+    end
+end
+
+RoRotaGUIAboutLoaded = true
+RoRotaGUIOpenersLoaded = true
+
+-- ============================================================================
+-- FINISHERS TAB (with subtabs)
+-- ============================================================================
+
+function RoRotaGUI.CreateFinishersTab(parent, frame)
+    local subtabBar = CreateFrame("Frame", nil, parent)
+    subtabBar:SetWidth(90)
+    subtabBar:SetHeight(500)
+    subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    subtabBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        tile = true, tileSize = 16, edgeSize = 0,
+        insets = {left = 0, right = 0, top = 0, bottom = 0}
+    })
+    subtabBar:SetBackdropColor(0, 0, 0, 0.5)
+    
+    local contentArea = CreateFrame("Frame", nil, parent)
+    contentArea:SetWidth(390)
+    contentArea:SetHeight(500)
+    contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
+    
+    local subtabs = {"Global", "SnD", "Rupture", "Expose", "Envenom", "Evis"}
+    frame.finisherSubtabs = {}
+    frame.finisherSubtabFrames = {}
+    
+    for i, name in ipairs(subtabs) do
+        local index = i
+        local btn = RoRotaGUI.CreateSubTab(subtabBar, -10 - (i-1)*25, name, function()
+            RoRotaGUI.ShowFinisherSubTab(frame, index)
+        end)
+        frame.finisherSubtabs[i] = {button = btn, name = name}
+        
+        local subFrame = CreateFrame("Frame", nil, contentArea)
+        subFrame:SetWidth(390)
+        subFrame:SetHeight(500)
+        subFrame:SetPoint("TOPLEFT", contentArea, "TOPLEFT", 0, 0)
+        subFrame:Hide()
+        frame.finisherSubtabFrames[i] = subFrame
+    end
+    
+    frame.finisherSubtabFrames[1].widgets = {}
+    frame.finisherSubtabFrames[2].widgets = {}
+    frame.finisherSubtabFrames[3].widgets = {}
+    frame.finisherSubtabFrames[4].widgets = {}
+    frame.finisherSubtabFrames[5].widgets = {}
+    frame.finisherSubtabFrames[6].widgets = {}
+    
+    if RoRotaGUI.CreateFinisherGlobalSubTab then
+        RoRotaGUI.CreateFinisherGlobalSubTab(frame.finisherSubtabFrames[1], frame.finisherSubtabFrames[1].widgets)
+    end
+    if RoRotaGUI.CreateSndSubTab then
+        RoRotaGUI.CreateSndSubTab(frame.finisherSubtabFrames[2], frame.finisherSubtabFrames[2].widgets)
+    end
+    if RoRotaGUI.CreateRuptureSubTab then
+        RoRotaGUI.CreateRuptureSubTab(frame.finisherSubtabFrames[3], frame.finisherSubtabFrames[3].widgets)
+    end
+    if RoRotaGUI.CreateExposeSubTab then
+        RoRotaGUI.CreateExposeSubTab(frame.finisherSubtabFrames[4], frame.finisherSubtabFrames[4].widgets)
+    end
+    if RoRotaGUI.CreateEnvenomSubTab then
+        RoRotaGUI.CreateEnvenomSubTab(frame.finisherSubtabFrames[5], frame.finisherSubtabFrames[5].widgets)
+    end
+    if RoRotaGUI.CreateEviscerateSub then
+        RoRotaGUI.CreateEviscerateSub(frame.finisherSubtabFrames[6], frame.finisherSubtabFrames[6].widgets)
+    end
+    
+    RoRotaGUI.ShowFinisherSubTab(frame, 1)
+end
+
+function RoRotaGUI.ShowFinisherSubTab(frame, index)
+    for i = 1, table.getn(frame.finisherSubtabFrames) do
+        if i == index then
+            frame.finisherSubtabFrames[i]:Show()
+            RoRotaGUI.SetSubTabActive(frame.finisherSubtabs[i].button, true)
+        else
+            frame.finisherSubtabFrames[i]:Hide()
+            RoRotaGUI.SetSubTabActive(frame.finisherSubtabs[i].button, false)
+        end
+    end
+end 
+
+function RoRotaGUI.LoadFinishersTab(frame)
+    if not frame.finisherSubtabFrames then return end
+    if RoRotaGUI.LoadFinisherGlobalSubTab and frame.finisherSubtabFrames[1] then 
+        RoRotaGUI.LoadFinisherGlobalSubTab(frame.finisherSubtabFrames[1].widgets) 
+    end
+    if RoRotaGUI.LoadSndSubTab and frame.finisherSubtabFrames[2] then 
+        RoRotaGUI.LoadSndSubTab(frame.finisherSubtabFrames[2].widgets) 
+    end
+    if RoRotaGUI.LoadRuptureSubTab and frame.finisherSubtabFrames[3] then 
+        RoRotaGUI.LoadRuptureSubTab(frame.finisherSubtabFrames[3].widgets) 
+    end
+    if RoRotaGUI.LoadExposeSubTab and frame.finisherSubtabFrames[4] then 
+        RoRotaGUI.LoadExposeSubTab(frame.finisherSubtabFrames[4].widgets) 
+    end
+    if RoRotaGUI.LoadEnvenomSubTab and frame.finisherSubtabFrames[5] then 
+        RoRotaGUI.LoadEnvenomSubTab(frame.finisherSubtabFrames[5].widgets) 
+    end
+    if RoRotaGUI.LoadEviscerateSub and frame.finisherSubtabFrames[6] then 
+        RoRotaGUI.LoadEviscerateSub(frame.finisherSubtabFrames[6].widgets) 
+    end
+end
+
+-- Finisher Global Subtab
+function RoRotaGUI.CreateFinisherGlobalSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Finisher Priority")
+    y = y - 25
+    
+    local finishers = {"Slice and Dice", "Envenom", "Rupture", "Expose Armor", "Cold Blood Eviscerate"}
+    widgets.priorityButtons = {}
+    for i, name in ipairs(finishers) do
+        local btn = RoRotaGUI.CreateButton(nil, parent, 140, 22, name)
+        btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+        btn.index = i
+        btn.finisher = name
+        widgets.priorityButtons[i] = btn
+        
+        local upBtn = RoRotaGUI.CreateButton(nil, parent, 25, 22, "↑")
+        upBtn:SetPoint("LEFT", btn, "RIGHT", 3, 0)
+        upBtn:SetScript("OnClick", function()
+            if btn.index > 1 then
+                local temp = finishers[btn.index]
+                finishers[btn.index] = finishers[btn.index - 1]
+                finishers[btn.index - 1] = temp
+                RoRota.db.profile.finisherPriority = finishers
+                if widgets.UpdatePriorityList then widgets.UpdatePriorityList() end
+            end
+        end)
+        
+        local downBtn = RoRotaGUI.CreateButton(nil, parent, 25, 22, "↓")
+        downBtn:SetPoint("LEFT", upBtn, "RIGHT", 3, 0)
+        downBtn:SetScript("OnClick", function()
+            if btn.index < table.getn(finishers) then
+                local temp = finishers[btn.index]
+                finishers[btn.index] = finishers[btn.index + 1]
+                finishers[btn.index + 1] = temp
+                RoRota.db.profile.finisherPriority = finishers
+                if widgets.UpdatePriorityList then widgets.UpdatePriorityList() end
+            end
+        end)
+        
+        y = y - 27
+    end
+    
+    widgets.UpdatePriorityList = function()
+        local priority = RoRota.db.profile.finisherPriority or finishers
+        for i, btn in ipairs(widgets.priorityButtons) do
+            btn:SetText(priority[i] or "")
+            btn.finisher = priority[i]
+            btn.index = i
+        end
+    end
+    
+    y = y - 10
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Energy Pooling Enable")
+    widgets.energyPoolCheck = RoRotaGUI.CreateCheckbox("RoRotaEnergyPoolCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.energyPooling then RoRota.db.profile.energyPooling = {} end
+        RoRota.db.profile.energyPooling.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 25
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Energy Pooling Threshold")
+    widgets.energyPoolDD = RoRotaGUI.CreateDropdownNumeric("RoRotaEnergyPoolDD", parent, 260, y, 0, 30, 5, function(value)
+        if not RoRota.db.profile.energyPooling then RoRota.db.profile.energyPooling = {} end
+        RoRota.db.profile.energyPooling.threshold = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Finisher Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.refreshThresholdEB = RoRotaGUI.CreateDecimalEditBox("RoRotaRefreshThresholdEB", parent, 260, y, 50, 0, 10, function(value)
+            RoRota.db.profile.finisherRefreshThreshold = value
+        end)
+    else
+        widgets.refreshThresholdEB = RoRotaGUI.CreateEditBox("RoRotaRefreshThresholdEB", parent, 175, y, 50, function(value)
+            RoRota.db.profile.finisherRefreshThreshold = value
+        end)
+    end
+end
+
+function RoRotaGUI.LoadFinisherGlobalSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.energyPoolCheck and p.energyPooling then
+        widgets.energyPoolCheck:SetChecked(p.energyPooling.enabled and 1 or nil)
+    end
+    if widgets.energyPoolDD and p.energyPooling then
+        local val = p.energyPooling.threshold or 10
+        UIDropDownMenu_SetSelectedValue(widgets.energyPoolDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.energyPoolDD)
+    end
+    if widgets.refreshThresholdEB then
+        local val = p.finisherRefreshThreshold or 2
+        widgets.refreshThresholdEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.UpdatePriorityList then
+        widgets.UpdatePriorityList()
+    end
+end
+
+-- SnD Subtab
+function RoRotaGUI.CreateSndSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Enable Slice and Dice")
+    widgets.sndCheck = RoRotaGUI.CreateCheckbox("RoRotaSndCheckNew", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Minimum CP")
+    widgets.sndMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaSndMinDDNew", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.minCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Maximum CP")
+    widgets.sndMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaSndMaxDDNew", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.maxCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP")
+    widgets.sndTargetMinEB = RoRotaGUI.CreateEditBox("RoRotaSndTargetMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.targetMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.sndTargetMaxEB = RoRotaGUI.CreateEditBox("RoRotaSndTargetMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.targetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Only use on Elites")
+    widgets.sndElitesCheck = RoRotaGUI.CreateCheckbox("RoRotaSndElitesCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.onlyElites = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadSndSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.sndCheck and p.abilities and p.abilities.SliceAndDice then
+        widgets.sndCheck:SetChecked(p.abilities.SliceAndDice.enabled and 1 or nil)
+    end
+    if widgets.sndMinDD and p.abilities and p.abilities.SliceAndDice then
+        local val = p.abilities.SliceAndDice.minCP or 1
+        UIDropDownMenu_SetSelectedValue(widgets.sndMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.sndMinDD)
+    end
+    if widgets.sndMaxDD and p.abilities and p.abilities.SliceAndDice then
+        local val = p.abilities.SliceAndDice.maxCP or 2
+        UIDropDownMenu_SetSelectedValue(widgets.sndMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.sndMaxDD)
+    end
+    if widgets.sndTargetMinEB and p.abilities and p.abilities.SliceAndDice then
+        widgets.sndTargetMinEB:SetText(tostring(p.abilities.SliceAndDice.targetMinHP or 0))
+    end
+    if widgets.sndTargetMaxEB and p.abilities and p.abilities.SliceAndDice then
+        widgets.sndTargetMaxEB:SetText(tostring(p.abilities.SliceAndDice.targetMaxHP or 100))
+    end
+    if widgets.sndElitesCheck and p.abilities and p.abilities.SliceAndDice then
+        widgets.sndElitesCheck:SetChecked(p.abilities.SliceAndDice.onlyElites and 1 or nil)
+    end
+end
+
+-- Rupture Subtab
+function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Enable Rupture")
+    widgets.ruptCheck = RoRotaGUI.CreateCheckbox("RoRotaRuptCheckNew", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Minimum CP")
+    widgets.ruptMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaRuptMinDDNew", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.minCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Maximum CP")
+    widgets.ruptMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaRuptMaxDDNew", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.maxCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Smart Rupture")
+    widgets.smartRuptCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartRuptCheckNew", parent, 260, y, "", function()
+        RoRota.db.profile.smartRupture = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP")
+    widgets.ruptTargetMinEB = RoRotaGUI.CreateEditBox("RoRotaRuptTargetMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.targetMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.ruptTargetMaxEB = RoRotaGUI.CreateEditBox("RoRotaRuptTargetMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.targetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Only use on Elites")
+    widgets.ruptElitesCheck = RoRotaGUI.CreateCheckbox("RoRotaRuptElitesCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.onlyElites = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadRuptureSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.ruptCheck and p.abilities and p.abilities.Rupture then
+        widgets.ruptCheck:SetChecked(p.abilities.Rupture.enabled and 1 or nil)
+    end
+    if widgets.ruptMinDD and p.abilities and p.abilities.Rupture then
+        local val = p.abilities.Rupture.minCP or 1
+        UIDropDownMenu_SetSelectedValue(widgets.ruptMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.ruptMinDD)
+    end
+    if widgets.ruptMaxDD and p.abilities and p.abilities.Rupture then
+        local val = p.abilities.Rupture.maxCP or 5
+        UIDropDownMenu_SetSelectedValue(widgets.ruptMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.ruptMaxDD)
+    end
+    if widgets.smartRuptCheck then
+        widgets.smartRuptCheck:SetChecked(p.smartRupture and 1 or nil)
+    end
+    if widgets.ruptTargetMinEB and p.abilities and p.abilities.Rupture then
+        widgets.ruptTargetMinEB:SetText(tostring(p.abilities.Rupture.targetMinHP or 0))
+    end
+    if widgets.ruptTargetMaxEB and p.abilities and p.abilities.Rupture then
+        widgets.ruptTargetMaxEB:SetText(tostring(p.abilities.Rupture.targetMaxHP or 100))
+    end
+    if widgets.ruptElitesCheck and p.abilities and p.abilities.Rupture then
+        widgets.ruptElitesCheck:SetChecked(p.abilities.Rupture.onlyElites and 1 or nil)
+    end
+end
+
+-- Expose Subtab
+function RoRotaGUI.CreateExposeSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Enable Expose Armor")
+    widgets.exposeCheck = RoRotaGUI.CreateCheckbox("RoRotaExposeCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Minimum CP")
+    widgets.exposeMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaExposeMinDD", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.minCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Maximum CP")
+    widgets.exposeMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaExposeMaxDD", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.maxCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP")
+    widgets.exposeTargetMinEB = RoRotaGUI.CreateEditBox("RoRotaExposeTargetMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.targetMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.exposeTargetMaxEB = RoRotaGUI.CreateEditBox("RoRotaExposeTargetMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.targetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Only use on Elites")
+    widgets.exposeElitesCheck = RoRotaGUI.CreateCheckbox("RoRotaExposeElitesCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.onlyElites = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadExposeSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.exposeCheck and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeCheck:SetChecked(p.abilities.ExposeArmor.enabled and 1 or nil)
+    end
+    if widgets.exposeMinDD and p.abilities and p.abilities.ExposeArmor then
+        local val = p.abilities.ExposeArmor.minCP or 5
+        UIDropDownMenu_SetSelectedValue(widgets.exposeMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.exposeMinDD)
+    end
+    if widgets.exposeMaxDD and p.abilities and p.abilities.ExposeArmor then
+        local val = p.abilities.ExposeArmor.maxCP or 5
+        UIDropDownMenu_SetSelectedValue(widgets.exposeMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.exposeMaxDD)
+    end
+    if widgets.exposeTargetMinEB and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeTargetMinEB:SetText(tostring(p.abilities.ExposeArmor.targetMinHP or 0))
+    end
+    if widgets.exposeTargetMaxEB and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeTargetMaxEB:SetText(tostring(p.abilities.ExposeArmor.targetMaxHP or 100))
+    end
+    if widgets.exposeElitesCheck and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeElitesCheck:SetChecked(p.abilities.ExposeArmor.onlyElites and 1 or nil)
+    end
+end
+
+-- Envenom Subtab
+function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Enable Envenom")
+    widgets.envCheck = RoRotaGUI.CreateCheckbox("RoRotaEnvCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Minimum CP")
+    widgets.envMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaEnvMinDD", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.minCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Maximum CP")
+    widgets.envMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaEnvMaxDD", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.maxCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP")
+    widgets.envTargetMinEB = RoRotaGUI.CreateEditBox("RoRotaEnvTargetMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.targetMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.envTargetMaxEB = RoRotaGUI.CreateEditBox("RoRotaEnvTargetMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.targetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Only use on Elites")
+    widgets.envElitesCheck = RoRotaGUI.CreateCheckbox("RoRotaEnvElitesCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.onlyElites = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadEnvenomSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.envCheck and p.abilities and p.abilities.Envenom then
+        widgets.envCheck:SetChecked(p.abilities.Envenom.enabled and 1 or nil)
+    end
+    if widgets.envMinDD and p.abilities and p.abilities.Envenom then
+        local val = p.abilities.Envenom.minCP or 1
+        UIDropDownMenu_SetSelectedValue(widgets.envMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.envMinDD)
+    end
+    if widgets.envMaxDD and p.abilities and p.abilities.Envenom then
+        local val = p.abilities.Envenom.maxCP or 2
+        UIDropDownMenu_SetSelectedValue(widgets.envMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.envMaxDD)
+    end
+    if widgets.envTargetMinEB and p.abilities and p.abilities.Envenom then
+        widgets.envTargetMinEB:SetText(tostring(p.abilities.Envenom.targetMinHP or 0))
+    end
+    if widgets.envTargetMaxEB and p.abilities and p.abilities.Envenom then
+        widgets.envTargetMaxEB:SetText(tostring(p.abilities.Envenom.targetMaxHP or 100))
+    end
+    if widgets.envElitesCheck and p.abilities and p.abilities.Envenom then
+        widgets.envElitesCheck:SetChecked(p.abilities.Envenom.onlyElites and 1 or nil)
+    end
+end
+
+-- Eviscerate Subtab
+function RoRotaGUI.CreateEviscerateSub(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use CB Eviscerate (finisher)")
+    widgets.cbEvisFinisherCheck = RoRotaGUI.CreateCheckbox("RoRotaCBEvisFinisherCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ColdBloodEviscerate then RoRota.db.profile.abilities.ColdBloodEviscerate = {} end
+        RoRota.db.profile.abilities.ColdBloodEviscerate.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Eviscerate-to-kill (execute)")
+    widgets.smartEvisCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartEvisCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.smartEviscerate = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "CB before execute Eviscerate")
+    widgets.coldBloodCheck = RoRotaGUI.CreateCheckbox("RoRotaColdBloodEvisCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.useColdBlood = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Cold Blood Min CP")
+    widgets.coldBloodMinDD = RoRotaGUI.CreateDropdownNumeric("RoRotaColdBloodMinDDEvis", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.coldBloodMinCP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP")
+    widgets.evisTargetMinEB = RoRotaGUI.CreateEditBox("RoRotaEvisTargetMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.targetMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.evisTargetMaxEB = RoRotaGUI.CreateEditBox("RoRotaEvisTargetMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.targetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Only use on Elites")
+    widgets.evisElitesCheck = RoRotaGUI.CreateCheckbox("RoRotaEvisElitesCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.onlyElites = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadEviscerateSub(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.cbEvisFinisherCheck and p.abilities and p.abilities.ColdBloodEviscerate then
+        widgets.cbEvisFinisherCheck:SetChecked(p.abilities.ColdBloodEviscerate.enabled and 1 or nil)
+    end
+    if widgets.smartEvisCheck and p.abilities and p.abilities.Eviscerate then
+        widgets.smartEvisCheck:SetChecked(p.abilities.Eviscerate.smartEviscerate and 1 or nil)
+    end
+    if widgets.coldBloodCheck and p.abilities and p.abilities.Eviscerate then
+        widgets.coldBloodCheck:SetChecked(p.abilities.Eviscerate.useColdBlood and 1 or nil)
+    end
+    if widgets.coldBloodMinDD and p.abilities and p.abilities.Eviscerate then
+        local val = p.abilities.Eviscerate.coldBloodMinCP or 4
+        UIDropDownMenu_SetSelectedValue(widgets.coldBloodMinDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.coldBloodMinDD)
+    end
+    if widgets.evisTargetMinEB and p.abilities and p.abilities.Eviscerate then
+        widgets.evisTargetMinEB:SetText(tostring(p.abilities.Eviscerate.targetMinHP or 0))
+    end
+    if widgets.evisTargetMaxEB and p.abilities and p.abilities.Eviscerate then
+        widgets.evisTargetMaxEB:SetText(tostring(p.abilities.Eviscerate.targetMaxHP or 100))
+    end
+    if widgets.evisElitesCheck and p.abilities and p.abilities.Eviscerate then
+        widgets.evisElitesCheck:SetChecked(p.abilities.Eviscerate.onlyElites and 1 or nil)
+    end
+end
+
+RoRotaGUIFinishersLoaded = true
+
+-- ============================================================================
+-- BUILDERS TAB (with subtabs)
+-- ============================================================================
+
+function RoRotaGUI.CreateBuildersTab(parent, frame)
+    local subtabBar = CreateFrame("Frame", nil, parent)
+    subtabBar:SetWidth(90)
+    subtabBar:SetHeight(500)
+    subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    subtabBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        tile = true, tileSize = 16, edgeSize = 0,
+        insets = {left = 0, right = 0, top = 0, bottom = 0}
+    })
+    subtabBar:SetBackdropColor(0, 0, 0, 0.5)
+    
+    local contentArea = CreateFrame("Frame", nil, parent)
+    contentArea:SetWidth(390)
+    contentArea:SetHeight(500)
+    contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
+    
+    local subtabs = {"Global", "Riposte", "Surprise", "Hemorrhage", "Ghostly"}
+    frame.builderSubtabs = {}
+    frame.builderSubtabFrames = {}
+    
+    for i, name in ipairs(subtabs) do
+        local index = i
+        local btn = RoRotaGUI.CreateSubTab(subtabBar, -10 - (i-1)*25, name, function()
+            RoRotaGUI.ShowBuilderSubTab(frame, index)
+        end)
+        frame.builderSubtabs[i] = {button = btn, name = name}
+        
+        local subFrame = CreateFrame("Frame", nil, contentArea)
+        subFrame:SetWidth(390)
+        subFrame:SetHeight(500)
+        subFrame:SetPoint("TOPLEFT", contentArea, "TOPLEFT", 0, 0)
+        subFrame:Hide()
+        frame.builderSubtabFrames[i] = subFrame
+    end
+    
+    frame.builderSubtabFrames[1].widgets = {}
+    frame.builderSubtabFrames[2].widgets = {}
+    frame.builderSubtabFrames[3].widgets = {}
+    frame.builderSubtabFrames[4].widgets = {}
+    frame.builderSubtabFrames[5].widgets = {}
+    
+    if RoRotaGUI.CreateBuilderGlobalSubTab then RoRotaGUI.CreateBuilderGlobalSubTab(frame.builderSubtabFrames[1], frame.builderSubtabFrames[1].widgets) end
+    if RoRotaGUI.CreateRiposteSubTab then RoRotaGUI.CreateRiposteSubTab(frame.builderSubtabFrames[2], frame.builderSubtabFrames[2].widgets) end
+    if RoRotaGUI.CreateSurpriseSubTab then RoRotaGUI.CreateSurpriseSubTab(frame.builderSubtabFrames[3], frame.builderSubtabFrames[3].widgets) end
+    if RoRotaGUI.CreateHemorrhageSubTab then RoRotaGUI.CreateHemorrhageSubTab(frame.builderSubtabFrames[4], frame.builderSubtabFrames[4].widgets) end
+    if RoRotaGUI.CreateGhostlySubTab then RoRotaGUI.CreateGhostlySubTab(frame.builderSubtabFrames[5], frame.builderSubtabFrames[5].widgets) end
+    
+    RoRotaGUI.ShowBuilderSubTab(frame, 1)
+end
+
+function RoRotaGUI.ShowBuilderSubTab(frame, index)
+    for i = 1, table.getn(frame.builderSubtabFrames) do
+        if i == index then
+            frame.builderSubtabFrames[i]:Show()
+            RoRotaGUI.SetSubTabActive(frame.builderSubtabs[i].button, true)
+        else
+            frame.builderSubtabFrames[i]:Hide()
+            RoRotaGUI.SetSubTabActive(frame.builderSubtabs[i].button, false)
+        end
+    end
+end
+
+function RoRotaGUI.LoadBuildersTab(frame)
+    if not frame.builderSubtabFrames then return end
+    if RoRotaGUI.LoadBuilderGlobalSubTab and frame.builderSubtabFrames[1] then RoRotaGUI.LoadBuilderGlobalSubTab(frame.builderSubtabFrames[1].widgets) end
+    if RoRotaGUI.LoadRiposteSubTab and frame.builderSubtabFrames[2] then RoRotaGUI.LoadRiposteSubTab(frame.builderSubtabFrames[2].widgets) end
+    if RoRotaGUI.LoadSurpriseSubTab and frame.builderSubtabFrames[3] then RoRotaGUI.LoadSurpriseSubTab(frame.builderSubtabFrames[3].widgets) end
+    if RoRotaGUI.LoadHemorrhageSubTab and frame.builderSubtabFrames[4] then RoRotaGUI.LoadHemorrhageSubTab(frame.builderSubtabFrames[4].widgets) end
+    if RoRotaGUI.LoadGhostlySubTab and frame.builderSubtabFrames[5] then RoRotaGUI.LoadGhostlySubTab(frame.builderSubtabFrames[5].widgets) end
+end
+
+-- Builder Global Subtab
+function RoRotaGUI.CreateBuilderGlobalSubTab(parent, widgets)
+    local y = -20
+    local builders = {"Sinister Strike", "Backstab", "Noxious Assault"}
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Main Builder")
+    widgets.mainBuilderDD = RoRotaGUI.CreateDropdown("RoRotaMainBuilderDD", parent, 150, y, 150, builders, function(value)
+        RoRota.db.profile.mainBuilder = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Secondary Builder")
+    widgets.secondaryBuilderDD = RoRotaGUI.CreateDropdown("RoRotaSecondaryBuilderDD", parent, 150, y, 150, builders, function(value)
+        RoRota.db.profile.secondaryBuilder = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Failsafe Attempts")
+    widgets.builderFailDD = RoRotaGUI.CreateDropdownNumeric("RoRotaBuilderFailDD", parent, 260, y, 1, 10, 1, function(value)
+        RoRota.db.profile.builderFailsafe = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Sync with Swings")
+    widgets.smartBuildersCheck = RoRotaGUI.CreateCheckbox("RoRotaSmartBuildersCheck", parent, 260, y, "", function()
+        RoRota.db.profile.smartBuilders = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadBuilderGlobalSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.mainBuilderDD and p.mainBuilder then
+        UIDropDownMenu_SetSelectedValue(widgets.mainBuilderDD, p.mainBuilder)
+        UIDropDownMenu_SetText(p.mainBuilder, widgets.mainBuilderDD)
+    end
+    if widgets.secondaryBuilderDD and p.secondaryBuilder then
+        UIDropDownMenu_SetSelectedValue(widgets.secondaryBuilderDD, p.secondaryBuilder)
+        UIDropDownMenu_SetText(p.secondaryBuilder, widgets.secondaryBuilderDD)
+    end
+    if widgets.builderFailDD then
+        local val = p.builderFailsafe or -1
+        UIDropDownMenu_SetSelectedValue(widgets.builderFailDD, val)
+        UIDropDownMenu_SetText(val == -1 and "Disabled" or tostring(val), widgets.builderFailDD)
+    end
+    if widgets.smartBuildersCheck then
+        widgets.smartBuildersCheck:SetChecked(p.smartBuilders and 1 or nil)
+    end
+end
+
+-- Riposte Subtab
+function RoRotaGUI.CreateRiposteSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Riposte")
+    widgets.riposteCheck = RoRotaGUI.CreateCheckbox("RoRotaRiposteCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useRiposte = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadRiposteSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.riposteCheck and p.defensive then
+        widgets.riposteCheck:SetChecked(p.defensive.useRiposte and 1 or nil)
+    end
+end
+
+-- Surprise Subtab
+function RoRotaGUI.CreateSurpriseSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Surprise Attack")
+    widgets.surpriseCheck = RoRotaGUI.CreateCheckbox("RoRotaSurpriseCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useSurpriseAttack = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadSurpriseSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.surpriseCheck and p.defensive then
+        widgets.surpriseCheck:SetChecked(p.defensive.useSurpriseAttack and 1 or nil)
+    end
+end
+
+-- Hemorrhage Subtab
+function RoRotaGUI.CreateHemorrhageSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Hemorrhage")
+    widgets.hemorrhageCheck = RoRotaGUI.CreateCheckbox("RoRotaHemorrhageCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Hemorrhage then RoRota.db.profile.abilities.Hemorrhage = {} end
+        RoRota.db.profile.abilities.Hemorrhage.enabled = (this:GetChecked() == 1)
+    end)
+end
+
+function RoRotaGUI.LoadHemorrhageSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.hemorrhageCheck and p.abilities and p.abilities.Hemorrhage then
+        widgets.hemorrhageCheck:SetChecked(p.abilities.Hemorrhage.enabled and 1 or nil)
+    end
+end
+
+-- Ghostly Subtab
+function RoRotaGUI.CreateGhostlySubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Ghostly Strike")
+    widgets.gsCheck = RoRotaGUI.CreateCheckbox("RoRotaGSCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useGhostlyStrike = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP")
+    widgets.gsTargetEB = RoRotaGUI.CreateEditBox("RoRotaGSTargetEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.ghostlyTargetMaxHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Player Min HP")
+    widgets.gsPlayerMinEB = RoRotaGUI.CreateEditBox("RoRotaGSPlayerMinEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.ghostlyPlayerMinHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Player Max HP")
+    widgets.gsPlayerMaxEB = RoRotaGUI.CreateEditBox("RoRotaGSPlayerMaxEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.ghostlyPlayerMaxHP = value
+    end)
+end
+
+function RoRotaGUI.LoadGhostlySubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.gsCheck and p.defensive then
+        widgets.gsCheck:SetChecked(p.defensive.useGhostlyStrike and 1 or nil)
+    end
+    if widgets.gsTargetEB and p.defensive then
+        widgets.gsTargetEB:SetText(tostring(p.defensive.ghostlyTargetMaxHP or 30))
+    end
+    if widgets.gsPlayerMinEB and p.defensive then
+        widgets.gsPlayerMinEB:SetText(tostring(p.defensive.ghostlyPlayerMinHP or 1))
+    end
+    if widgets.gsPlayerMaxEB and p.defensive then
+        widgets.gsPlayerMaxEB:SetText(tostring(p.defensive.ghostlyPlayerMaxHP or 90))
+    end
+end
+
+RoRotaGUIBuildersLoaded = true
+
+-- ============================================================================
+-- DEFENSIVE TAB (with subtabs)
+-- ============================================================================
+
+function RoRotaGUI.CreateDefensiveTab(parent, frame)
+    local subtabBar = CreateFrame("Frame", nil, parent)
+    subtabBar:SetWidth(90)
+    subtabBar:SetHeight(500)
+    subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    subtabBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        tile = true, tileSize = 16, edgeSize = 0,
+        insets = {left = 0, right = 0, top = 0, bottom = 0}
+    })
+    subtabBar:SetBackdropColor(0, 0, 0, 0.5)
+    
+    local contentArea = CreateFrame("Frame", nil, parent)
+    contentArea:SetWidth(390)
+    contentArea:SetHeight(500)
+    contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
+    
+    local subtabs = {"Global", "Interrupts", "Survival"}
+    frame.defensiveSubtabs = {}
+    frame.defensiveSubtabFrames = {}
+    
+    for i, name in ipairs(subtabs) do
+        local index = i
+        local btn = RoRotaGUI.CreateSubTab(subtabBar, -10 - (i-1)*25, name, function()
+            RoRotaGUI.ShowDefensiveSubTab(frame, index)
+        end)
+        frame.defensiveSubtabs[i] = {button = btn, name = name}
+        
+        local subFrame = CreateFrame("Frame", nil, contentArea)
+        subFrame:SetWidth(390)
+        subFrame:SetHeight(500)
+        subFrame:SetPoint("TOPLEFT", contentArea, "TOPLEFT", 0, 0)
+        subFrame:Hide()
+        frame.defensiveSubtabFrames[i] = subFrame
+    end
+    
+    frame.defensiveSubtabFrames[1].widgets = {}
+    frame.defensiveSubtabFrames[2].widgets = {}
+    frame.defensiveSubtabFrames[3].widgets = {}
+    
+    if RoRotaGUI.CreateDefensiveGlobalSubTab then RoRotaGUI.CreateDefensiveGlobalSubTab(frame.defensiveSubtabFrames[1], frame.defensiveSubtabFrames[1].widgets) end
+    if RoRotaGUI.CreateInterruptsSubTab then RoRotaGUI.CreateInterruptsSubTab(frame.defensiveSubtabFrames[2], frame.defensiveSubtabFrames[2].widgets) end
+    if RoRotaGUI.CreateSurvivalSubTab then RoRotaGUI.CreateSurvivalSubTab(frame.defensiveSubtabFrames[3], frame.defensiveSubtabFrames[3].widgets) end
+    
+    RoRotaGUI.ShowDefensiveSubTab(frame, 1)
+end
+
+function RoRotaGUI.ShowDefensiveSubTab(frame, index)
+    for i = 1, table.getn(frame.defensiveSubtabFrames) do
+        if i == index then
+            frame.defensiveSubtabFrames[i]:Show()
+            RoRotaGUI.SetSubTabActive(frame.defensiveSubtabs[i].button, true)
+        else
+            frame.defensiveSubtabFrames[i]:Hide()
+            RoRotaGUI.SetSubTabActive(frame.defensiveSubtabs[i].button, false)
+        end
+    end
+end
+
+function RoRotaGUI.LoadDefensiveTab(frame)
+    if not frame.defensiveSubtabFrames then return end
+    if RoRotaGUI.LoadDefensiveGlobalSubTab and frame.defensiveSubtabFrames[1] then RoRotaGUI.LoadDefensiveGlobalSubTab(frame.defensiveSubtabFrames[1].widgets) end
+    if RoRotaGUI.LoadInterruptsSubTab and frame.defensiveSubtabFrames[2] then RoRotaGUI.LoadInterruptsSubTab(frame.defensiveSubtabFrames[2].widgets) end
+    if RoRotaGUI.LoadSurvivalSubTab and frame.defensiveSubtabFrames[3] then RoRotaGUI.LoadSurvivalSubTab(frame.defensiveSubtabFrames[3].widgets) end
+end
+
+-- Defensive Global Subtab
+function RoRotaGUI.CreateDefensiveGlobalSubTab(parent, widgets)
+    local y = -20
+    RoRotaGUI.CreateLabel(parent, 10, y, "Reserved for future settings")
+end
+
+function RoRotaGUI.LoadDefensiveGlobalSubTab(widgets)
+end
+
+-- Interrupts Subtab
+function RoRotaGUI.CreateInterruptsSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Kick")
+    widgets.kickCheck = RoRotaGUI.CreateCheckbox("RoRotaKickCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.interrupt then RoRota.db.profile.interrupt = {} end
+        RoRota.db.profile.interrupt.useKick = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Gouge")
+    widgets.gougeCheck = RoRotaGUI.CreateCheckbox("RoRotaGougeCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.interrupt then RoRota.db.profile.interrupt = {} end
+        RoRota.db.profile.interrupt.useGouge = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Kidney Shot")
+    widgets.ksCheck = RoRotaGUI.CreateCheckbox("RoRotaKSCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.interrupt then RoRota.db.profile.interrupt = {} end
+        RoRota.db.profile.interrupt.useKidneyShot = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Kidney Shot Max CP")
+    widgets.ksMaxDD = RoRotaGUI.CreateDropdownNumeric("RoRotaKSMaxDD", parent, 260, y, 1, 5, 1, function(value)
+        if not RoRota.db.profile.interrupt then RoRota.db.profile.interrupt = {} end
+        RoRota.db.profile.interrupt.kidneyMaxCP = value
+    end)
+end
+
+function RoRotaGUI.LoadInterruptsSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.kickCheck and p.interrupt then
+        widgets.kickCheck:SetChecked(p.interrupt.useKick and 1 or nil)
+    end
+    if widgets.gougeCheck and p.interrupt then
+        widgets.gougeCheck:SetChecked(p.interrupt.useGouge and 1 or nil)
+    end
+    if widgets.ksCheck and p.interrupt then
+        widgets.ksCheck:SetChecked(p.interrupt.useKidneyShot and 1 or nil)
+    end
+    if widgets.ksMaxDD and p.interrupt then
+        local val = p.interrupt.kidneyMaxCP or 2
+        UIDropDownMenu_SetSelectedValue(widgets.ksMaxDD, val)
+        UIDropDownMenu_SetText(tostring(val), widgets.ksMaxDD)
+    end
+end
+
+-- Survival Subtab
+function RoRotaGUI.CreateSurvivalSubTab(parent, widgets)
+    local y = -20
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Vanish")
+    widgets.vanishCheck = RoRotaGUI.CreateCheckbox("RoRotaVanishCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useVanish = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Vanish HP% Threshold")
+    widgets.vanishEB = RoRotaGUI.CreateEditBox("RoRotaVanishEB", parent, 175, y, 50, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.vanishHP = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Feint")
+    widgets.feintCheck = RoRotaGUI.CreateCheckbox("RoRotaFeintCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useFeint = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Feint Mode")
+    local feintModes = {"Always", "WhenTargeted", "HighThreat"}
+    widgets.feintModeDD = RoRotaGUI.CreateDropdown("RoRotaFeintModeDD", parent, 200, y, 150, feintModes, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.feintMode = value
+    end)
+end
+
+function RoRotaGUI.LoadSurvivalSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.vanishCheck and p.defensive then
+        widgets.vanishCheck:SetChecked(p.defensive.useVanish and 1 or nil)
+    end
+    if widgets.vanishEB and p.defensive then
+        widgets.vanishEB:SetText(tostring(p.defensive.vanishHP or 20))
+    end
+    if widgets.feintCheck and p.defensive then
+        widgets.feintCheck:SetChecked(p.defensive.useFeint and 1 or nil)
+    end
+    if widgets.feintModeDD and p.defensive and p.defensive.feintMode then
+        UIDropDownMenu_SetSelectedValue(widgets.feintModeDD, p.defensive.feintMode)
+        UIDropDownMenu_SetText(p.defensive.feintMode, widgets.feintModeDD)
+    end
+end
+
+RoRotaGUIDefensiveLoaded = true
+
+-- ============================================================================
+-- POISONS TAB
+-- ============================================================================
+
+function RoRotaGUI.CreatePoisonsTab(parent, frame)
+    local poisonTypes = {"None", "Agitating Poison", "Corrosive Poison", "Crippling Poison", "Deadly Poison", "Dissolvent Poison", "Instant Poison", "Mind-numbing Poison", "Wound Poison", "Sharpening Stone"}
+    local y = -40
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Auto-Apply Poisons")
+    frame.autoApplyCheck = RoRotaGUI.CreateCheckbox("RoRotaAutoApplyCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.autoApply = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Allow in Combat")
+    frame.applyInCombatCheck = RoRotaGUI.CreateCheckbox("RoRotaApplyInCombatCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.applyInCombat = (this:GetChecked() == 1)
+    end)
+    y = y - 40
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Main Hand Poison")
+    frame.mainHandPoisonDD = RoRotaGUI.CreateDropdown("RoRotaMainHandPoisonDD", parent, 350, y, 180, poisonTypes, function(value)
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.mainHandPoison = value
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Off Hand Poison")
+    frame.offHandPoisonDD = RoRotaGUI.CreateDropdown("RoRotaOffHandPoisonDD", parent, 350, y, 180, poisonTypes, function(value)
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.offHandPoison = value
+    end)
+    y = y - 40
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Enable Poison Warnings")
+    frame.poisonCheck = RoRotaGUI.CreateCheckbox("RoRotaPoisonCheck", parent, 350, y, "", function()
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Time Threshold (minutes)")
+    local timeOptions = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
+    frame.poisonTimeDD = RoRotaGUI.CreateDropdown("RoRotaPoisonTimeDD", parent, 350, y, 80, timeOptions, function(value)
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.timeThreshold = tonumber(value) * 60
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Charges Threshold")
+    frame.poisonChargesDD = RoRotaGUI.CreateDropdownNumeric("RoRotaPoisonChargesDD", parent, 350, y, 5, 50, 5, function(value)
+        if not RoRota.db.profile.poisons then RoRota.db.profile.poisons = {} end
+        RoRota.db.profile.poisons.chargesThreshold = value
+    end)
+    y = y - 40
+    
+    local testBtn = RoRotaGUI.CreateButton(nil, parent, 120, 25, "Test Warning")
+    testBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    testBtn:SetScript("OnClick", function()
+        if RoRota.CheckWeaponPoisons then
+            RoRota:CheckWeaponPoisons(true)
+        else
+            RoRota:Print("Poison module not loaded")
+        end
+    end)
+end
+
+function RoRotaGUI.LoadPoisonsTab(frame)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if frame.autoApplyCheck and p.poisons then
+        frame.autoApplyCheck:SetChecked(p.poisons.autoApply and 1 or nil)
+    end
+    if frame.applyInCombatCheck and p.poisons then
+        frame.applyInCombatCheck:SetChecked(p.poisons.applyInCombat and 1 or nil)
+    end
+    if frame.mainHandPoisonDD and p.poisons and p.poisons.mainHandPoison then
+        UIDropDownMenu_SetSelectedValue(frame.mainHandPoisonDD, p.poisons.mainHandPoison)
+        UIDropDownMenu_SetText(p.poisons.mainHandPoison, frame.mainHandPoisonDD)
+    end
+    if frame.offHandPoisonDD and p.poisons and p.poisons.offHandPoison then
+        UIDropDownMenu_SetSelectedValue(frame.offHandPoisonDD, p.poisons.offHandPoison)
+        UIDropDownMenu_SetText(p.poisons.offHandPoison, frame.offHandPoisonDD)
+    end
+    if frame.poisonCheck and p.poisons then
+        frame.poisonCheck:SetChecked(p.poisons.enabled and 1 or nil)
+    end
+    if frame.poisonTimeDD and p.poisons then
+        local val = math.floor((p.poisons.timeThreshold or 180) / 60)
+        UIDropDownMenu_SetSelectedValue(frame.poisonTimeDD, tostring(val))
+        UIDropDownMenu_SetText(tostring(val), frame.poisonTimeDD)
+    end
+    if frame.poisonChargesDD and p.poisons then
+        local val = p.poisons.chargesThreshold or 10
+        UIDropDownMenu_SetSelectedValue(frame.poisonChargesDD, val)
+        UIDropDownMenu_SetText(tostring(val), frame.poisonChargesDD)
+    end
+end
+
+RoRotaGUIPoisonsLoaded = true
+
+-- ============================================================================
+-- PROFILES TAB
+-- ============================================================================
+
+function RoRotaGUI.CreateProfilesTab(parent, frame)
+    local y = -40
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Current Profile")
+    
+    local function GetCurrentProfile()
+        local charKey = UnitName("player").." - "..GetRealmName()
+        return RoRotaDB.char and RoRotaDB.char[charKey] or "Default"
+    end
+    
+    local function UpdateProfileDropdown()
+        if not frame.profileDD then return end
+        local current = GetCurrentProfile()
+        UIDropDownMenu_SetSelectedValue(frame.profileDD, current)
+        UIDropDownMenu_SetText(current, frame.profileDD)
+    end
+    
+    frame.profileDD = CreateFrame("Frame", "RoRotaProfileDD", parent, "UIDropDownMenuTemplate")
+    local offset = 150 - 100
+    frame.profileDD:SetPoint("TOPLEFT", parent, "TOPLEFT", 350 - 16 - offset, y + 4)
+    UIDropDownMenu_SetWidth(150, frame.profileDD)
+    
+    local left = getglobal("RoRotaProfileDDLeft")
+    local middle = getglobal("RoRotaProfileDDMiddle")
+    local right = getglobal("RoRotaProfileDDRight")
+    if left then left:SetTexture("") end
+    if middle then middle:SetTexture("") end
+    if right then right:SetTexture("") end
+    
+    UIDropDownMenu_Initialize(frame.profileDD, function()
+        if not RoRotaDB.profiles then RoRotaDB.profiles = {} end
+        if not RoRotaDB.profiles["Default"] then
+            local function deepCopy(t)
+                if type(t) ~= "table" then return t end
+                local copy = {}
+                for k, v in pairs(t) do
+                    copy[k] = deepCopy(v)
+                end
+                return copy
+            end
+            RoRotaDB.profiles["Default"] = deepCopy(RoRotaDefaultProfile)
+        end
+        
+        local names = {}
+        for profileName in pairs(RoRotaDB.profiles) do
+            table.insert(names, profileName)
+        end
+        table.sort(names)
+        
+        local current = GetCurrentProfile()
+        for _, pname in ipairs(names) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = pname
+            info.value = pname
+            info.checked = (pname == current)
+            local localName = pname
+            info.func = function()
+                if not RoRotaDB.char then RoRotaDB.char = {} end
+                local charKey = UnitName("player").." - "..GetRealmName()
+                RoRotaDB.char[charKey] = localName
+                RoRota:SetProfile(localName)
+                RoRota:Print("Switched to profile: "..localName)
+                UpdateProfileDropdown()
+                if RoRotaGUIFrame and RoRotaGUI.LoadAllTabs then
+                    RoRotaGUI.LoadAllTabs(RoRotaGUIFrame)
+                end
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    UpdateProfileDropdown()
+    y = y - 40
+    
+    local newBtn = RoRotaGUI.CreateButton(nil, parent, 120, 25, "New Profile")
+    newBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    newBtn:SetScript("OnClick", function()
+        StaticPopupDialogs["ROROTA_NEW_PROFILE"] = {
+            text = "Enter new profile name:",
+            button1 = "Create",
+            button2 = "Cancel",
+            hasEditBox = 1,
+            maxLetters = 32,
+            OnAccept = function()
+                local name = getglobal(this:GetParent():GetName().."EditBox"):GetText()
+                if name and name ~= "" then
+                    if RoRotaDB.profiles and RoRotaDB.profiles[name] then
+                        RoRota:Print("Profile '"..name.."' already exists.")
+                        return
+                    end
+                    if not RoRotaDB.profiles then RoRotaDB.profiles = {} end
+                    local function deepCopy(t)
+                        if type(t) ~= "table" then return t end
+                        local copy = {}
+                        for k, v in pairs(t) do
+                            copy[k] = deepCopy(v)
+                        end
+                        return copy
+                    end
+                    RoRotaDB.profiles[name] = deepCopy(RoRotaDefaultProfile)
+                    if not RoRotaDB.char then RoRotaDB.char = {} end
+                    local charKey = UnitName("player").." - "..GetRealmName()
+                    RoRotaDB.char[charKey] = name
+                    RoRota:SetProfile(name)
+                    RoRota:Print("Created new profile: "..name)
+                    UpdateProfileDropdown()
+                    if RoRotaGUIFrame and RoRotaGUI.LoadAllTabs then
+                        RoRotaGUI.LoadAllTabs(RoRotaGUIFrame)
+                    end
+                end
+            end,
+            OnShow = function()
+                getglobal(this:GetName().."EditBox"):SetFocus()
+            end,
+            EditBoxOnEnterPressed = function()
+                local parent = this:GetParent()
+                StaticPopupDialogs["ROROTA_NEW_PROFILE"].OnAccept()
+                parent:Hide()
+            end,
+            EditBoxOnEscapePressed = function()
+                this:GetParent():Hide()
+            end,
+            timeout = 0,
+            whileDead = 1,
+            hideOnEscape = 1
+        }
+        StaticPopup_Show("ROROTA_NEW_PROFILE")
+    end)
+    
+    local deleteBtn = RoRotaGUI.CreateButton(nil, parent, 120, 25, "Delete Profile")
+    deleteBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 150, y)
+    y = y - 50
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Enable Auto-Switching")
+    frame.autoSwitchCheck = RoRotaGUI.CreateCheckbox("RoRotaAutoSwitchCheck", parent, 350, y, "", function()
+        if not RoRotaDB.autoSwitch then RoRotaDB.autoSwitch = {} end
+        RoRotaDB.autoSwitch.enabled = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    local function GetProfileNames()
+        local names = {}
+        if RoRotaDB and RoRotaDB.profiles then
+            for pname in pairs(RoRotaDB.profiles) do
+                table.insert(names, pname)
+            end
+            table.sort(names)
+        end
+        return names
+    end
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Solo Profile")
+    frame.soloProfileDD = CreateFrame("Frame", "RoRotaSoloProfileDD", parent, "UIDropDownMenuTemplate")
+    local offset = 150 - 100
+    frame.soloProfileDD:SetPoint("TOPLEFT", parent, "TOPLEFT", 350 - 16 - offset, y + 4)
+    UIDropDownMenu_SetWidth(150, frame.soloProfileDD)
+    
+    local left = getglobal("RoRotaSoloProfileDDLeft")
+    local middle = getglobal("RoRotaSoloProfileDDMiddle")
+    local right = getglobal("RoRotaSoloProfileDDRight")
+    if left then left:SetTexture("") end
+    if middle then middle:SetTexture("") end
+    if right then right:SetTexture("") end
+    
+    UIDropDownMenu_Initialize(frame.soloProfileDD, function()
+        local names = GetProfileNames()
+        for _, pname in ipairs(names) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = pname
+            info.value = pname
+            local p = pname
+            info.func = function()
+                if not RoRotaDB.autoSwitch then RoRotaDB.autoSwitch = {} end
+                RoRotaDB.autoSwitch.soloProfile = p
+                UIDropDownMenu_SetSelectedValue(frame.soloProfileDD, p)
+                UIDropDownMenu_SetText(p, frame.soloProfileDD)
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Group Profile")
+    frame.groupProfileDD = CreateFrame("Frame", "RoRotaGroupProfileDD", parent, "UIDropDownMenuTemplate")
+    local offset = 150 - 100
+    frame.groupProfileDD:SetPoint("TOPLEFT", parent, "TOPLEFT", 350 - 16 - offset, y + 4)
+    UIDropDownMenu_SetWidth(150, frame.groupProfileDD)
+    
+    local left = getglobal("RoRotaGroupProfileDDLeft")
+    local middle = getglobal("RoRotaGroupProfileDDMiddle")
+    local right = getglobal("RoRotaGroupProfileDDRight")
+    if left then left:SetTexture("") end
+    if middle then middle:SetTexture("") end
+    if right then right:SetTexture("") end
+    
+    UIDropDownMenu_Initialize(frame.groupProfileDD, function()
+        local names = GetProfileNames()
+        for _, pname in ipairs(names) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = pname
+            info.value = pname
+            local p = pname
+            info.func = function()
+                if not RoRotaDB.autoSwitch then RoRotaDB.autoSwitch = {} end
+                RoRotaDB.autoSwitch.groupProfile = p
+                UIDropDownMenu_SetSelectedValue(frame.groupProfileDD, p)
+                UIDropDownMenu_SetText(p, frame.groupProfileDD)
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 20, y, "Raid Profile")
+    frame.raidProfileDD = CreateFrame("Frame", "RoRotaRaidProfileDD", parent, "UIDropDownMenuTemplate")
+    local offset = 150 - 100
+    frame.raidProfileDD:SetPoint("TOPLEFT", parent, "TOPLEFT", 350 - 16 - offset, y + 4)
+    UIDropDownMenu_SetWidth(150, frame.raidProfileDD)
+    
+    local left = getglobal("RoRotaRaidProfileDDLeft")
+    local middle = getglobal("RoRotaRaidProfileDDMiddle")
+    local right = getglobal("RoRotaRaidProfileDDRight")
+    if left then left:SetTexture("") end
+    if middle then middle:SetTexture("") end
+    if right then right:SetTexture("") end
+    
+    UIDropDownMenu_Initialize(frame.raidProfileDD, function()
+        local names = GetProfileNames()
+        for _, pname in ipairs(names) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = pname
+            info.value = pname
+            local p = pname
+            info.func = function()
+                if not RoRotaDB.autoSwitch then RoRotaDB.autoSwitch = {} end
+                RoRotaDB.autoSwitch.raidProfile = p
+                UIDropDownMenu_SetSelectedValue(frame.raidProfileDD, p)
+                UIDropDownMenu_SetText(p, frame.raidProfileDD)
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    
+    deleteBtn:SetScript("OnClick", function()
+        local current = GetCurrentProfile()
+        local profileCount = 0
+        if RoRotaDB and RoRotaDB.profiles then
+            for _ in pairs(RoRotaDB.profiles) do
+                profileCount = profileCount + 1
+            end
+        end
+        if profileCount <= 1 then
+            RoRota:Print("Cannot delete the last profile")
+            return
+        end
+        
+        StaticPopupDialogs["ROROTA_DELETE_PROFILE"] = {
+            text = "Delete profile '"..current.."'?",
+            button1 = "Delete",
+            button2 = "Cancel",
+            OnAccept = function()
+                local charKey = UnitName("player").." - "..GetRealmName()
+                local toDelete = RoRotaDB.char and RoRotaDB.char[charKey] or "Default"
+                if RoRotaDB and RoRotaDB.profiles then
+                    local newProfile = nil
+                    for name in pairs(RoRotaDB.profiles) do
+                        if name ~= toDelete then
+                            newProfile = name
+                            break
+                        end
+                    end
+                    if newProfile then
+                        RoRotaDB.profiles[toDelete] = nil
+                        if not RoRotaDB.char then RoRotaDB.char = {} end
+                        RoRotaDB.char[charKey] = newProfile
+                        RoRota:SetProfile(newProfile)
+                        RoRota:Print("Deleted profile: "..toDelete)
+                        UpdateProfileDropdown()
+                        if RoRotaGUIFrame and RoRotaGUI.LoadAllTabs then
+                            RoRotaGUI.LoadAllTabs(RoRotaGUIFrame)
+                        end
+                    end
+                end
+            end,
+            timeout = 0,
+            whileDead = 1,
+            hideOnEscape = 1
+        }
+        StaticPopup_Show("ROROTA_DELETE_PROFILE")
+    end)
+end
+
+function RoRotaGUI.LoadProfilesTab(frame)
+    if frame.autoSwitchCheck and RoRotaDB.autoSwitch then
+        frame.autoSwitchCheck:SetChecked(RoRotaDB.autoSwitch.enabled and 1 or nil)
+    end
+    if frame.soloProfileDD and RoRotaDB.autoSwitch and RoRotaDB.autoSwitch.soloProfile then
+        UIDropDownMenu_SetSelectedValue(frame.soloProfileDD, RoRotaDB.autoSwitch.soloProfile)
+        UIDropDownMenu_SetText(RoRotaDB.autoSwitch.soloProfile, frame.soloProfileDD)
+    end
+    if frame.groupProfileDD and RoRotaDB.autoSwitch and RoRotaDB.autoSwitch.groupProfile then
+        UIDropDownMenu_SetSelectedValue(frame.groupProfileDD, RoRotaDB.autoSwitch.groupProfile)
+        UIDropDownMenu_SetText(RoRotaDB.autoSwitch.groupProfile, frame.groupProfileDD)
+    end
+    if frame.raidProfileDD and RoRotaDB.autoSwitch and RoRotaDB.autoSwitch.raidProfile then
+        UIDropDownMenu_SetSelectedValue(frame.raidProfileDD, RoRotaDB.autoSwitch.raidProfile)
+        UIDropDownMenu_SetText(RoRotaDB.autoSwitch.raidProfile, frame.raidProfileDD)
+    end
+end
+
+-- ============================================================================
+-- PREVIEW TAB
+-- ============================================================================
+
+function RoRotaGUI.CreatePreviewTab(parent, frame)
+    parent:Show()
+    parent:EnableMouse(false)
+    local y = -40
+    
+    local title = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    title:SetText("Preview Window Settings")
+    y = y - 40
+    
+    local toggleBtn = RoRotaGUI.CreateButton(nil, parent, 150, 25, "Toggle Preview")
+    toggleBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    toggleBtn:SetScript("OnClick", function()
+        if RoRota and RoRota.CreateRotationPreview then
+            RoRota:CreateRotationPreview()
+            if RoRotaPreviewFrame then
+                if RoRotaPreviewFrame:IsVisible() then
+                    RoRotaPreviewFrame:Hide()
+                else
+                    RoRotaPreviewFrame:Show()
+                end
+            end
+        end
+    end)
+    y = y - 40
+    
+    local depthLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    depthLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    depthLabel:SetText("Show abilities:")
+    
+    local depthDropdown = RoRotaGUI.CreateDropdown("RoRotaPreviewDepthDropdown", parent, 140, y, 60, {"1", "2", "3"}, function(value)
+        if RoRota and RoRota.db and RoRota.db.profile then
+            RoRota.db.profile.previewDepth = tonumber(value)
+        end
+    end)
+    frame.previewDepthDropdown = depthDropdown
+    y = y - 30
+    
+    local depthDesc = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    depthDesc:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+    depthDesc:SetText("1 = Current ability only")
+    y = y - 18
+    
+    local depthDesc2 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    depthDesc2:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+    depthDesc2:SetText("2 = Current + Next ability")
+    y = y - 18
+    
+    local depthDesc3 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    depthDesc3:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
+    depthDesc3:SetText("3 = Current + Next + Next+1 ability")
+end
+
+function RoRotaGUI.LoadPreviewTab(frame)
+    if frame.previewDepthDropdown and RoRota and RoRota.db and RoRota.db.profile then
+        local depth = RoRota.db.profile.previewDepth or 1
+        UIDropDownMenu_SetSelectedValue(frame.previewDepthDropdown, tostring(depth))
+    end
+end
+
+RoRotaGUIProfilesLoaded = true
+RoRotaGUIPreviewLoaded = true

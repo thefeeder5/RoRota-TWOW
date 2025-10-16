@@ -1,8 +1,12 @@
 --[[ casting ]]--
--- Cast detection and combat log event handlers.
--- Tracks enemy casting and handles immunity/Sap fail detection.
+-- Read-only target casting detection.
+-- Detects enemy casting via SuperWoW API or combat log fallback.
+--
+-- Key functions:
+--   IsTargetCasting() - Check if target is casting
+--   OnCastingEvent() - Handle casting events (called by events.lua)
 
--- return instantly if already loaded
+if not RoRota then return end
 if RoRota.casting then return end
 
 RoRota.currentTargetSpell = nil

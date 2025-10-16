@@ -1,69 +1,76 @@
--- RoRota State Module
--- Centralized state management with caching
--- Only caches frequently accessed values (energy, CP, health)
--- For buff/debuff checking, use buffs.lua functions directly
+--[[ state ]]--
+-- Read-only state queries.
+-- Direct WoW API calls with no caching or side effects.
+--
+-- Key functions:
+--   GetCurrentState() - Returns complete state snapshot
+--   IsInCombat() - Returns combat status
+--   HasTarget() - Returns target existence
+--   GetComboPoints() - Returns current CP
+--   GetEnergy() - Returns current energy
+--   IsStealthed() - Returns stealth status
 
-RoRota.State = {
-    -- Combat state
-    inCombat = false,
-    energy = 0,
-    comboPoints = 0,
-    
-    -- Player state
-    stealthed = false,
-    health = 0,
-    healthMax = 0,
-    healthPercent = 100,
-    
-    -- Target state
-    hasTarget = false,
-    targetHealth = 0,
-    targetHealthMax = 0,
-    targetHealthPercent = 100,
-    
-    -- Timestamps
-    lastUpdate = 0,
-}
+if not RoRota then return end
+if RoRota.state then return end
 
--- Update all state (called on rotation calculation)
+RoRota.State = {}
+
+-- Get complete state snapshot (read-only)
+function RoRota.State:GetCurrentState()
+	return {
+		energy = UnitMana("player"),
+		comboPoints = GetComboPoints("player", "target"),
+		inCombat = UnitAffectingCombat("player"),
+		stealthed = self:IsStealthed(),
+		hasTarget = self:HasTarget(),
+		healthPercent = self:GetHealthPercent(),
+		targetHealthPercent = self:GetTargetHealthPercent(),
+	}
+end
+
+-- Read-only state queries (no caching)
+
+function RoRota.State:IsInCombat()
+	return UnitAffectingCombat("player")
+end
+
+function RoRota.State:HasTarget()
+	return UnitExists("target") and not UnitIsDead("target")
+end
+
+function RoRota.State:GetComboPoints()
+	return GetComboPoints("player", "target")
+end
+
+function RoRota.State:GetEnergy()
+	return UnitMana("player")
+end
+
+function RoRota.State:IsStealthed()
+	local i = 1
+	while UnitBuff("player", i) do
+		local texture = UnitBuff("player", i)
+		if texture and string.find(texture, "Stealth") then
+			return true
+		end
+		i = i + 1
+		if i > 40 then break end
+	end
+	return false
+end
+
+function RoRota.State:GetHealthPercent()
+	return (UnitHealth("player") / UnitHealthMax("player")) * 100
+end
+
+function RoRota.State:GetTargetHealthPercent()
+	if not self:HasTarget() then return 100 end
+	return (UnitHealth("target") / UnitHealthMax("target")) * 100
+end
+
+-- Legacy compatibility (deprecated, use Cache instead)
 function RoRota.State:Update()
-    -- Update frequently accessed values
-    self.inCombat = UnitAffectingCombat("player")
-    self.energy = UnitMana("player")
-    self.comboPoints = GetComboPoints("player", "target")
-    self.stealthed = RoRota:HasPlayerBuff("Stealth")
-    
-    -- Player health
-    self.health = UnitHealth("player")
-    self.healthMax = UnitHealthMax("player")
-    self.healthPercent = (self.health / self.healthMax) * 100
-    
-    -- Target state
-    self.hasTarget = UnitExists("target") and not UnitIsDead("target")
-    if self.hasTarget then
-        self.targetHealth = UnitHealth("target")
-        self.targetHealthMax = UnitHealthMax("target")
-        self.targetHealthPercent = (self.targetHealth / self.targetHealthMax) * 100
-    else
-        self.targetHealth = 0
-        self.targetHealthMax = 0
-        self.targetHealthPercent = 0
-    end
-    
-    self.lastUpdate = GetTime()
+	-- No-op for backward compatibility
 end
 
-
-
--- Event handlers
-function RoRota.State:OnCombatStart()
-    self.inCombat = true
-end
-
-function RoRota.State:OnCombatEnd()
-    self.inCombat = false
-end
-
-function RoRota.State:OnAuraChange()
-    -- State update will happen on next rotation call
-end
+RoRota.state = true

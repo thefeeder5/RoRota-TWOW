@@ -1,13 +1,14 @@
 --[[ swingtimer ]]--
--- Weapon swing timer tracking for optimal builder usage.
--- Predicts next swing and queues builders with latency compensation.
+-- Weapon swing timer tracking.
+-- Tracks swing timing to avoid clipping auto-attacks with builders.
 --
--- Features:
---   - MH swing detection via combat log
---   - Weapon speed tracking
---   - Latency compensation using GetNetStats()
---   - Cast window: next_swing - latency - 0.1s
---   - Only affects SS/BS/NA builders
+-- Key function:
+--   CanUseBuilder() - Returns true if safe to use builder
+--
+-- Features: MH swing detection, latency compensation, queue window
+
+if not RoRota then return end
+if RoRota.swingtimer then return end
 
 RoRota.SwingTimer = RoRota.SwingTimer or {}
 
@@ -59,4 +60,4 @@ local frame = CreateFrame("Frame")
 frame:RegisterEvent("CHAT_MSG_COMBAT_SELF_HITS")
 frame:SetScript("OnEvent", OnEvent)
 
-RoRotaSwingTimerLoaded = true
+RoRota.swingtimer = true

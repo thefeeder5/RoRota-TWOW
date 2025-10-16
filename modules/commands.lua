@@ -6,6 +6,9 @@ if not RoRota then return end
 if RoRota.commands then return end
 
 function RoRota:HandleSlashCommand(msg)
+    if RoRota.Debug and RoRota.Debug.enabled then
+        RoRota.Debug:Log("HandleSlashCommand called with: '"..tostring(msg).."'")
+    end
     -- debug commands
     if msg == "checkbuffs" then
         if self.HasWeaponPoison then
@@ -44,20 +47,63 @@ function RoRota:HandleSlashCommand(msg)
         end
         return
     elseif msg == "preview" then
+        if RoRota.Debug and RoRota.Debug.enabled then
+            RoRota.Debug:Log("Preview command matched")
+        end
         if self.CreateRotationPreview then
+            if RoRota.Debug and RoRota.Debug.enabled then
+                RoRota.Debug:Log("CreateRotationPreview exists, calling it")
+            end
             self:CreateRotationPreview()
             if RoRotaPreviewFrame then
-                if RoRotaPreviewFrame:IsVisible() then
-                    RoRotaPreviewFrame:Hide()
-                else
-                    RoRotaPreviewFrame:Show()
+                if RoRota.Debug and RoRota.Debug.enabled then
+                    RoRota.Debug:Log("Frame exists, current enabled="..tostring(RoRotaPreviewFrame.enabled))
                 end
+                RoRotaPreviewFrame.enabled = not RoRotaPreviewFrame.enabled
+                if RoRota.Debug and RoRota.Debug.enabled then
+                    RoRota.Debug:Log("Toggled enabled to "..tostring(RoRotaPreviewFrame.enabled))
+                end
+                local hasTarget = UnitExists("target") and not UnitIsDead("target")
+                if RoRotaPreviewFrame.enabled then
+                    self:Print("Preview enabled (will show when you have a target)")
+                else
+                    self:Print("Preview disabled")
+                    RoRotaPreviewFrame:Hide()
+                end
+            else
+                self:Print("ERROR: RoRotaPreviewFrame is nil after CreateRotationPreview()")
+            end
+        else
+            self:Print("ERROR: CreateRotationPreview function not found")
+        end
+        return
+    elseif msg == "debug on" or msg == "debug" then
+        if self.Debug then
+            self.Debug:Show()
+            if RoRotaPreviewFrame then
+                RoRotaPreviewFrame.debugMode = true
+                RoRotaPreviewFrame:SetHeight(220)
             end
         end
         return
-
+    elseif msg == "debug off" then
+        if self.Debug then
+            self.Debug:SetEnabled(false)
+            self.Debug:SetTrace(false, true)
+            if RoRotaPreviewFrame then
+                RoRotaPreviewFrame.debugMode = false
+                RoRotaPreviewFrame:SetHeight(150)
+            end
+        end
+        return
+    elseif msg == "state" then
+        if self.Debug then self.Debug:ShowState() end
+        return
     elseif msg == "logs" then
         if self.Debug then self.Debug:ShowLogs(20) end
+        return
+    elseif msg == "perf" then
+        if self.Debug then self.Debug:ShowPerformance() end
         return
     elseif msg == "integration" or msg == "int" then
         if self.Integration and self.Integration.PrintStatus then
@@ -148,7 +194,7 @@ function RoRota:HandleSlashCommand(msg)
             self:Print("RoRota.planner="..tostring(self.planner).." RoRota.PlanRotation="..tostring(self.PlanRotation))
         end
         return
-    elseif msg == "debug" or msg == "cpdebug" then
+    elseif msg == "cpdebug" then
         if self.ToggleCPDebugWindow then
             self:ToggleCPDebugWindow()
         else
@@ -217,69 +263,65 @@ function RoRota:HandleSlashCommand(msg)
             end
         end
         return
-    elseif msg == "opener" then
-        if not UnitExists("target") then
-            self:Print("No target selected")
-            return
-        end
-        local openerCfg = self.db.profile.opener or {}
-        self:Print("=== Opener Config ===")
-        self:Print("Primary: "..(openerCfg.ability or "None"))
-        self:Print("Secondary: "..(openerCfg.secondaryAbility or "None"))
-        self:Print("Failsafe Attempts: "..(openerCfg.failsafeAttempts or -1))
-        self:Print("Pick Pocket: "..(openerCfg.pickPocket and "Yes" or "No"))
-        self:Print("Cold Blood: "..(openerCfg.useColdBlood and "Yes" or "No"))
-        local targetName = UnitName("target")
-        self:Print("Target: "..targetName)
+    elseif msg == "test" then
+        self:Print("=== Phase 9: Module Validation ===")
         
-        local primaryImmune = self:IsTargetImmune(openerCfg.ability)
-        self:Print("Is Immune to Primary: "..(primaryImmune and "YES" or "NO"))
-        if openerCfg.secondaryAbility then
-            local secondaryImmune = self:IsTargetImmune(openerCfg.secondaryAbility)
-            self:Print("Is Immune to Secondary: "..(secondaryImmune and "YES" or "NO"))
-        end
-        
-        self:Print("\n=== Logic Trace ===")
-        local opener = openerCfg.ability
-        self:Print("1. Initial opener: "..(opener or "nil"))
-        
-        if opener and primaryImmune and openerCfg.secondaryAbility then
-            self:Print("2. Immunity check: Switching to secondary")
-            opener = openerCfg.secondaryAbility
+        -- Test cache
+        if RoRota.Cache then
+            RoRota.Cache:Update()
+            local stats = RoRota.Cache:GetStats()
+            self:Print("Cache: OK (" .. string.format("%.1f%%", stats.hitRate) .. " hit rate)")
         else
-            self:Print("2. Immunity check: No switch")
+            self:Print("Cache: MISSING")
         end
-        self:Print("   Current opener: "..(opener or "nil"))
         
-        if self.GetOpenerAbility then
-            local result = self:GetOpenerAbility()
-            self:Print("\nGetOpenerAbility() returns: "..(result or "nil"))
+        -- Test state
+        if RoRota.State and RoRota.State.GetCurrentState then
+            local state = RoRota.State:GetCurrentState()
+            self:Print("State: OK (" .. state.energy .. " energy, " .. state.comboPoints .. " CP)")
+        else
+            self:Print("State: MISSING")
         end
-        return
-    elseif msg == "immunity" then
-        if not UnitExists("target") then
-            self:Print("No target selected")
-            return
+        
+        -- Test abilities
+        if RoRota.HasSpell and RoRota.GetEnergyCost and RoRota.IsFinisher then
+            local hasSS = RoRota:HasSpell("Sinister Strike")
+            local cost = RoRota:GetEnergyCost("Sinister Strike")
+            self:Print("Abilities: OK (SS: " .. (hasSS and "Yes" or "No") .. ", cost: " .. cost .. ")")
+        else
+            self:Print("Abilities: MISSING")
         end
-        local targetName = UnitName("target")
-        self:Print("=== Immunity Check: "..targetName.." ===")
-        if RoRotaDB and RoRotaDB.immunities and RoRotaDB.immunities[targetName] then
-            self:Print("Immune to:")
-            for ability in pairs(RoRotaDB.immunities[targetName]) do
-                self:Print("  - "..ability)
+        
+        -- Test decision modules
+        local decisions = {
+            {"Interrupt", RoRota.GetInterruptAbility},
+            {"Defensive", RoRota.GetDefensiveAbility},
+            {"Opener", RoRota.GetOpenerAbility},
+            {"Planner", RoRota.GetRotationAbility}
+        }
+        for _, d in ipairs(decisions) do
+            if d[2] then
+                self:Print(d[1] .. ": OK")
+            else
+                self:Print(d[1] .. ": MISSING")
             end
+        end
+        
+        -- Test calculation modules
+        if RoRota.CanKillWithEviscerate and RoRota.GetEnergyTickTime then
+            self:Print("Calculations: OK")
         else
-            self:Print("No immunities recorded")
+            self:Print("Calculations: MISSING")
         end
-        if RoRotaDB and RoRotaDB.noPockets and RoRotaDB.noPockets[targetName] then
-            self:Print("Has no pockets: YES")
-        end
+        
+        self:Print("=== Test Complete ===")
         return
     elseif msg == "help" then
         self:Print("=== RoRota Commands ===")
         self:Print("/rr - Open settings")
+        self:Print("/rr test - Run module validation (Phase 9)")
         self:Print("/rr preview - Toggle rotation preview")
-        self:Print("/rr debug - Toggle CP planning debug window")
+        self:Print("/rr cpdebug - Toggle CP planning debug window")
         self:Print("/rr cpplan - Show CP planning timeline & pacing")
         self:Print("/rr log - Show rotation decision log (last 15)")
         self:Print("/rr clearlog - Clear rotation log")
@@ -288,7 +330,10 @@ function RoRota:HandleSlashCommand(msg)
         self:Print("/rr talents - Show CP talent info")
         self:Print("/rr plan - Show planner recommendation")
         self:Print("/rr integration - Show SuperWoW/Nampower status")
-        self:Print("/rr immunity - Check target immunity database")
+        self:Print("/rr debug - Toggle debug mode (shows in preview)")
+        self:Print("/rr state - Show current state")
+        self:Print("/rr logs - Show recent debug logs")
+        self:Print("/rr perf - Show performance stats")
         self:Print("/rr poison - Test poison warnings")
         return
     end

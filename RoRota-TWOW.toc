@@ -2,12 +2,48 @@
 ## Title: RoRota (Rogue One-Button Rotation)
 ## Author: feeder5 (vibe coding ftw)
 ## Notes: Helps you with rotation as a rogue.
-## Version: 0.8.0 Release
+## Version: 0.8.0
 ## SavedVariables: RoRotaDB
-
-Libs\acelibs.xml
+Libs\AceLibrary\AceLibrary.lua
+Libs\AceOO-2.0\AceOO-2.0.lua
+Libs\AceAddon-2.0\AceAddon-2.0.lua
+Libs\AceDB-2.0\AceDB-2.0.lua
+Libs\AceConsole-2.0\AceConsole-2.0.lua
+Libs\AceEvent-2.0\AceEvent-2.0.lua
+Libs\AceLocale-2.2\AceLocale-2.2.lua
+Libs\Dewdrop-2.0\Dewdrop-2.0.lua
 modules\constants.lua
 modules\defaultprofile.lua
 Core.lua
-init.xml
+modules\debug.lua
+modules\state.lua
+modules\cache.lua
+modules\abilities.lua
+modules\talents.lua
+modules\buffs.lua
+modules\damage.lua
+modules\immunity.lua
+modules\casting.lua
+modules\energytick.lua
+modules\timeline.lua
+modules\cppacing.lua
+modules\rotationlog.lua
+modules\planner.lua
+modules\interrupt.lua
+modules\defensive.lua
+modules\opener.lua
+modules\commands.lua
+modules\events.lua
+modules\integration.lua
+modules\swingtimer.lua
+modules\helpers.lua
+modules\rotation.lua
+modules\poisons.lua
+modules\profileswitcher.lua
+modules\gui_widgets.lua
+modules\gui_menu.lua
+modules\gui.lua
+modules\gui_minimap.lua
+modules\gui_preview.lua
+modules\gui_cpdebug.lua
 Bindings.xml

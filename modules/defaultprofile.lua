@@ -3,8 +3,8 @@
 
 RoRotaDefaultProfile = {
 	abilities = {
-		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2},
-		Eviscerate = {enabled = true, maxCP = 5},
+		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
+		Eviscerate = {enabled = true, targetMinHP = 0, targetMaxHP = 100, onlyElites = false, smartEviscerate = true, useColdBlood = false, coldBloodMinCP = 4},
 		SinisterStrike = {enabled = true},
 		NoxiousAssault = {enabled = false},
 		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 0, targetMaxHP = 100, onlyElites = false},
@@ -25,7 +25,6 @@ RoRotaDefaultProfile = {
 		failsafeAttempts = 3,
 		pickPocket = false,
 		sapFailAction = "None",
-		useColdBlood = false,
 	},
 	interrupt = {
 		useKick = true,
@@ -35,8 +34,6 @@ RoRotaDefaultProfile = {
 	},
 	finisherPriority = {"Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Cold Blood Eviscerate"},
 	smartRupture = true,
-	useColdBloodEviscerate = false,
-	coldBloodMinCP = 4,
 	energyPooling = {
 		enabled = true,
 		threshold = 10,

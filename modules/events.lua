@@ -23,33 +23,48 @@ end
 
 function RoRota:CHAT_MSG_SPELL_SELF_DAMAGE()
     if self.OnSelfSpellEvent then self:OnSelfSpellEvent(arg1) end
+    
+    -- Track builder casts for failsafe (resets counter on successful cast)
+    if self.OnBuilderCast and self.db and self.db.profile then
+        local mainBuilder = self.db.profile.mainBuilder
+        if mainBuilder and string.find(arg1, mainBuilder) then
+            self:OnBuilderCast(mainBuilder)
+        end
+    end
 end
 
 function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
 end
 
--- Error messages (immunity, no pockets)
+-- Error messages (immunity, no pockets, positioning)
 function RoRota:UI_ERROR_MESSAGE()
     if self.OnErrorMessage then self:OnErrorMessage(arg1) end
+    
+    -- Track positioning errors
+    if string.find(arg1, "must be") and (string.find(arg1, "behind") or string.find(arg1, "front")) then
+        -- Check if in stealth (opener error) or not (builder error)
+        local isStealthed = self.Cache and self.Cache.stealthed or false
+        if isStealthed and self.OnOpenerPositionError then
+            self:OnOpenerPositionError()
+        elseif not isStealthed and self.OnBuilderPositionError then
+            self:OnBuilderPositionError()
+        end
+    end
 end
 
 -- Combat state
 function RoRota:PLAYER_REGEN_DISABLED()
-    if self.State then self.State:OnCombatStart() end
     if self.OnCombatStart then self:OnCombatStart() end
 end
 
 function RoRota:PLAYER_REGEN_ENABLED()
-    if self.State then self.State:OnCombatEnd() end
     if self.CheckPendingSwitch then self:CheckPendingSwitch() end
 end
 
 -- Aura changes
 function RoRota:UNIT_AURA()
-    if arg1 == "player" or arg1 == "target" then
-        if self.State then self.State:OnAuraChange() end
-    end
+    -- Cache will update on next rotation cycle
 end
 
 -- Group state
@@ -59,15 +74,6 @@ end
 
 function RoRota:RAID_ROSTER_UPDATE()
     if self.OnGroupStateChange then self:OnGroupStateChange() end
-end
-
--- Talent changes
-function RoRota:CHARACTER_POINTS_CHANGED()
-    if self.UpdateAllTalents then self:UpdateAllTalents() end
-end
-
-function RoRota:PLAYER_ENTERING_WORLD()
-    if self.UpdateAllTalents then self:UpdateAllTalents() end
 end
 
 RoRota.events = true

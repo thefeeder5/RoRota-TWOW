@@ -25,11 +25,12 @@ function RoRotaGUI.LoadAllTabs(frame)
     
     if RoRotaGUI.LoadAboutTab then RoRotaGUI.LoadAboutTab(frame) end
     if RoRotaGUI.LoadOpenersTab then RoRotaGUI.LoadOpenersTab(frame) end
-    if RoRotaGUI.LoadBuildersTab then RoRotaGUI.LoadBuildersTab(frame) end
-    if RoRotaGUI.LoadFinishersTab then RoRotaGUI.LoadFinishersTab(frame) end
-    if RoRotaGUI.LoadDefensiveTab then RoRotaGUI.LoadDefensiveTab(frame) end
+    if RoRotaGUI.LoadBuildersTab and frame.tabs[3] and frame.tabs[3].content then RoRotaGUI.LoadBuildersTab(frame.tabs[3].content) end
+    if RoRotaGUI.LoadFinishersTab and frame.tabs[4] and frame.tabs[4].content then RoRotaGUI.LoadFinishersTab(frame.tabs[4].content) end
+    if RoRotaGUI.LoadDefensiveTab and frame.tabs[5] and frame.tabs[5].content then RoRotaGUI.LoadDefensiveTab(frame.tabs[5].content) end
     if RoRotaGUI.LoadPoisonsTab then RoRotaGUI.LoadPoisonsTab(frame) end
     if RoRotaGUI.LoadProfilesTab then RoRotaGUI.LoadProfilesTab(frame) end
+    if RoRotaGUI.LoadPreviewTab then RoRotaGUI.LoadPreviewTab(frame) end
 end
 
 function RoRota:CreateGUI()
@@ -56,7 +57,7 @@ function RoRota:CreateGUI()
     
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", f, "TOP", 0, -10)
-    title:SetText("RoRota")
+    title:SetText("RoRota v0.8.0")
     
     local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 0)
@@ -91,7 +92,6 @@ function RoRota:CreateGUI()
     slider:SetMinMaxValues(0, 340)
     slider:SetValueStep(10)
     slider:SetValue(0)
-    RoRotaGUI.CreateBackdrop(slider)
     slider:SetScript("OnValueChanged", function()
         scrollFrame:SetVerticalScroll(this:GetValue())
     end)
@@ -108,9 +108,9 @@ function RoRota:CreateGUI()
     end)
 
     f.tabs = {}
-    local tabNames = {"About", "Openers", "Builders", "Finishers", "Defensive", "Poisons", "Profiles"}
+    local tabNames = {"About", "Openers", "Builders", "Finishers", "Defensive", "Poisons", "Profiles", "Preview"}
     
-    for i = 1, 7 do
+    for i = 1, 8 do
         local idx = i
         local btn = RoRotaGUI.CreateSidebarButton(sidebar, -40 - (i-1)*35, tabNames[i], function()
             ShowTab(f, idx)
@@ -139,7 +139,7 @@ function RoRota:CreateGUI()
     t3:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     t3:Hide()
     f.tabs[3].content = t3
-    if RoRotaGUI.CreateBuildersTab then RoRotaGUI.CreateBuildersTab(t3, f) end
+    if RoRotaGUI.CreateBuildersTab then RoRotaGUI.CreateBuildersTab(t3, t3) end
     
     local t4 = CreateFrame("Frame", nil, content)
     t4:SetWidth(480)
@@ -147,7 +147,7 @@ function RoRota:CreateGUI()
     t4:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     t4:Hide()
     f.tabs[4].content = t4
-    if RoRotaGUI.CreateFinishersTab then RoRotaGUI.CreateFinishersTab(t4, f) end
+    if RoRotaGUI.CreateFinishersTab then RoRotaGUI.CreateFinishersTab(t4, t4) end
     
     local t5 = CreateFrame("Frame", nil, content)
     t5:SetWidth(480)
@@ -155,7 +155,7 @@ function RoRota:CreateGUI()
     t5:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     t5:Hide()
     f.tabs[5].content = t5
-    if RoRotaGUI.CreateDefensiveTab then RoRotaGUI.CreateDefensiveTab(t5, f) end
+    if RoRotaGUI.CreateDefensiveTab then RoRotaGUI.CreateDefensiveTab(t5, t5) end
     
     local t6 = CreateFrame("Frame", nil, content)
     t6:SetWidth(480)
@@ -172,6 +172,14 @@ function RoRota:CreateGUI()
     t7:Hide()
     f.tabs[7].content = t7
     if RoRotaGUI.CreateProfilesTab then RoRotaGUI.CreateProfilesTab(t7, f) end
+    
+    local t8 = CreateFrame("Frame", nil, content)
+    t8:SetWidth(480)
+    t8:SetHeight(800)
+    t8:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    t8:Hide()
+    f.tabs[8].content = t8
+    if RoRotaGUI.CreatePreviewTab then RoRotaGUI.CreatePreviewTab(t8, f) end
     
     ShowTab(f, 1)
 end

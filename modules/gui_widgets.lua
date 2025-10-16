@@ -243,15 +243,14 @@ function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     return eb
 end
 
--- create editbox for decimal input (0.1 precision)
+-- create editbox for decimal input
 function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, callback)
     local eb = CreateFrame("EditBox", name, parent)
     eb:SetWidth(width or 50)
     eb:SetHeight(20)
     eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
     eb:SetAutoFocus(false)
-    eb:SetNumeric(false)
-    eb:SetMaxLetters(4)
+    eb:SetMaxLetters(5)
     
     RoRotaGUI.CreateBackdrop(eb)
     eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
@@ -259,40 +258,14 @@ function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, cal
     eb:SetFontObject("GameFontHighlight")
     eb:SetTextInsets(5, 5, 0, 0)
     
-    local function validate()
-        local text = this:GetText()
-        local num = tonumber(text)
-        if num then
-            if num < min then num = min end
-            if num > max then num = max end
-            num = math.floor(num * 10 + 0.5) / 10
-            this:SetText(string.format("%.1f", num))
-            if callback then callback(num) end
-        else
-            this:SetText(string.format("%.1f", min))
-            if callback then callback(min) end
-        end
-    end
-    
-    eb:SetScript("OnEnterPressed", function()
-        validate()
-        this:ClearFocus()
-    end)
-    eb:SetScript("OnEditFocusLost", validate)
-
-    local font = eb:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    eb:SetFontObject("GameFontHighlight")
-    eb:SetTextInsets(5, 5, 0, 0)
-    
     eb:SetScript("OnEnterPressed", function()
         this:ClearFocus()
-        local val = tonumber(this:GetText()) or (min or 0)
-        if min and val < min then val = min end
-        if max and val > max then val = max end
-        this:SetText(string.format("%.1f", val))
-        if callback then callback(val) end
+        local value = tonumber(this:GetText()) or 0
+        if min and value < min then value = min end
+        if max and value > max then value = max end
+        this:SetText(string.format("%.1f", value))
+        if callback then callback(value) end
     end)
-
     eb:SetScript("OnEscapePressed", function()
         this:ClearFocus()
     end)
@@ -304,6 +277,92 @@ end
 function RoRotaGUI.CreateSettingRow(parent, y, labelText, controlX)
     local label = RoRotaGUI.CreateLabel(parent, 20, y, labelText)
     return label, controlX or 350
+end
+
+-- create horizontal tab button
+function RoRotaGUI.CreateHorizontalTab(parent, x, text, onClick)
+    local btn = CreateFrame("Button", nil, parent)
+    btn:SetWidth(85)
+    btn:SetHeight(25)
+    btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, 0)
+    RoRotaGUI.CreateBackdrop(btn)
+    btn:SetNormalTexture("")
+    btn:SetHighlightTexture("")
+    btn:SetPushedTexture("")
+    
+    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
+    btn.text:SetText(text)
+    
+    btn:SetScript("OnEnter", function()
+        if not this.active then
+            this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
+        end
+    end)
+    btn:SetScript("OnLeave", function()
+        if not this.active then
+            this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+        end
+    end)
+    btn:SetScript("OnClick", onClick)
+    
+    return btn
+end
+
+-- set horizontal tab active
+function RoRotaGUI.SetHorizontalTabActive(btn, active)
+    if active then
+        btn:SetBackdropBorderColor(0.2, 1, 0.8, 1)
+        btn.text:SetTextColor(1, 1, 1)
+        btn.active = true
+    else
+        btn:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+        btn.text:SetTextColor(0.6, 0.6, 0.6)
+        btn.active = false
+    end
+end
+
+-- create subtab button
+function RoRotaGUI.CreateSubTab(parent, y, text, onClick)
+    local btn = CreateFrame("Button", nil, parent)
+    btn:SetWidth(80)
+    btn:SetHeight(22)
+    btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, y)
+    RoRotaGUI.CreateBackdrop(btn)
+    btn:SetNormalTexture("")
+    btn:SetHighlightTexture("")
+    btn:SetPushedTexture("")
+    
+    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
+    btn.text:SetText(text)
+    
+    btn:SetScript("OnEnter", function()
+        if not this.active then
+            this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
+        end
+    end)
+    btn:SetScript("OnLeave", function()
+        if not this.active then
+            this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+        end
+    end)
+    btn:SetScript("OnClick", onClick)
+    
+    return btn
+end
+
+-- set subtab active
+function RoRotaGUI.SetSubTabActive(btn, active)
+    if active then
+        btn:SetBackdropBorderColor(0.2, 1, 0.8, 1)
+        btn.text:SetTextColor(1, 1, 1)
+        btn.active = true
+    else
+        btn:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+        btn.text:SetTextColor(0.6, 0.6, 0.6)
+        btn.active = false
+    end
 end
 
 RoRotaGUIWidgetsLoaded = true

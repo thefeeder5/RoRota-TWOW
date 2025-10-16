@@ -1,8 +1,13 @@
 --[[ damage ]]--
--- Damage calculation functions for finishers.
--- Handles overkill prevention and execute calculations.
+-- Pure damage calculation functions.
+-- Calculates finisher damage with all modifiers (talents, buffs, AP).
+--
+-- Key functions:
+--   GetAttackPower() - Get current AP
+--   CanKillWithEviscerate(cp) - Check if Eviscerate will kill target
+--   WouldOverkill(ability, cp) - Check if ability would overkill
 
--- return instantly if already loaded
+if not RoRota then return end
 if RoRota.damage then return end
 
 function RoRota:GetAttackPower()

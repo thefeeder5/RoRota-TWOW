@@ -1,14 +1,48 @@
 --[[ helpers ]]--
--- Utility functions for rotation system.
--- This module contains general helper functions that don't fit into specific modules.
+-- Shared utility functions.
+-- General helpers that don't fit into specific modules.
 --
--- Functions moved to specialized modules:
---   abilities.lua - HasSpell, GetEnergyCost, HasEnoughEnergy, IsOnCooldown, GetSpellRank
---   buffs.lua - HasPlayerBuff, HasTargetDebuff, GetBuffTimeRemaining, GetDebuffTimeRemaining
---   damage.lua - WouldOverkill, CanKillWithEviscerate, GetAttackPower
---   talents.lua - All talent modifier functions
---   immunity.lua - IsTargetImmune, TargetHasNoPockets, ProcessImmunity, UsedSap
---   casting.lua - IsTargetCasting, all event handlers
+-- Key functions:
+--   UpdateRotationCache() - Cache energy costs and talent values
+--   GetThreatSituation() - Get threat level
+--   IsInGroupOrRaid() - Check if in group
+--   IsTargetElite/Boss/Rare() - Target classification
+--
+-- Note: Most helpers moved to specialized modules (abilities, buffs, damage, etc.)
+
+-- Global rotation cache (updated on login and talent changes)
+RoRota.RotationCache = {
+	dirty = true,
+	energyCosts = {},
+	maxEnergy = 100,
+	ruthlessnessChance = 0,
+	lastUpdate = 0
+}
+
+function RoRota:UpdateRotationCache()
+	local cache = self.RotationCache
+	
+	-- Cache energy costs for common abilities
+	for _, ability in ipairs({"Sinister Strike", "Backstab", "Hemorrhage", "Ghostly Strike", "Eviscerate", "Rupture", "Slice and Dice", "Envenom", "Expose Armor", "Kick", "Gouge", "Feint"}) do
+		cache.energyCosts[ability] = self:GetEnergyCost(ability)
+	end
+	
+	-- Cache max energy from Vigor talent
+	cache.maxEnergy = 100
+	if self.TalentCache and self.TalentCache.vigor and self.TalentCache.vigor > 0 then
+		cache.maxEnergy = 110
+	end
+	
+	-- Cache Ruthlessness chance
+	cache.ruthlessnessChance = self:GetRuthlessnessChance()
+	
+	cache.dirty = false
+	cache.lastUpdate = GetTime()
+end
+
+function RoRota:InvalidateRotationCache()
+	self.RotationCache.dirty = true
+end
 
 function RoRota:GetThreatSituation()
     if UnitThreatSituation then
@@ -67,10 +101,17 @@ function RoRota:NeedsPoisonApplication()
 	return false
 end
 
--- Rotation Preview
+-- Target classification helpers
+function RoRota:GetTargetClassification()
+	if not UnitExists("target") then return nil end
+	local classification = UnitClassification("target")
+	return classification
+end
 
--- Rotation reason (for debug display)
-RoRota.rotationReason = ""
+function RoRota:IsTargetElite()
+	local classification = self:GetTargetClassification()
+	return classification == "elite" or classification == "worldboss" or classification == "rareelite"
+end
 
 function RoRota:IsTargetBoss()
 	local classification = self:GetTargetClassification()
@@ -82,20 +123,10 @@ function RoRota:IsTargetRare()
 	return classification == "rare" or classification == "rareelite"
 end
 
--- Check if ability is a finisher
-function RoRota:IsFinisher(ability)
-	if not ability then return false end
-	return ability == "Eviscerate" or ability == "Slice and Dice" or ability == "Rupture" 
-		or ability == "Envenom" or ability == "Expose Armor" or ability == "Kidney Shot"
-		or ability == "Cold Blood"
-end
+-- Rotation reason (for debug display)
+RoRota.rotationReason = ""
 
--- Calculate expected CP after using a builder (accounts for Seal Fate, etc.)
-function RoRota:CalculateExpectedCP(ability, currentCP)
-	if not ability or self:IsFinisher(ability) then
-		return currentCP
-	end
-	
-	local expectedCP = math.min(5, currentCP + 1)
-	return expectedCP
-end
+if not RoRota then return end
+if RoRota.helpers then return end
+
+RoRota.helpers = true
