@@ -40,16 +40,6 @@ function RoRota:GetDefensiveAbility()
 		end
 	end
 	
-	-- Riposte (reactive after parry)
-	if defensive.useRiposte and self:HasSpell("Riposte") and self:HasEnoughEnergy("Riposte") and not self:IsOnCooldown("Riposte") then
-		return "Riposte"
-	end
-	
-	-- Surprise Attack (reactive after dodge)
-	if defensive.useSurpriseAttack and self:HasSpell("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") and not self:IsOnCooldown("Surprise Attack") then
-		return "Surprise Attack"
-	end
-	
 	return nil
 end
 

@@ -67,7 +67,6 @@ end
 function RoRota:OnBuilderCast(ability)
 	local mainBuilder = self.db.profile.mainBuilder
 	local secondaryBuilder = self.db.profile.secondaryBuilder
-	-- Reset counter if either main or secondary builder casts
 	if ability == mainBuilder or ability == secondaryBuilder then
 		builder_attempts = 0
 		last_builder_cast = ability
@@ -83,8 +82,17 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	if finisher == "Slice and Dice" then finisherKey = "SliceAndDice"
 	elseif finisher == "Expose Armor" then finisherKey = "ExposeArmor"
 	elseif finisher == "Cold Blood Eviscerate" then finisherKey = "ColdBloodEviscerate"
+	elseif finisher == "Shadow of Death" then finisherKey = "ShadowOfDeath"
 	end
 	local cfg = cache.abilities[finisherKey]
+	
+	if finisher == "Rupture" and cfg and cfg.tasteForBlood and self:IsTargetImmune(finisher) then
+		if self:HasPlayerBuff("Taste for Blood") then
+			return false
+		end
+	elseif self:IsTargetImmune(finisher) then
+		return false
+	end
 	
 	-- Cold Blood Eviscerate: special handling
 	if finisher == "Cold Blood Eviscerate" then
@@ -242,7 +250,7 @@ function RoRota:PlanRotation(state)
 		db = self.db.profile,
 		abilities = self.db.profile.abilities or {},
 		defensive = self.db.profile.defensive or {},
-		finisherPrio = self.db.profile.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor"},
+		finisherPrio = self.db.profile.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Shadow of Death"},
 		refreshThreshold = self.db.profile.finisherRefreshThreshold or 2,
 		mainBuilder = state.mainBuilder,
 		targetHPPct = UnitHealth("target") / UnitHealthMax("target") * 100,
@@ -262,7 +270,7 @@ function RoRota:PlanRotation(state)
 	end
 	
 	-- Execute phase: Smart Eviscerate (kill at any CP)
-	if state.cp >= 1 and cache.db.smartEviscerate then
+	if state.cp >= 1 and cache.db.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
 		if self:CanKillWithEviscerate(state.cp) and state.energy >= cache.energyCosts["Eviscerate"] then
 			-- Use Cold Blood if configured and available
 			local coldBloodMinCP = cache.db.coldBloodMinCP or 4
@@ -355,7 +363,68 @@ function RoRota:PlanRotation(state)
 	
 	-- Build phase: CP < 5, need to build
 	if state.cp < 5 then
-		-- Builder selection with failsafe
+		if cache.defensive.useRiposte and self.riposteAvailable and (GetTime() - self.riposteAvailable) < 5 then
+			if self:HasSpell("Riposte") and self:HasEnoughEnergy("Riposte") and not self:IsOnCooldown("Riposte") then
+				local targetMinHP = cache.defensive.riposteTargetMinHP or 0
+				local targetMaxHP = cache.defensive.riposteTargetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					return "Riposte", REASON.BUILD, state.cp + 1
+				end
+			end
+		end
+		
+		if cache.defensive.useSurpriseAttack and self.surpriseAttackAvailable and (GetTime() - self.surpriseAttackAvailable) < 5 then
+			if self:HasSpell("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") and not self:IsOnCooldown("Surprise Attack") then
+				local targetMinHP = cache.defensive.surpriseTargetMinHP or 0
+				local targetMaxHP = cache.defensive.surpriseTargetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					return "Surprise Attack", REASON.BUILD, state.cp + 2
+				end
+			end
+		end
+		
+		if cache.abilities.MarkForDeath and cache.abilities.MarkForDeath.enabled then
+			if self:HasSpell("Mark for Death") and self:HasEnoughEnergy("Mark for Death") and not self:IsOnCooldown("Mark for Death") then
+				local targetMinHP = cache.abilities.MarkForDeath.targetMinHP or 0
+				local targetMaxHP = cache.abilities.MarkForDeath.targetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					if cache.abilities.MarkForDeath.onlyElites and not self:IsTargetElite() then
+					else
+						return "Mark for Death", REASON.BUILD, state.cp + 2
+					end
+				end
+			end
+		end
+		
+		if cache.abilities.Hemorrhage and cache.abilities.Hemorrhage.enabled then
+			if self:HasSpell("Hemorrhage") and self:HasEnoughEnergy("Hemorrhage") then
+				local targetMinHP = cache.abilities.Hemorrhage.targetMinHP or 0
+				local targetMaxHP = cache.abilities.Hemorrhage.targetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					if cache.abilities.Hemorrhage.onlyElites and not self:IsTargetElite() then
+					else
+						local shouldUse = true
+						if cache.abilities.Hemorrhage.onlyWhenMissing then
+							shouldUse = not self:HasTargetDebuff("Hemorrhage")
+						end
+						if shouldUse then
+							return "Hemorrhage", REASON.BUILD, state.cp + 1
+						end
+					end
+				end
+			end
+		end
+		
+		if cache.defensive.useGhostlyStrike and self:HasSpell("Ghostly Strike") and not self:IsOnCooldown("Ghostly Strike") and not self:IsTargetImmune("Ghostly Strike") then
+			if state.energy >= cache.energyCosts["Ghostly Strike"] then
+				if cache.targetHPPct <= (cache.defensive.ghostlyTargetMaxHP or 100) and 
+				   cache.playerHPPct >= (cache.defensive.ghostlyPlayerMinHP or 0) and 
+				   cache.playerHPPct <= (cache.defensive.ghostlyPlayerMaxHP or 100) then
+					return "Ghostly Strike", REASON.GHOSTLY, 0
+				end
+			end
+		end
+		
 		local builder = cache.mainBuilder
 		local failsafeThreshold = cache.db.builderFailsafeAttempts or 3
 		if builder_attempts >= failsafeThreshold and cache.db.secondaryBuilder then
@@ -363,14 +432,15 @@ function RoRota:PlanRotation(state)
 		end
 		local builderCost = cache.energyCosts[builder] or 40
 		
-		-- Ghostly Strike conditional builder
-		if cache.defensive.useGhostlyStrike and self:HasSpell("Ghostly Strike") and not self:IsOnCooldown("Ghostly Strike") then
-			if state.energy >= cache.energyCosts["Ghostly Strike"] then
-				if cache.targetHPPct <= (cache.defensive.ghostlyTargetMaxHP or 100) and 
-				   cache.playerHPPct >= (cache.defensive.ghostlyPlayerMinHP or 0) and 
-				   cache.playerHPPct <= (cache.defensive.ghostlyPlayerMaxHP or 100) then
-					return "Ghostly Strike", REASON.GHOSTLY, 0
-				end
+		-- Check immunity before using builder
+		if self:IsTargetImmune(builder) then
+			-- Try secondary builder if main is immune
+			if cache.db.secondaryBuilder and not self:IsTargetImmune(cache.db.secondaryBuilder) then
+				builder = cache.db.secondaryBuilder
+				builderCost = cache.energyCosts[builder] or 40
+				builder_attempts = 0
+			else
+				return nil, REASON.BUILD, 0
 			end
 		end
 		
@@ -391,7 +461,7 @@ function RoRota:PlanRotation(state)
 	end
 	
 	-- Fallback: dump CP at 5 with Eviscerate
-	if state.cp >= 5 then
+	if state.cp >= 5 and not self:IsTargetImmune("Eviscerate") then
 		local cost = cache.energyCosts["Eviscerate"] or 30
 		if state.energy >= cost then
 			return "Eviscerate", REASON.CP_DUMP, 0

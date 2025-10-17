@@ -28,6 +28,8 @@ RoRota.targetCasting = false
 RoRota.castingTimeout = 0
 RoRota.sapFailed = false
 RoRota.sapFailTime = 0
+RoRota.riposteAvailable = 0
+RoRota.surpriseAttackAvailable = 0
 RoRota.lastPoisonApply = 0
 RoRota.poisonApplyPending = nil
 RoRota.poisonApplyTime = 0
@@ -93,6 +95,9 @@ function RoRota:OnEnable()
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE")
+    self:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
+    self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES")
+    self:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
     self:RegisterEvent("UI_ERROR_MESSAGE")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")

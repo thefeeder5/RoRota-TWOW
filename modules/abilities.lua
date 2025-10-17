@@ -104,7 +104,7 @@ function RoRota:GetSpellRank(spellName)
 end
 
 function RoRota:IsFinisher(abilityName)
-	local finishers = {"Eviscerate", "Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Kidney Shot"}
+	local finishers = {"Eviscerate", "Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Kidney Shot", "Shadow of Death"}
 	for _, finisher in ipairs(finishers) do
 		if abilityName == finisher then return true end
 	end
@@ -112,7 +112,7 @@ function RoRota:IsFinisher(abilityName)
 end
 
 function RoRota:IsBuilder(abilityName)
-	local builders = {"Sinister Strike", "Backstab", "Hemorrhage", "Noxious Assault", "Ghostly Strike", "Ambush", "Garrote", "Cheap Shot"}
+	local builders = {"Sinister Strike", "Backstab", "Hemorrhage", "Noxious Assault", "Ghostly Strike", "Ambush", "Garrote", "Cheap Shot", "Mark for Death", "Riposte", "Surprise Attack"}
 	for _, builder in ipairs(builders) do
 		if abilityName == builder then return true end
 	end
@@ -123,6 +123,8 @@ function RoRota:GetAbilityCP(abilityName)
 	local baseCP = 1
 	
 	if abilityName == "Cheap Shot" then
+		baseCP = 2
+	elseif abilityName == "Mark for Death" then
 		baseCP = 2
 	end
 	

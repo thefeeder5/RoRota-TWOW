@@ -64,12 +64,15 @@ function RoRota:CreateMinimapButton()
 				info.notCheckable = true
 				info.func = function()
 					if RoRota.CreateRotationPreview then
-						RoRota:CreateRotationPreview()
+						if not RoRotaPreviewFrame then
+							RoRota:CreateRotationPreview()
+						end
 						if RoRotaPreviewFrame then
-							if RoRotaPreviewFrame:IsVisible() then
-								RoRotaPreviewFrame:Hide()
+							RoRotaPreviewFrame.enabled = not RoRotaPreviewFrame.enabled
+							if RoRotaPreviewFrame.enabled then
+								RoRota:Print("Preview enabled")
 							else
-								RoRotaPreviewFrame:Show()
+								RoRota:Print("Preview disabled")
 							end
 						end
 					end

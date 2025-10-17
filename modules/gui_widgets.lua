@@ -322,11 +322,10 @@ function RoRotaGUI.SetHorizontalTabActive(btn, active)
     end
 end
 
--- create subtab button
 function RoRotaGUI.CreateSubTab(parent, y, text, onClick)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetWidth(80)
-    btn:SetHeight(22)
+    btn:SetHeight(30)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, y)
     RoRotaGUI.CreateBackdrop(btn)
     btn:SetNormalTexture("")
@@ -336,6 +335,8 @@ function RoRotaGUI.CreateSubTab(parent, y, text, onClick)
     btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
     btn.text:SetText(text)
+    btn.text:SetJustifyH("CENTER")
+    btn.text:SetWidth(75)
     
     btn:SetScript("OnEnter", function()
         if not this.active then

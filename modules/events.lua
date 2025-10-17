@@ -24,11 +24,13 @@ end
 function RoRota:CHAT_MSG_SPELL_SELF_DAMAGE()
     if self.OnSelfSpellEvent then self:OnSelfSpellEvent(arg1) end
     
-    -- Track builder casts for failsafe (resets counter on successful cast)
     if self.OnBuilderCast and self.db and self.db.profile then
         local mainBuilder = self.db.profile.mainBuilder
+        local secondaryBuilder = self.db.profile.secondaryBuilder
         if mainBuilder and string.find(arg1, mainBuilder) then
             self:OnBuilderCast(mainBuilder)
+        elseif secondaryBuilder and string.find(arg1, secondaryBuilder) then
+            self:OnBuilderCast(secondaryBuilder)
         end
     end
 end
@@ -37,7 +39,22 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
 end
 
--- Error messages (immunity, no pockets, positioning)
+function RoRota:CHAT_MSG_COMBAT_SELF_MISSES()
+    if string.find(arg1, "parry") then
+        self.riposteAvailable = GetTime()
+    end
+end
+
+function RoRota:CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES()
+    if string.find(arg1, "dodge") then
+        self.surpriseAttackAvailable = GetTime()
+    end
+end
+
+function RoRota:CHAT_MSG_COMBAT_HOSTILE_DEATH()
+    if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
+end
+
 function RoRota:UI_ERROR_MESSAGE()
     if self.OnErrorMessage then self:OnErrorMessage(arg1) end
     
