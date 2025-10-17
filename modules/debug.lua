@@ -356,7 +356,10 @@ function RoRota.Debug:CreateWindow()
     f:SetScript("OnUpdate", function()
         if RoRota.Debug.paused then return end
         if not this.lastUpdate then this.lastUpdate = 0 end
-        if GetTime() - this.lastUpdate > 0.5 then
+        if GetTime() - this.lastUpdate > 0.1 then
+            if RoRota.Cache and RoRota.Cache.Update then
+                RoRota.Cache:Update()
+            end
             RoRota.Debug:UpdateStateDisplay()
             this.lastUpdate = GetTime()
         end

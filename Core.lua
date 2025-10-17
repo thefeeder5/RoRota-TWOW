@@ -89,6 +89,8 @@ function RoRota:OnEnable()
     end
     
     -- event registration (handlers in modules/events.lua)
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("CHARACTER_POINTS_CHANGED")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF")

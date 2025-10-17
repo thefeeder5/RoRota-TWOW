@@ -67,12 +67,22 @@ function RoRota:CreateRotationPreview()
 		local depth = RoRota.db.profile.previewDepth or 1
 		this:SetHeight(depth * 32)
 		
-		-- Get abilities
-		local queue = RoRota:PredictNextAbilities(depth)
+		-- Get abilities using real rotation logic
 		local abilities = {}
-		for i = 1, table.getn(queue) do
-			if queue[i] then
-				table.insert(abilities, queue[i])
+		if RoRota.GetRotationAbility then
+			local ability = RoRota:GetRotationAbility()
+			if ability then
+				table.insert(abilities, ability)
+			end
+		end
+		
+		-- Fill remaining slots with simplified prediction
+		if table.getn(abilities) < depth then
+			local queue = RoRota:PredictNextAbilities(depth)
+			for i = 1, table.getn(queue) do
+				if queue[i] and table.getn(abilities) < depth then
+					table.insert(abilities, queue[i])
+				end
 			end
 		end
 		

@@ -173,7 +173,12 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	if state.energy < cache.energyCosts[finisher] then return false end
 	
-	local timeRemaining = self:GetBuffTimeRemaining(finisher)
+	local timeRemaining
+	if finisher == "Rupture" or finisher == "Expose Armor" then
+		timeRemaining = self:GetDebuffTimeRemaining(finisher)
+	else
+		timeRemaining = self:GetBuffTimeRemaining(finisher)
+	end
 	local threshold = cache.refreshThreshold
 	
 	local duration = self:CalculateFinisherDuration(finisher, state.cp)
@@ -207,7 +212,12 @@ function RoRota:GetOptimalFinisher(state, cache)
 						return "Cold Blood", REASON.CB_EVIS, 0
 					end
 				else
-					local timeRemaining = self:GetBuffTimeRemaining(finisher)
+					local timeRemaining
+					if finisher == "Rupture" or finisher == "Expose Armor" then
+						timeRemaining = self:GetDebuffTimeRemaining(finisher)
+					else
+						timeRemaining = self:GetBuffTimeRemaining(finisher)
+					end
 					return finisher, REASON.EXPIRING, timeRemaining
 				end
 			end
