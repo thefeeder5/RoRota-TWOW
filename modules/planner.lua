@@ -426,7 +426,7 @@ function RoRota:PlanRotation(state)
 		end
 		
 		local builder = cache.mainBuilder
-		local failsafeThreshold = cache.db.builderFailsafeAttempts or 3
+		local failsafeThreshold = cache.db.builderFailsafe or 3
 		if builder_attempts >= failsafeThreshold and cache.db.secondaryBuilder then
 			builder = cache.db.secondaryBuilder
 		end
