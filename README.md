@@ -4,8 +4,6 @@
 **Target:** Vanilla WoW 1.12.1 (Turtle WoW)  
 **Author:** feeder5
 
-**Architecture:** Refactored modular system (Phases 1-10 complete)
-
 ---
 
 ## Features
