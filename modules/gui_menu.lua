@@ -1725,6 +1725,18 @@ function RoRotaGUI.CreateProfilesTab(parent, frame)
     
     local deleteBtn = RoRotaGUI.CreateButton(nil, parent, 120, 25, "Delete Profile")
     deleteBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 150, y)
+    
+    local exportBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    exportBtn:SetWidth(120)
+    exportBtn:SetHeight(25)
+    exportBtn:SetText("Export/Import")
+    exportBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 280, y)
+    RoRotaGUI.SkinButton(exportBtn)
+    exportBtn:SetScript("OnClick", function()
+        if RoRota and RoRota.ShowExportWindow then
+            RoRota:ShowExportWindow()
+        end
+    end)
     y = y - 50
     
     RoRotaGUI.CreateLabel(parent, 20, y, "Enable Auto-Switching")
@@ -1972,4 +1984,338 @@ function RoRotaGUI.LoadPreviewTab(frame)
 end
 
 RoRotaGUIProfilesLoaded = true
+
+-- ============================================================================
+-- IMMUNITIES TAB (with subtabs)
+-- ============================================================================
+
+function RoRotaGUI.CreateImmunitiesTab(parent, frame)
+    local subtabBar = CreateFrame("Frame", nil, parent)
+    subtabBar:SetWidth(90)
+    subtabBar:SetHeight(500)
+    subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    subtabBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        tile = true, tileSize = 16, edgeSize = 0,
+        insets = {left = 0, right = 0, top = 0, bottom = 0}
+    })
+    subtabBar:SetBackdropColor(0, 0, 0, 0.5)
+    
+    local contentArea = CreateFrame("Frame", nil, parent)
+    contentArea:SetWidth(390)
+    contentArea:SetHeight(500)
+    contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
+    
+    local subtabs = {"Bleed", "Stun", "Incapacitate"}
+    frame.immunitySubtabs = {}
+    frame.immunitySubtabFrames = {}
+    
+    for i, name in ipairs(subtabs) do
+        local index = i
+        local btn = RoRotaGUI.CreateSubTab(subtabBar, -10 - (i-1)*33, name, function()
+            RoRotaGUI.ShowImmunitySubTab(frame, index)
+        end)
+        frame.immunitySubtabs[i] = {button = btn, name = name}
+        
+        local subFrame = CreateFrame("Frame", nil, contentArea)
+        subFrame:SetWidth(390)
+        subFrame:SetHeight(500)
+        subFrame:SetPoint("TOPLEFT", contentArea, "TOPLEFT", 0, 0)
+        subFrame:Hide()
+        frame.immunitySubtabFrames[i] = subFrame
+    end
+    
+    if RoRotaGUI.CreateImmunitySubTab then
+        RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[1], "bleed")
+        RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[2], "stun")
+        RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[3], "incapacitate")
+    end
+    
+    RoRotaGUI.ShowImmunitySubTab(frame, 1)
+end
+
+function RoRotaGUI.ShowImmunitySubTab(frame, index)
+    for i = 1, table.getn(frame.immunitySubtabFrames) do
+        if i == index then
+            frame.immunitySubtabFrames[i]:Show()
+            RoRotaGUI.SetSubTabActive(frame.immunitySubtabs[i].button, true)
+        else
+            frame.immunitySubtabFrames[i]:Hide()
+            RoRotaGUI.SetSubTabActive(frame.immunitySubtabs[i].button, false)
+        end
+    end
+    -- Refresh after showing
+    if frame.immunitySubtabFrames[index] and frame.immunitySubtabFrames[index].Refresh then
+        frame.immunitySubtabFrames[index]:Refresh()
+    end
+end
+
+function RoRotaGUI.CreateImmunitySubTab(parent, groupName)
+    local y = -10
+    
+    -- Top section: Active immunities
+    local topLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    topLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    topLabel:SetText("Targets added to immune group")
+    y = y - 20
+    
+    local topScroll = CreateFrame("ScrollFrame", nil, parent)
+    topScroll:SetWidth(350)
+    topScroll:SetHeight(180)
+    topScroll:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    
+    local topList = CreateFrame("Frame", nil, topScroll)
+    topList:SetWidth(350)
+    topList:SetHeight(1)
+    topScroll:SetScrollChild(topList)
+    
+    local topSlider = CreateFrame("Slider", nil, topScroll)
+    topSlider:SetPoint("TOPRIGHT", topScroll, "TOPRIGHT", 18, 0)
+    topSlider:SetPoint("BOTTOMRIGHT", topScroll, "BOTTOMRIGHT", 18, 0)
+    topSlider:SetWidth(16)
+    topSlider:SetOrientation("VERTICAL")
+    topSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Vertical")
+    topSlider:SetMinMaxValues(0, 100)
+    topSlider:SetValue(0)
+    topSlider:SetScript("OnValueChanged", function()
+        topScroll:SetVerticalScroll(this:GetValue())
+    end)
+    parent.topSlider = topSlider
+    parent.topSliderMax = 100
+    topScroll:EnableMouseWheel(true)
+    topScroll:SetScript("OnMouseWheel", function()
+        if not parent.topSlider then return end
+        local current = parent.topSlider:GetValue()
+        local maxVal = parent.topSliderMax or 100
+        local step = 20
+        if arg1 > 0 then
+            parent.topSlider:SetValue(math.max(0, current - step))
+        else
+            parent.topSlider:SetValue(math.min(maxVal, current + step))
+        end
+    end)
+    
+    y = y - 190
+    
+    -- Bottom section: Ignored targets
+    local bottomLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bottomLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    bottomLabel:SetText("Targets ignored in immune group")
+    y = y - 20
+    
+    local bottomScroll = CreateFrame("ScrollFrame", nil, parent)
+    bottomScroll:SetWidth(350)
+    bottomScroll:SetHeight(180)
+    bottomScroll:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    
+    local bottomList = CreateFrame("Frame", nil, bottomScroll)
+    bottomList:SetWidth(350)
+    bottomList:SetHeight(1)
+    bottomScroll:SetScrollChild(bottomList)
+    
+    local bottomSlider = CreateFrame("Slider", nil, bottomScroll)
+    bottomSlider:SetPoint("TOPRIGHT", bottomScroll, "TOPRIGHT", 18, 0)
+    bottomSlider:SetPoint("BOTTOMRIGHT", bottomScroll, "BOTTOMRIGHT", 18, 0)
+    bottomSlider:SetWidth(16)
+    bottomSlider:SetOrientation("VERTICAL")
+    bottomSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Vertical")
+    bottomSlider:SetMinMaxValues(0, 100)
+    bottomSlider:SetValue(0)
+    bottomSlider:SetScript("OnValueChanged", function()
+        bottomScroll:SetVerticalScroll(this:GetValue())
+    end)
+    parent.bottomSlider = bottomSlider
+    parent.bottomSliderMax = 100
+    bottomScroll:EnableMouseWheel(true)
+    bottomScroll:SetScript("OnMouseWheel", function()
+        if not parent.bottomSlider then return end
+        local current = parent.bottomSlider:GetValue()
+        local maxVal = parent.bottomSliderMax or 100
+        local step = 20
+        if arg1 > 0 then
+            parent.bottomSlider:SetValue(math.max(0, current - step))
+        else
+            parent.bottomSlider:SetValue(math.min(maxVal, current + step))
+        end
+    end)
+    
+    parent.topList = topList
+    parent.bottomList = bottomList
+    parent.groupName = groupName
+    
+    function parent:Refresh()
+        if not RoRota then return end
+        
+        -- Get active immune targets
+        local activeTargets = RoRota:GetImmuneTargets(self.groupName) or {}
+        
+        -- Get ignored targets
+        local ignoredTargets = RoRota:GetIgnoredTargets(self.groupName) or {}
+        
+        -- Clear top list
+        local topChildren = {self.topList:GetChildren()}
+        for i = 1, table.getn(topChildren) do
+            topChildren[i]:Hide()
+        end
+        
+        -- Clear bottom list
+        local bottomChildren = {self.bottomList:GetChildren()}
+        for i = 1, table.getn(bottomChildren) do
+            bottomChildren[i]:Hide()
+        end
+        
+        -- Populate top list (active immunities)
+        local yPos = -5
+        for _, tName in ipairs(activeTargets) do
+            local row = CreateFrame("Frame", nil, self.topList)
+            row:SetWidth(360)
+            row:SetHeight(22)
+            row:SetPoint("TOPLEFT", self.topList, "TOPLEFT", 0, yPos)
+            
+            local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            nameText:SetPoint("LEFT", row, "LEFT", 5, 0)
+            nameText:SetText(tName)
+            
+            local deleteBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+            deleteBtn:SetWidth(50)
+            deleteBtn:SetHeight(18)
+            deleteBtn:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+            deleteBtn:SetText("Delete")
+            deleteBtn.targetName = tName
+            RoRotaGUI.SkinButton(deleteBtn)
+            deleteBtn:SetScript("OnClick", function()
+                RoRota:RemoveImmunity(this.targetName)
+                parent:Refresh()
+            end)
+            
+            local ignoreBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+            ignoreBtn:SetWidth(50)
+            ignoreBtn:SetHeight(18)
+            ignoreBtn:SetPoint("RIGHT", deleteBtn, "LEFT", -3, 0)
+            ignoreBtn:SetText("Ignore")
+            ignoreBtn.targetName = tName
+            ignoreBtn.groupName = self.groupName
+            RoRotaGUI.SkinButton(ignoreBtn)
+            ignoreBtn:SetScript("OnClick", function()
+                RoRota:IgnoreImmunity(this.targetName, this.groupName)
+                parent:Refresh()
+            end)
+            
+            yPos = yPos - 24
+        end
+        local topHeight = math.max(1, math.abs(yPos))
+        self.topList:SetHeight(topHeight)
+        if self.topSlider then
+            local maxVal = math.max(0, topHeight - 180)
+            self.topSlider:SetMinMaxValues(0, maxVal)
+            self.topSliderMax = maxVal
+        end
+        
+        -- Populate bottom list (ignored targets)
+        yPos = -5
+        for _, tName in ipairs(ignoredTargets) do
+            local row = CreateFrame("Frame", nil, self.bottomList)
+            row:SetWidth(360)
+            row:SetHeight(22)
+            row:SetPoint("TOPLEFT", self.bottomList, "TOPLEFT", 0, yPos)
+            
+            local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            nameText:SetPoint("LEFT", row, "LEFT", 5, 0)
+            nameText:SetText(tName)
+            nameText:SetTextColor(0.6, 0.6, 0.6)
+            
+            local unignoreBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+            unignoreBtn:SetWidth(60)
+            unignoreBtn:SetHeight(18)
+            unignoreBtn:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+            unignoreBtn:SetText("Unignore")
+            unignoreBtn.targetName = tName
+            unignoreBtn.groupName = self.groupName
+            RoRotaGUI.SkinButton(unignoreBtn)
+            unignoreBtn:SetScript("OnClick", function()
+                RoRota:UnignoreImmunity(this.targetName, this.groupName)
+                parent:Refresh()
+            end)
+            
+            yPos = yPos - 24
+        end
+        local bottomHeight = math.max(1, math.abs(yPos))
+        self.bottomList:SetHeight(bottomHeight)
+        if self.bottomSlider then
+            local maxVal = math.max(0, bottomHeight - 180)
+            self.bottomSlider:SetMinMaxValues(0, maxVal)
+            self.bottomSliderMax = maxVal
+        end
+    end
+    
+    y = y - 190
+    
+    local addBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    addBtn:SetWidth(100)
+    addBtn:SetHeight(25)
+    addBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    addBtn:SetText("Add Target")
+    RoRotaGUI.SkinButton(addBtn)
+    addBtn:SetScript("OnClick", function()
+        local dialogName = "ROROTA_ADD_IMMUNITY_"..string.upper(parent.groupName)
+        StaticPopupDialogs[dialogName] = {
+            text = "Enter target name:",
+            button1 = "Add",
+            button2 = "Cancel",
+            hasEditBox = 1,
+            maxLetters = 50,
+            OnAccept = function()
+                local name = getglobal(this:GetParent():GetName().."EditBox"):GetText()
+                if name and name ~= "" then
+                    RoRota:AddImmunity(name, parent.groupName)
+                    parent:Refresh()
+                end
+            end,
+            OnShow = function()
+                getglobal(this:GetName().."EditBox"):SetFocus()
+            end,
+            EditBoxOnEnterPressed = function()
+                local name = this:GetText()
+                if name and name ~= "" then
+                    RoRota:AddImmunity(name, parent.groupName)
+                    parent:Refresh()
+                end
+                this:GetParent():Hide()
+            end,
+            EditBoxOnEscapePressed = function()
+                this:GetParent():Hide()
+            end,
+            timeout = 0,
+            whileDead = 1,
+            hideOnEscape = 1
+        }
+        StaticPopup_Show(dialogName)
+    end)
+    
+    local clearBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    clearBtn:SetWidth(80)
+    clearBtn:SetHeight(25)
+    clearBtn:SetPoint("LEFT", addBtn, "RIGHT", 10, 0)
+    clearBtn:SetText("Clear All")
+    RoRotaGUI.SkinButton(clearBtn)
+    clearBtn:SetScript("OnClick", function()
+        if not RoRotaDB or not RoRotaDB.immunities then return end
+        local targets = RoRota:GetImmuneTargets(parent.groupName)
+        for _, targetName in ipairs(targets) do
+            RoRota:RemoveImmunity(targetName)
+        end
+        parent:Refresh()
+    end)
+end
+
+function RoRotaGUI.LoadImmunitiesTab(frame)
+    if not frame.immunitySubtabFrames then return end
+    for i = 1, table.getn(frame.immunitySubtabFrames) do
+        if frame.immunitySubtabFrames[i].Refresh then
+            frame.immunitySubtabFrames[i]:Refresh()
+        end
+    end
+end
+
+RoRotaGUIImmunitiesLoaded = true
 RoRotaGUIPreviewLoaded = true

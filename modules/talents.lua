@@ -70,10 +70,12 @@ function RoRota:UpdateAllTalents()
 end
 
 function RoRota:GetImprovedEviscerateMod()
-    local _, _, _, _, rank = GetTalentInfo(1, 1)
-    if rank == 1 then return 1.05
-    elseif rank == 2 then return 1.10
-    elseif rank == 3 then return 1.15
+    if self.TalentCache and self.TalentCache.improvedEviscerate then
+        local rank = self.TalentCache.improvedEviscerate
+        if rank == 1 then return 1.05
+        elseif rank == 2 then return 1.10
+        elseif rank == 3 then return 1.15
+        end
     end
     return 1.0
 end
@@ -106,19 +108,23 @@ function RoRota:GetTasteForBloodMod()
 end
 
 function RoRota:GetAggressionMod()
-    local _, _, _, _, rank = GetTalentInfo(2, 17)
-    if rank == 1 then return 1.03
-    elseif rank == 2 then return 1.06
-    elseif rank == 3 then return 1.10
+    if self.TalentCache and self.TalentCache.aggression then
+        local rank = self.TalentCache.aggression
+        if rank == 1 then return 1.03
+        elseif rank == 2 then return 1.06
+        elseif rank == 3 then return 1.10
+        end
     end
     return 1.0
 end
 
 function RoRota:GetSerratedBladesMod()
-    local _, _, _, _, rank = GetTalentInfo(3, 6)
-    if rank == 1 then return 1.10
-    elseif rank == 2 then return 1.20
-    elseif rank == 3 then return 1.30
+    if self.TalentCache and self.TalentCache.serratedBlades then
+        local rank = self.TalentCache.serratedBlades
+        if rank == 1 then return 1.10
+        elseif rank == 2 then return 1.20
+        elseif rank == 3 then return 1.30
+        end
     end
     return 1.0
 end

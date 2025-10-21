@@ -41,9 +41,6 @@ local REASON = {
 local builder_attempts = 0
 local last_builder_cast = nil
 
--- Cold Blood Eviscerate state tracking
-local cb_evis_ready = false
-
 function RoRota:ResetBuilderState()
 	builder_attempts = 0
 	last_builder_cast = nil
@@ -73,18 +70,18 @@ function RoRota:OnBuilderCast(ability)
 	end
 end
 
-function RoRota:ResetCBEvisState()
-	cb_evis_ready = false
+-- Helper: Convert finisher display name to config key
+local function GetFinisherKey(finisher)
+	if finisher == "Slice and Dice" then return "SliceAndDice"
+	elseif finisher == "Expose Armor" then return "ExposeArmor"
+	elseif finisher == "Cold Blood Eviscerate" then return "ColdBloodEviscerate"
+	elseif finisher == "Shadow of Death" then return "ShadowOfDeath"
+	end
+	return finisher
 end
 
 function RoRota:ShouldRefreshFinisher(finisher, state, cache)
-	local finisherKey = finisher
-	if finisher == "Slice and Dice" then finisherKey = "SliceAndDice"
-	elseif finisher == "Expose Armor" then finisherKey = "ExposeArmor"
-	elseif finisher == "Cold Blood Eviscerate" then finisherKey = "ColdBloodEviscerate"
-	elseif finisher == "Shadow of Death" then finisherKey = "ShadowOfDeath"
-	end
-	local cfg = cache.abilities[finisherKey]
+	local cfg = cache.abilities[GetFinisherKey(finisher)]
 	
 	if finisher == "Rupture" and cfg and cfg.tasteForBlood and self:IsTargetImmune(finisher) then
 		if self:HasPlayerBuff("Taste for Blood") then
@@ -96,31 +93,14 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	-- Cold Blood Eviscerate: special handling
 	if finisher == "Cold Blood Eviscerate" then
-		if not cfg or not cfg.enabled then 
-			cb_evis_ready = false
-			return false 
-		end
-		if state.cp < (cfg.minCP or 5) then 
-			cb_evis_ready = false
-			return false 
-		end
-		if not self:HasSpell("Cold Blood") then 
-			cb_evis_ready = false
-			return false 
-		end
+		if not cfg or not cfg.enabled then return false end
+		if state.cp < (cfg.minCP or 5) then return false end
+		if not self:HasSpell("Cold Blood") then return false end
 		-- Check cooldown only if buff is not active
-		local cbBuffActive = self:HasPlayerBuff("Cold Blood")
-		if not cbBuffActive then
-			-- No buff, check if CB is available
-			if self:IsOnCooldown("Cold Blood") then 
-				cb_evis_ready = false
-				return false 
-			end
+		if not self:HasPlayerBuff("Cold Blood") and self:IsOnCooldown("Cold Blood") then
+			return false
 		end
-		if state.energy < cache.energyCosts["Eviscerate"] then 
-			cb_evis_ready = false
-			return false 
-		end
+		if state.energy < cache.energyCosts["Eviscerate"] then return false end
 		
 		-- Target HP check
 		local targetMinHP = cfg.targetMinHP or 0
@@ -226,12 +206,6 @@ function RoRota:GetOptimalFinisher(state, cache)
 	return nil, nil, 0
 end
 
--- Energy pooling is REMOVED - it caused more problems than it solved
--- The rotation now just builds/spends CPs naturally without complex pooling logic
-function RoRota:ShouldPoolEnergy(state, pacing, cache)
-	return false, nil, 0
-end
-
 function RoRota:GetOptimalFinisherWithTimeline(state, pacing, cache)
 	local finisher, reason, data = self:GetOptimalFinisher(state, cache)
 	if finisher then
@@ -279,20 +253,6 @@ function RoRota:PlanRotation(state)
 		self.PlannerCache.lastBuffCheck = now
 	end
 	
-	-- Execute phase: Smart Eviscerate (kill at any CP)
-	if state.cp >= 1 and cache.db.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
-		if self:CanKillWithEviscerate(state.cp) and state.energy >= cache.energyCosts["Eviscerate"] then
-			-- Use Cold Blood if configured and available
-			local coldBloodMinCP = cache.db.coldBloodMinCP or 4
-			if cache.db.useColdBloodEviscerate and state.cp >= coldBloodMinCP then
-				if self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
-					return "Cold Blood", REASON.EXECUTE, state.cp
-				end
-			end
-			return "Eviscerate", REASON.EXECUTE, state.cp
-		end
-	end
-	
 	local pacing = self:CalculateCPPacing(state)
 	
 	-- Early exit: CP = 0 always builds (optimization #3)
@@ -302,40 +262,37 @@ function RoRota:PlanRotation(state)
 	
 	-- CP overflow prevention: at 5 CP, check if we should wait for deadline
 	if state.cp == 5 then
-		-- Check if Cold Blood Eviscerate is enabled and high priority
-		local cbEvisConfig = cache.abilities.ColdBloodEviscerate
-		if cbEvisConfig and cbEvisConfig.enabled and self:HasSpell("Cold Blood") then
-			local cbCooldown = self:GetCooldownRemaining("Cold Blood")
-			if cbCooldown > 0 and cbCooldown <= 5 then
-				-- Check if CB Evis is high priority in the list
-				local cbEvisPriority = nil
-				for i, finisher in ipairs(cache.finisherPrio) do
-					if finisher == "Cold Blood Eviscerate" then
-						cbEvisPriority = i
-						break
+		-- Check if Cold Blood Eviscerate is enabled and high priority (only if player has CB)
+		if self:HasSpell("Cold Blood") then
+			local cbEvisConfig = cache.abilities.ColdBloodEviscerate
+			if cbEvisConfig and cbEvisConfig.enabled then
+				local cbCooldown = self:GetCooldownRemaining("Cold Blood")
+				if cbCooldown > 0 and cbCooldown <= 5 then
+					-- Check if CB Evis is high priority in the list
+					local cbEvisPriority = nil
+					for i, finisher in ipairs(cache.finisherPrio) do
+						if finisher == "Cold Blood Eviscerate" then
+							cbEvisPriority = i
+							break
+						end
+					end
+					
+					-- If CB Evis is in priority list, wait for it unless energy would overcap
+					if cbEvisPriority then
+						local maxEnergy = cache.maxEnergy or 100
+						local wouldOvercap = state.energy >= (maxEnergy - 20)
+						if not wouldOvercap then
+							return nil, REASON.SAVE_CP, cbCooldown
+						end
 					end
 				end
-				
-				-- If CB Evis is in priority list, wait for it unless energy would overcap
-				if cbEvisPriority then
-					local maxEnergy = cache.maxEnergy or 100
-					local wouldOvercap = state.energy >= (maxEnergy - 20)
-					if not wouldOvercap then
-						return nil, REASON.SAVE_CP, cbCooldown
-					end
 				end
-			end
 		end
 		
 		-- Don't use finisher if deadline expires within 5s (wait for refresh)
 		-- UNLESS: high energy risks overcap OR deadline finisher can't be used at current CP
 		if pacing.deadline and not pacing.deadline.virtual and pacing.deadline.expiresIn > 0 and pacing.deadline.expiresIn <= 5 then
-			local deadlineFinisher = pacing.deadline.name
-			local finisherKey = deadlineFinisher
-			if deadlineFinisher == "Slice and Dice" then finisherKey = "SliceAndDice"
-			elseif deadlineFinisher == "Expose Armor" then finisherKey = "ExposeArmor"
-			end
-			local deadlineCfg = cache.abilities[finisherKey]
+			local deadlineCfg = cache.abilities[GetFinisherKey(pacing.deadline.name)]
 			
 			-- Check if deadline finisher can be used at current CP
 			local canUseAtCurrentCP = false
@@ -362,6 +319,21 @@ function RoRota:PlanRotation(state)
 	end
 	
 	local finisher, reason, data = self:GetOptimalFinisherWithTimeline(state, pacing, cache)
+	
+	-- Execute phase: Smart Eviscerate (kill at any CP) - OVERRIDES finisher priority
+	local evisConfig = cache.abilities.Eviscerate or {}
+	if state.cp >= 1 and evisConfig.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
+		if self:CanKillWithEviscerate(state.cp) and state.energy >= cache.energyCosts["Eviscerate"] then
+			-- Use Cold Blood if configured and available
+			if evisConfig.useColdBlood and state.cp >= (evisConfig.coldBloodMinCP or 4) then
+				if self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
+					return "Cold Blood", REASON.EXECUTE, state.cp
+				end
+			end
+			return "Eviscerate", REASON.EXECUTE, state.cp
+		end
+	end
+	
 	if finisher then
 		return finisher, reason, data
 	end

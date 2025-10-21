@@ -30,6 +30,7 @@ function RoRotaGUI.LoadAllTabs(frame)
     if RoRotaGUI.LoadDefensiveTab and frame.tabs[5] and frame.tabs[5].content then RoRotaGUI.LoadDefensiveTab(frame.tabs[5].content) end
     if RoRotaGUI.LoadPoisonsTab then RoRotaGUI.LoadPoisonsTab(frame) end
     if RoRotaGUI.LoadProfilesTab then RoRotaGUI.LoadProfilesTab(frame) end
+    if RoRotaGUI.LoadImmunitiesTab and frame.tabs[8] and frame.tabs[8].content then RoRotaGUI.LoadImmunitiesTab(frame.tabs[8].content) end
     if RoRotaGUI.LoadPreviewTab then RoRotaGUI.LoadPreviewTab(frame) end
 end
 
@@ -108,11 +109,11 @@ function RoRota:CreateGUI()
     end)
 
     f.tabs = {}
-    local tabNames = {"About", "Openers", "Builders", "Finishers", "Defensive", "Poisons", "Profiles", "Preview"}
+    local tabNames = {"About", "Openers", "Builders", "Finishers", "Defensive", "Poisons", "Profiles", "Immunities", "Preview"}
     
-    for i = 1, 8 do
+    for i = 1, 9 do
         local idx = i
-        local btn = RoRotaGUI.CreateSidebarButton(sidebar, -40 - (i-1)*35, tabNames[i], function()
+        local btn = RoRotaGUI.CreateSidebarButton(sidebar, -40 - (i-1)*32, tabNames[i], function()
             ShowTab(f, idx)
         end)
         f.tabs[i] = {button = btn}
@@ -179,7 +180,15 @@ function RoRota:CreateGUI()
     t8:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     t8:Hide()
     f.tabs[8].content = t8
-    if RoRotaGUI.CreatePreviewTab then RoRotaGUI.CreatePreviewTab(t8, f) end
+    if RoRotaGUI.CreateImmunitiesTab then RoRotaGUI.CreateImmunitiesTab(t8, t8) end
+    
+    local t9 = CreateFrame("Frame", nil, content)
+    t9:SetWidth(480)
+    t9:SetHeight(800)
+    t9:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    t9:Hide()
+    f.tabs[9].content = t9
+    if RoRotaGUI.CreatePreviewTab then RoRotaGUI.CreatePreviewTab(t9, f) end
     
     ShowTab(f, 1)
 end

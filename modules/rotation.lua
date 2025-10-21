@@ -106,6 +106,8 @@ local function RoRotaRunRotationInternal()
 		if RoRota.Debug and RoRota.Debug.enabled then
 			RoRota.Debug:LogCast(ability, "Target casting")
 		end
+		RoRota.lastAbilityCast = ability
+		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(ability)
 		RoRota.targetCasting = false
@@ -119,6 +121,8 @@ local function RoRotaRunRotationInternal()
 		if RoRota.Debug and RoRota.Debug.enabled then
 			RoRota.Debug:LogCast(ability, "Defensive ability")
 		end
+		RoRota.lastAbilityCast = ability
+		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(ability)
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
@@ -131,6 +135,8 @@ local function RoRotaRunRotationInternal()
 		if RoRota.Debug and RoRota.Debug.enabled then
 			RoRota.Debug:LogCast(ability, "Opener from stealth")
 		end
+		RoRota.lastAbilityCast = ability
+		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(ability)
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
@@ -158,6 +164,8 @@ local function RoRotaRunRotationInternal()
 			RoRota.Debug:LogCast(ability, reason or "Rotation decision")
 		end
 		
+		RoRota.lastAbilityCast = ability
+		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(ability)
 		
