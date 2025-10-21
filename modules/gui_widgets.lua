@@ -215,7 +215,7 @@ function RoRotaGUI.SetSidebarButtonActive(btn, active)
     end
 end
 
--- create editbox for numeric input
+-- create editbox for numeric input (generic)
 function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     local eb = CreateFrame("EditBox", name, parent)
     eb:SetWidth(width or 30)
@@ -223,7 +223,7 @@ function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
     eb:SetAutoFocus(false)
     eb:SetNumeric(true)
-    eb:SetMaxLetters(3)
+    eb:SetMaxLetters(10)
     
     RoRotaGUI.CreateBackdrop(eb)
     eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
@@ -235,6 +235,68 @@ function RoRotaGUI.CreateEditBox(name, parent, x, y, width, callback)
     eb:SetScript("OnEnterPressed", function()
         this:ClearFocus()
         if callback then callback(tonumber(this:GetText()) or 0) end
+    end)
+    eb:SetScript("OnEscapePressed", function()
+        this:ClearFocus()
+    end)
+    
+    return eb
+end
+
+-- create editbox for percentage (0-100)
+function RoRotaGUI.CreatePercentEditBox(name, parent, x, y, callback)
+    local eb = CreateFrame("EditBox", name, parent)
+    eb:SetWidth(40)
+    eb:SetHeight(20)
+    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
+    eb:SetAutoFocus(false)
+    eb:SetNumeric(true)
+    eb:SetMaxLetters(3)
+    
+    RoRotaGUI.CreateBackdrop(eb)
+    eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    
+    eb:SetFontObject("GameFontHighlight")
+    eb:SetTextInsets(5, 5, 0, 0)
+    
+    eb:SetScript("OnEnterPressed", function()
+        this:ClearFocus()
+        local value = tonumber(this:GetText()) or 0
+        if value < 0 then value = 0 end
+        if value > 100 then value = 100 end
+        this:SetText(tostring(value))
+        if callback then callback(value) end
+    end)
+    eb:SetScript("OnEscapePressed", function()
+        this:ClearFocus()
+    end)
+    
+    return eb
+end
+
+-- create editbox for flat HP (0-9999999)
+function RoRotaGUI.CreateFlatHPEditBox(name, parent, x, y, callback)
+    local eb = CreateFrame("EditBox", name, parent)
+    eb:SetWidth(80)
+    eb:SetHeight(20)
+    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
+    eb:SetAutoFocus(false)
+    eb:SetNumeric(true)
+    eb:SetMaxLetters(10)
+    
+    RoRotaGUI.CreateBackdrop(eb)
+    eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    
+    eb:SetFontObject("GameFontHighlight")
+    eb:SetTextInsets(5, 5, 0, 0)
+    
+    eb:SetScript("OnEnterPressed", function()
+        this:ClearFocus()
+        local value = tonumber(this:GetText()) or 0
+        if value < 0 then value = 0 end
+        if value > 9999999 then value = 9999999 end
+        this:SetText(tostring(value))
+        if callback then callback(value) end
     end)
     eb:SetScript("OnEscapePressed", function()
         this:ClearFocus()

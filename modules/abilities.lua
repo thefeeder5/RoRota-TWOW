@@ -139,4 +139,12 @@ function RoRota:GetAbilityCP(abilityName)
 	return baseCP
 end
 
+function RoRota:IsSpellUsable(spellName)
+	local spellID = self:GetSpellID(spellName)
+	if not spellID then return false end
+	
+	local usable, notEnough = IsUsableSpell(spellID, BOOKTYPE_SPELL)
+	return usable == 1
+end
+
 RoRota.abilities = true

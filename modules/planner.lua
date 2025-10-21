@@ -102,10 +102,18 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		end
 		if state.energy < cache.energyCosts["Eviscerate"] then return false end
 		
-		-- Target HP check
+		-- Target HP percentage check
 		local targetMinHP = cfg.targetMinHP or 0
 		local targetMaxHP = cfg.targetMaxHP or 100
 		if cache.targetHPPct < targetMinHP or cache.targetHPPct > targetMaxHP then
+			return false
+		end
+		
+		-- Target HP flat amount check
+		local targetHP = UnitHealth("target")
+		local minFlat = cfg.targetMinHPFlat or 0
+		local maxFlat = cfg.targetMaxHPFlat or 9999999
+		if targetHP < minFlat or targetHP > maxFlat then
 			return false
 		end
 		
@@ -129,21 +137,24 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		if state.cp > (cfg.maxCP or 5) then return false end
 	end
 	
-	-- Target HP check
+	-- Target HP percentage check
 	local targetMinHP = cfg.targetMinHP or 0
 	local targetMaxHP = cfg.targetMaxHP or 100
 	if cache.targetHPPct < targetMinHP or cache.targetHPPct > targetMaxHP then
 		return false
 	end
 	
-	-- Elite check
-	if cfg.onlyElites and not self:IsTargetElite() then
+	-- Target HP flat amount check
+	local targetHP = UnitHealth("target")
+	local minFlat = cfg.targetMinHPFlat or 0
+	local maxFlat = cfg.targetMaxHPFlat or 9999999
+	if targetHP < minFlat or targetHP > maxFlat then
 		return false
 	end
 	
-	if cache.targetHPPct < 15 then
-		if finisher == "Rupture" then return false end
-		if cache.targetHPPct < 10 and (finisher == "Slice and Dice" or finisher == "Envenom") then return false end
+	-- Elite check
+	if cfg.onlyElites and not self:IsTargetElite() then
+		return false
 	end
 	
 	-- Smart Rupture: skip if would overkill
@@ -345,8 +356,8 @@ function RoRota:PlanRotation(state)
 	
 	-- Build phase: CP < 5, need to build
 	if state.cp < 5 then
-		if cache.defensive.useRiposte and self.riposteAvailable and (GetTime() - self.riposteAvailable) < 5 then
-			if self:HasSpell("Riposte") and self:HasEnoughEnergy("Riposte") and not self:IsOnCooldown("Riposte") then
+		if cache.defensive.useRiposte then
+			if self:HasSpell("Riposte") and self:IsSpellUsable("Riposte") and self:HasEnoughEnergy("Riposte") and not self:IsOnCooldown("Riposte") then
 				local targetMinHP = cache.defensive.riposteTargetMinHP or 0
 				local targetMaxHP = cache.defensive.riposteTargetMaxHP or 100
 				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
@@ -355,8 +366,8 @@ function RoRota:PlanRotation(state)
 			end
 		end
 		
-		if cache.defensive.useSurpriseAttack and self.surpriseAttackAvailable and (GetTime() - self.surpriseAttackAvailable) < 5 then
-			if self:HasSpell("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") and not self:IsOnCooldown("Surprise Attack") then
+		if cache.defensive.useSurpriseAttack then
+			if self:HasSpell("Surprise Attack") and self:IsSpellUsable("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") and not self:IsOnCooldown("Surprise Attack") then
 				local targetMinHP = cache.defensive.surpriseTargetMinHP or 0
 				local targetMaxHP = cache.defensive.surpriseTargetMaxHP or 100
 				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
