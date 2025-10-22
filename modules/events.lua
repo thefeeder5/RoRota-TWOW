@@ -40,16 +40,16 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
 end
 
 function RoRota:CHAT_MSG_COMBAT_SELF_MISSES()
-    -- Only track parries against the player ("You parry" or "Your attacks are parried")
-    if string.find(arg1, "parry") and string.find(arg1, "You") then
-        self.riposteAvailable = GetTime()
+    if string.find(arg1, "You parry") then
+        if not self.ReactiveAbilities then self.ReactiveAbilities = {} end
+        self.ReactiveAbilities.riposteUntil = GetTime() + 5
     end
 end
 
 function RoRota:CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES()
-    -- Only track dodges by the player ("You dodge")
-    if string.find(arg1, "dodge") and string.find(arg1, "You") then
-        self.surpriseAttackAvailable = GetTime()
+    if string.find(arg1, "You dodge") then
+        if not self.ReactiveAbilities then self.ReactiveAbilities = {} end
+        self.ReactiveAbilities.surpriseUntil = GetTime() + 5
     end
 end
 
