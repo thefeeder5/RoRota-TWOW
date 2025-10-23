@@ -164,12 +164,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	if state.energy < cache.energyCosts[finisher] then return false end
 	
-	local timeRemaining
-	if finisher == "Rupture" or finisher == "Expose Armor" then
-		timeRemaining = self:GetDebuffTimeRemaining(finisher)
-	else
-		timeRemaining = self:GetBuffTimeRemaining(finisher)
-	end
+	local timeRemaining = cache.buffTimes[finisher] or 0
 	local threshold = cache.refreshThreshold
 	
 	local duration = self:CalculateFinisherDuration(finisher, state.cp)
@@ -203,12 +198,7 @@ function RoRota:GetOptimalFinisher(state, cache)
 						return "Cold Blood", REASON.CB_EVIS, 0
 					end
 				else
-					local timeRemaining
-					if finisher == "Rupture" or finisher == "Expose Armor" then
-						timeRemaining = self:GetDebuffTimeRemaining(finisher)
-					else
-						timeRemaining = self:GetBuffTimeRemaining(finisher)
-					end
+					local timeRemaining = cache.buffTimes[finisher] or 0
 					return finisher, REASON.EXPIRING, timeRemaining
 				end
 			end
@@ -253,7 +243,14 @@ function RoRota:PlanRotation(state)
 		-- Use cached values from global cache
 		energyCosts = self.RotationCache.energyCosts,
 		maxEnergy = self.RotationCache.maxEnergy,
-		ruthlessnessChance = self.RotationCache.ruthlessnessChance
+		ruthlessnessChance = self.RotationCache.ruthlessnessChance,
+		-- Cache buff/debuff times for consistent checks within this call
+		buffTimes = {
+			["Slice and Dice"] = self:GetBuffTimeRemaining("Slice and Dice"),
+			["Envenom"] = self:GetBuffTimeRemaining("Envenom"),
+			["Rupture"] = self:GetDebuffTimeRemaining("Rupture"),
+			["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor")
+		}
 	}
 	
 	-- Update timeline only when needed (optimization #4)
