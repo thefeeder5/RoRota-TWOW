@@ -3,15 +3,15 @@
 
 RoRotaDefaultProfile = {
 	abilities = {
-		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		Eviscerate = {enabled = true, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, smartEviscerate = true, useColdBlood = false, coldBloodMinCP = 4},
+		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		Eviscerate = {enabled = true, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, smartEviscerate = true, useColdBlood = false, coldBloodMinCP = 4},
 		SinisterStrike = {enabled = true},
 		NoxiousAssault = {enabled = false},
-		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		Rupture = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 15, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		ColdBloodEviscerate = {enabled = false, minCP = 4, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		ShadowOfDeath = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		Rupture = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 15, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		ColdBloodEviscerate = {enabled = false, minCP = 4, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
+		ShadowOfDeath = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
 		MarkForDeath = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
 		Hemorrhage = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, onlyWhenMissing = false},
 		Backstab = {enabled = false, failsafeAttempts = 3},

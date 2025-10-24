@@ -109,12 +109,14 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 			return false
 		end
 		
-		-- Target HP flat amount check
-		local targetHP = UnitHealth("target")
-		local minFlat = cfg.targetMinHPFlat or 0
-		local maxFlat = cfg.targetMaxHPFlat or 9999999
-		if targetHP < minFlat or targetHP > maxFlat then
-			return false
+		-- Target HP flat amount check (only if enabled)
+		if cfg.useFlatHP then
+			local targetHP = UnitHealth("target")
+			local minFlat = cfg.targetMinHPFlat or 0
+			local maxFlat = cfg.targetMaxHPFlat or 9999999
+			if targetHP < minFlat or targetHP > maxFlat then
+				return false
+			end
 		end
 		
 		-- Elite check
@@ -144,12 +146,14 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		return false
 	end
 	
-	-- Target HP flat amount check
-	local targetHP = UnitHealth("target")
-	local minFlat = cfg.targetMinHPFlat or 0
-	local maxFlat = cfg.targetMaxHPFlat or 9999999
-	if targetHP < minFlat or targetHP > maxFlat then
-		return false
+	-- Target HP flat amount check (only if enabled)
+	if cfg.useFlatHP then
+		local targetHP = UnitHealth("target")
+		local minFlat = cfg.targetMinHPFlat or 0
+		local maxFlat = cfg.targetMaxHPFlat or 9999999
+		if targetHP < minFlat or targetHP > maxFlat then
+			return false
+		end
 	end
 	
 	-- Elite check
@@ -166,11 +170,6 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	local timeRemaining = cache.buffTimes[finisher] or 0
 	local threshold = cache.refreshThreshold
-	
-	local duration = self:CalculateFinisherDuration(finisher, state.cp)
-	if timeRemaining > duration * 0.1 and timeRemaining > threshold then
-		return false
-	end
 	
 	if timeRemaining <= threshold then return true end
 	

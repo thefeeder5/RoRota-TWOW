@@ -454,6 +454,14 @@ function RoRotaGUI.CreateSndSubTab(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.sndUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaSndUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+        RoRota.db.profile.abilities.SliceAndDice.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.sndTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaSndTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -500,6 +508,9 @@ function RoRotaGUI.LoadSndSubTab(widgets)
     end
     if widgets.sndTargetMaxEB and p.abilities and p.abilities.SliceAndDice then
         widgets.sndTargetMaxEB:SetText(tostring(p.abilities.SliceAndDice.targetMaxHP or 100))
+    end
+    if widgets.sndUseFlatHPCheck and p.abilities and p.abilities.SliceAndDice then
+        widgets.sndUseFlatHPCheck:SetChecked(p.abilities.SliceAndDice.useFlatHP and 1 or nil)
     end
     if widgets.sndTargetMinFlatEB and p.abilities and p.abilities.SliceAndDice then
         widgets.sndTargetMinFlatEB:SetText(tostring(p.abilities.SliceAndDice.targetMinHPFlat or 0))
@@ -562,6 +573,14 @@ function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.ruptUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaRuptUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+        RoRota.db.profile.abilities.Rupture.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.ruptTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaRuptTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -619,6 +638,9 @@ function RoRotaGUI.LoadRuptureSubTab(widgets)
     end
     if widgets.ruptTargetMaxEB and p.abilities and p.abilities.Rupture then
         widgets.ruptTargetMaxEB:SetText(tostring(p.abilities.Rupture.targetMaxHP or 100))
+    end
+    if widgets.ruptUseFlatHPCheck and p.abilities and p.abilities.Rupture then
+        widgets.ruptUseFlatHPCheck:SetChecked(p.abilities.Rupture.useFlatHP and 1 or nil)
     end
     if widgets.ruptTargetMinFlatEB and p.abilities and p.abilities.Rupture then
         widgets.ruptTargetMinFlatEB:SetText(tostring(p.abilities.Rupture.targetMinHPFlat or 0))
@@ -678,6 +700,14 @@ function RoRotaGUI.CreateExposeSubTab(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.exposeUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaExposeUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+        RoRota.db.profile.abilities.ExposeArmor.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.exposeTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaExposeTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -724,6 +754,9 @@ function RoRotaGUI.LoadExposeSubTab(widgets)
     end
     if widgets.exposeTargetMaxEB and p.abilities and p.abilities.ExposeArmor then
         widgets.exposeTargetMaxEB:SetText(tostring(p.abilities.ExposeArmor.targetMaxHP or 100))
+    end
+    if widgets.exposeUseFlatHPCheck and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeUseFlatHPCheck:SetChecked(p.abilities.ExposeArmor.useFlatHP and 1 or nil)
     end
     if widgets.exposeTargetMinFlatEB and p.abilities and p.abilities.ExposeArmor then
         widgets.exposeTargetMinFlatEB:SetText(tostring(p.abilities.ExposeArmor.targetMinHPFlat or 0))
@@ -780,6 +813,14 @@ function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.envUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaEnvUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+        RoRota.db.profile.abilities.Envenom.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.envTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEnvTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -826,6 +867,9 @@ function RoRotaGUI.LoadEnvenomSubTab(widgets)
     end
     if widgets.envTargetMaxEB and p.abilities and p.abilities.Envenom then
         widgets.envTargetMaxEB:SetText(tostring(p.abilities.Envenom.targetMaxHP or 100))
+    end
+    if widgets.envUseFlatHPCheck and p.abilities and p.abilities.Envenom then
+        widgets.envUseFlatHPCheck:SetChecked(p.abilities.Envenom.useFlatHP and 1 or nil)
     end
     if widgets.envTargetMinFlatEB and p.abilities and p.abilities.Envenom then
         widgets.envTargetMinFlatEB:SetText(tostring(p.abilities.Envenom.targetMinHPFlat or 0))
@@ -882,6 +926,14 @@ function RoRotaGUI.CreateShadowOfDeathSubTab(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.shadowUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaShadowUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.ShadowOfDeath then RoRota.db.profile.abilities.ShadowOfDeath = {} end
+        RoRota.db.profile.abilities.ShadowOfDeath.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.shadowTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaShadowTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -928,6 +980,9 @@ function RoRotaGUI.LoadShadowOfDeathSubTab(widgets)
     end
     if widgets.shadowTargetMaxEB and p.abilities and p.abilities.ShadowOfDeath then
         widgets.shadowTargetMaxEB:SetText(tostring(p.abilities.ShadowOfDeath.targetMaxHP or 100))
+    end
+    if widgets.shadowUseFlatHPCheck and p.abilities and p.abilities.ShadowOfDeath then
+        widgets.shadowUseFlatHPCheck:SetChecked(p.abilities.ShadowOfDeath.useFlatHP and 1 or nil)
     end
     if widgets.shadowTargetMinFlatEB and p.abilities and p.abilities.ShadowOfDeath then
         widgets.shadowTargetMinFlatEB:SetText(tostring(p.abilities.ShadowOfDeath.targetMinHPFlat or 0))
@@ -992,6 +1047,14 @@ function RoRotaGUI.CreateEviscerateSub(parent, widgets)
     end)
     y = y - 30
     
+    RoRotaGUI.CreateLabel(parent, 10, y, "Use Flat HP Checks")
+    widgets.evisUseFlatHPCheck = RoRotaGUI.CreateCheckbox("RoRotaEvisUseFlatHPCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+        if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
+        RoRota.db.profile.abilities.Eviscerate.useFlatHP = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
     RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
     widgets.evisTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEvisTargetMinFlatEB", parent, 175, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
@@ -1039,6 +1102,9 @@ function RoRotaGUI.LoadEviscerateSub(widgets)
     end
     if widgets.evisTargetMaxEB and p.abilities and p.abilities.Eviscerate then
         widgets.evisTargetMaxEB:SetText(tostring(p.abilities.Eviscerate.targetMaxHP or 100))
+    end
+    if widgets.evisUseFlatHPCheck and p.abilities and p.abilities.Eviscerate then
+        widgets.evisUseFlatHPCheck:SetChecked(p.abilities.Eviscerate.useFlatHP and 1 or nil)
     end
     if widgets.evisTargetMinFlatEB and p.abilities and p.abilities.Eviscerate then
         widgets.evisTargetMinFlatEB:SetText(tostring(p.abilities.Eviscerate.targetMinHPFlat or 0))
