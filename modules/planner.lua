@@ -248,7 +248,8 @@ function RoRota:PlanRotation(state)
 			["Slice and Dice"] = self:GetBuffTimeRemaining("Slice and Dice"),
 			["Envenom"] = self:GetBuffTimeRemaining("Envenom"),
 			["Rupture"] = self:GetDebuffTimeRemaining("Rupture"),
-			["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor")
+			["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor"),
+			["Shadow of Death"] = self:GetDebuffTimeRemaining("Shadow of Death")
 		}
 	}
 	
