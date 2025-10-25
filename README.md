@@ -1,296 +1,44 @@
-# RoRota - Rogue One-Button Rotation
+# RoRota
 
-**Version:** 0.8.0  
-**Target:** Vanilla WoW 1.12.1 (Turtle WoW)  
-**Author:** feeder5
+**One-button rotation addon for Rogues on Turtle WoW**
 
-**Architecture:** Refactored modular system (Phases 1-10 complete)
+Version 0.8.2 | Vanilla WoW 1.12.1 | By feeder5
 
 ---
+
+## What is RoRota?
+
+RoRota automates your rogue rotation into a single keybind. Press one button and the addon executes the optimal ability based on your current situation - handling openers, combo point builders, finishers, interrupts, and defensive cooldowns intelligently.
 
 ## Features
 
-### Core Rotation
-- **One-button rotation** - Press keybind to execute optimal ability
-- **Smart opener system** - Automatic opener selection with failsafe fallback
-- **Finisher priority** - Customizable priority order (drag-and-drop)
-- **Builder failsafe** - Auto-switch to secondary builder if primary fails
-- **Energy pooling** - Pool energy at 4+ CP for immediate finisher at 5 CP
-- **Smart Eviscerate** - Execute at any CP if it will kill target
-- **Smart Rupture** - Skip if it would overkill target
-
-### Interrupts & Defensive
-- **Interrupt priority** - Kick → Gouge → Kidney Shot
-- **Threat management** - Feint with multiple modes (Always/WhenTargeted/HighThreat)
-- **Emergency Vanish** - Auto-vanish at configurable HP threshold
-- **Reactive abilities** - Riposte (after parry), Surprise Attack (after dodge)
-- **Ghostly Strike** - Conditional usage based on HP thresholds
-
-### Poison Management
-- **Auto-apply poisons** - Automatically apply when missing
-- **Combat control** - Allow/disallow poison application in combat
-- **Sharpening Stone support** - Can use sharpening stones instead of poisons
-- **Separate MH/OH** - Different poison for each weapon
-- **8 Turtle WoW poisons** - Full support for all Turtle WoW poison types
-- **Poison warnings** - Alerts for low time/charges
-- **Manual application** - Button to manually apply poisons
-
-### Advanced Features
-- **Ability queue** - Preview shows current + next ability in rotation
-- **Macro generator** - One-click macro creation for rotation keybind
-- **Profile system** - Create, switch, and delete profiles
-- **Auto-profile switching** - Automatic switching for Solo/Group/Raid
-- **SuperWoW support** - Enhanced features when SuperWoW is available
-- **Performance optimized** - Throttling, caching, and state management
-- **Debug system** - Built-in debugging tools (/rr debug, /rr state, /rr perf)
-
----
+- **Smart rotation system** - Automatic ability selection with energy pooling, combo point management, and damage optimization
+- **Configurable priorities** - Customize opener sequences, finisher priorities, and builder failsafes through an intuitive GUI
+- **Interrupt & defensive handling** - Automatic kick/gouge/kidney interrupts, emergency vanish, and threat management
+- **Poison management** - Auto-apply poisons with warnings, support for all Turtle WoW poison types and sharpening stones
+- **Profile system** - Multiple profiles with auto-switching for solo/group/raid scenarios
+- **Performance optimized** - Sub-millisecond execution with intelligent caching
 
 ## Installation
 
-1. Download the latest release
-2. Extract `RoRota-TWOW` folder to `Interface\AddOns\`
-3. Login to WoW and enable the addon
-4. Type `/rr` to open settings
+1. Extract to `Interface\AddOns\RoRota-TWOW`
+2. Login and type `/rr` to configure
+3. Set keybind in ESC → Key Bindings → RoRota → Run Rotation
+4. Use macro generator in About tab for easy action bar setup
 
----
+## Quick Start
 
-## Usage
+- `/rr` - Open settings
+- `/rr preview` - Toggle ability preview window
+- `/rr help` - Show all commands
 
-### Keybindings
-Set up keybindings in ESC → Key Bindings → RoRota:
-- **Run Rotation** - Execute rotation (main keybind)
-- **Show Options** - Open settings GUI
-- **Toggle Preview** - Show/hide rotation preview window
-
-### Macro Setup
-Use the macro creation buttons in the About tab:
-- **Create Rotation Macro** - Creates "RoRota" macro with `/script RoRotaRunRotation()`
-- **Create Poison Macro** - Creates "RoRotaPoison" macro with `/script RoRotaApplyPoison()`
-- Drag macros to action bar for easy access
-- Macros are character-specific and update if already created
-
-### Slash Commands
-- `/rr` or `/rorota` - Open settings GUI
-- `/rr test` - Run module validation (Phase 9)
-- `/rr preview` - Toggle rotation preview window
-- `/rr debug on/off` - Toggle debug mode
-- `/rr trace on/off` - Toggle rotation trace logging
-- `/rr state` - Show cached state values
-- `/rr logs` - Show recent debug logs
-- `/rr perf` - Show performance statistics
-- `/rr poison` - Test poison warnings
-- `/rr help` - Show command list
-
----
-
-## Configuration
-
-The addon features a modern GUI with vertical sidebar navigation and scrollable content.
-
-### About Tab
-- Addon information and version
-- Macro creation buttons
-- Feature list and commands
-- GitHub link
-
-### Openers Tab
-- Primary opener ability
-- Secondary opener (failsafe)
-- Pick Pocket before opener
-- Sap fail emergency action
-
-### Finishers Tab
-- Enable/disable individual finishers
-- Min/Max CP per finisher (Slice and Dice, Envenom, Rupture, Expose Armor)
-- Finisher priority system with up/down buttons (Eviscerate always last)
-- Smart Eviscerate toggle (execute at any CP if it kills target)
-- Smart Rupture toggle (skip if it would overkill)
-- Energy pooling settings
-
-### Builders Tab
-- Main builder ability
-- Secondary builder (failsafe)
-- Failsafe attempt threshold
-- Riposte toggle
-- Surprise Attack toggle
-- Hemorrhage toggle
-- Ghostly Strike settings (enable, target max HP, player min/max HP)
-- Smart Combo Builders toggle
-
-### Defensive Tab
-- Interrupt settings (Kick, Gouge, Kidney Shot with max CP)
-- Vanish settings (enable, HP threshold)
-- Feint settings (enable, mode: Always/WhenTargeted/HighThreat)
-
-### Poisons Tab
-- Auto-apply toggle
-- Apply in combat toggle
-- Main hand poison/stone selection (9 options including Turtle WoW poisons)
-- Off hand poison/stone selection
-- Warning settings (enable, time threshold, charges threshold)
-- Test warning button
-
-### Profiles Tab
-- Create new profiles
-- Switch between profiles
-- Delete profiles
-- Auto-switch settings (Solo/Group/Raid)
-
----
+Configure your preferred openers, finishers, builders, and defensive abilities in the GUI. The addon handles the rest.
 
 ## Requirements
 
-- **WoW Version:** 1.12.1 (Vanilla)
-- **Class:** Rogue only
-- **Recommended:** SuperWoW for enhanced features
-- **Recommended:** Nampower for energy tracking
-
----
-
-## Version History
-
-### v0.8.0 (Current) - Architecture Refactor
-- **Phase 1:** Cache system for performance (90%+ hit rate)
-- **Phase 2:** Simplified state module (read-only)
-- **Phase 3:** Organized query modules (consistent naming)
-- **Phase 4:** Pure calculation modules (no side effects)
-- **Phase 5:** Standardized decision modules (single entry point)
-- **Phase 6:** Cleaned planner interface
-- **Phase 7:** Simplified rotation orchestrator (< 200 lines)
-- **Phase 8:** Organized helper modules
-- **Phase 9:** Testing and validation system
-- **Phase 10:** Documentation and cleanup
-- Fixed GetCooldownRemaining to use spell book index
-- Fixed Vigor talent calculation
-- Added IsFinisher/IsBuilder helpers
-- Removed unnecessary combopoints.lua
-- Performance: < 1ms per rotation cycle
-
-### v0.6.2
-- Complete GUI redesign with vertical sidebar navigation
-- Scrollable content area
-- About tab with macro creation buttons
-- Finisher priority system with drag-to-reorder
-- Character-specific macro creation
-
-### v0.6.1
-- GUI layout improvements
-- Widget alignment fixes
-
-### v0.6.0
-- Modular GUI architecture
-- Dark theme design
-
-### v0.5.0
-- Ability queue (current + next ability preview)
-- Macro generator button
-- Improved rotation planning
-
-### v0.4.0
-- Modular architecture refactoring
-- Split helpers.lua into 6 focused modules
-- Improved code organization and maintainability
-
-### v0.3
-- Code quality improvements
-- Style guide creation
-- Class check on login
-
-### v0.2
-- Sharpening Stone support
-- Poison verification system
-- Bug fixes
-
-### v0.1
-- Initial release
-- Core rotation system
-- Poison management
-- Profile system
-
----
-
-## Developer Guide
-
-### Module Architecture
-
-RoRota uses a clean modular architecture with clear separation of concerns:
-
-**Core Modules:**
-- `constants.lua` - Pure data (energy costs, damage tables)
-- `state.lua` - Read-only state queries
-- `cache.lua` - Performance cache layer (throttled updates)
-
-**Query Modules (Read-only):**
-- `abilities.lua` - Spell availability, costs, cooldowns
-- `buffs.lua` - Buff/debuff scanning
-- `talents.lua` - Talent information
-- `casting.lua` - Target casting detection
-- `immunity.lua` - Immunity tracking
-
-**Calculation Modules (Pure functions):**
-- `damage.lua` - Damage calculations
-- `energytick.lua` - Energy prediction
-- `timeline.lua` - Finisher timeline
-- `cppacing.lua` - CP pacing calculator
-
-**Decision Modules (Returns ability or nil):**
-- `interrupt.lua` - Interrupt decisions
-- `defensive.lua` - Defensive decisions
-- `opener.lua` - Opener decisions
-- `planner.lua` - Rotation planning
-
-**Orchestration:**
-- `rotation.lua` - Calls decision modules in priority order (< 200 lines)
-
-**Simulation:**
-- `simstate.lua` - State simulation for lookahead
-
-**Utilities:**
-- `helpers.lua` - Shared utility functions
-- `swingtimer.lua` - Swing timer tracking
-- `debug.lua` - Debug system
-
-### Key Principles
-
-1. **Single Responsibility** - Each module does one thing
-2. **No Circular Dependencies** - Clear hierarchy
-3. **Read vs Write** - Query modules are read-only
-4. **Pure Functions** - Calculation modules have no side effects
-5. **Clear Naming** - Module name = its purpose
-
-### Performance
-
-- Rotation execution: < 1ms average
-- Cache hit rate: > 90%
-- Throttling: 0.1s minimum between updates
-- No memory leaks
-
-### Testing
-
-Run `/rr test` to validate all modules are loaded and working.
-
-See `PHASE_9_VALIDATION.md` for comprehensive test checklist.
-
----
+- Vanilla WoW 1.12.1 (Turtle WoW)
+- Rogue class only
 
 ## Support
 
-- **GitHub:** https://github.com/thefeeder5/RoRota-TWOW
-- **Issues:** Report bugs on GitHub Issues
-- **Discord:** Turtle WoW Discord
-
----
-
-## Credits
-
-- **Author:** feeder5
-- **Inspired by:** pfUI's modular architecture
-- **Libraries:** Ace2 framework
-- **Testing:** Turtle WoW community
-
----
-
-## License
-
-This addon is free and open source.
+GitHub: https://github.com/thefeeder5/RoRota-TWOW
