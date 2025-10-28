@@ -484,6 +484,16 @@ function RoRotaGUI.CreateSndSubTab(parent, widgets)
         if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
         RoRota.db.profile.abilities.SliceAndDice.onlyElites = (this:GetChecked() == 1)
     end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.sndRefreshEB = RoRotaGUI.CreateDecimalEditBox("RoRotaSndRefreshEB", parent, 260, y, 50, 0, 10, function(value)
+            if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+            if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
+            RoRota.db.profile.abilities.SliceAndDice.refreshThreshold = value
+        end)
+    end
 end
 
 function RoRotaGUI.LoadSndSubTab(widgets)
@@ -520,6 +530,10 @@ function RoRotaGUI.LoadSndSubTab(widgets)
     end
     if widgets.sndElitesCheck and p.abilities and p.abilities.SliceAndDice then
         widgets.sndElitesCheck:SetChecked(p.abilities.SliceAndDice.onlyElites and 1 or nil)
+    end
+    if widgets.sndRefreshEB and p.abilities and p.abilities.SliceAndDice then
+        local val = p.abilities.SliceAndDice.refreshThreshold or p.finisherRefreshThreshold or 2
+        widgets.sndRefreshEB:SetText(string.format("%.1f", val))
     end
 end
 
@@ -611,6 +625,16 @@ function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
         if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
         RoRota.db.profile.abilities.Rupture.tasteForBlood = (this:GetChecked() == 1)
     end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.ruptRefreshEB = RoRotaGUI.CreateDecimalEditBox("RoRotaRuptRefreshEB", parent, 260, y, 50, 0, 10, function(value)
+            if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+            if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
+            RoRota.db.profile.abilities.Rupture.refreshThreshold = value
+        end)
+    end
 end
 
 function RoRotaGUI.LoadRuptureSubTab(widgets)
@@ -653,6 +677,10 @@ function RoRotaGUI.LoadRuptureSubTab(widgets)
     end
     if widgets.ruptTasteCheck and p.abilities and p.abilities.Rupture then
         widgets.ruptTasteCheck:SetChecked(p.abilities.Rupture.tasteForBlood and 1 or nil)
+    end
+    if widgets.ruptRefreshEB and p.abilities and p.abilities.Rupture then
+        local val = p.abilities.Rupture.refreshThreshold or p.finisherRefreshThreshold or 2
+        widgets.ruptRefreshEB:SetText(string.format("%.1f", val))
     end
 end
 
@@ -730,6 +758,16 @@ function RoRotaGUI.CreateExposeSubTab(parent, widgets)
         if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
         RoRota.db.profile.abilities.ExposeArmor.onlyElites = (this:GetChecked() == 1)
     end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.exposeRefreshEB = RoRotaGUI.CreateDecimalEditBox("RoRotaExposeRefreshEB", parent, 260, y, 50, 0, 10, function(value)
+            if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+            if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
+            RoRota.db.profile.abilities.ExposeArmor.refreshThreshold = value
+        end)
+    end
 end
 
 function RoRotaGUI.LoadExposeSubTab(widgets)
@@ -766,6 +804,10 @@ function RoRotaGUI.LoadExposeSubTab(widgets)
     end
     if widgets.exposeElitesCheck and p.abilities and p.abilities.ExposeArmor then
         widgets.exposeElitesCheck:SetChecked(p.abilities.ExposeArmor.onlyElites and 1 or nil)
+    end
+    if widgets.exposeRefreshEB and p.abilities and p.abilities.ExposeArmor then
+        local val = p.abilities.ExposeArmor.refreshThreshold or p.finisherRefreshThreshold or 2
+        widgets.exposeRefreshEB:SetText(string.format("%.1f", val))
     end
 end
 
@@ -843,6 +885,16 @@ function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
         if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
         RoRota.db.profile.abilities.Envenom.onlyElites = (this:GetChecked() == 1)
     end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.envRefreshEB = RoRotaGUI.CreateDecimalEditBox("RoRotaEnvRefreshEB", parent, 260, y, 50, 0, 10, function(value)
+            if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+            if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
+            RoRota.db.profile.abilities.Envenom.refreshThreshold = value
+        end)
+    end
 end
 
 function RoRotaGUI.LoadEnvenomSubTab(widgets)
@@ -879,6 +931,10 @@ function RoRotaGUI.LoadEnvenomSubTab(widgets)
     end
     if widgets.envElitesCheck and p.abilities and p.abilities.Envenom then
         widgets.envElitesCheck:SetChecked(p.abilities.Envenom.onlyElites and 1 or nil)
+    end
+    if widgets.envRefreshEB and p.abilities and p.abilities.Envenom then
+        local val = p.abilities.Envenom.refreshThreshold or p.finisherRefreshThreshold or 2
+        widgets.envRefreshEB:SetText(string.format("%.1f", val))
     end
 end
 
@@ -956,6 +1012,16 @@ function RoRotaGUI.CreateShadowOfDeathSubTab(parent, widgets)
         if not RoRota.db.profile.abilities.ShadowOfDeath then RoRota.db.profile.abilities.ShadowOfDeath = {} end
         RoRota.db.profile.abilities.ShadowOfDeath.onlyElites = (this:GetChecked() == 1)
     end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Refresh Window (sec)")
+    if RoRotaGUI.CreateDecimalEditBox then
+        widgets.shadowRefreshEB = RoRotaGUI.CreateDecimalEditBox("RoRotaShadowRefreshEB", parent, 260, y, 50, 0, 10, function(value)
+            if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
+            if not RoRota.db.profile.abilities.ShadowOfDeath then RoRota.db.profile.abilities.ShadowOfDeath = {} end
+            RoRota.db.profile.abilities.ShadowOfDeath.refreshThreshold = value
+        end)
+    end
 end
 
 function RoRotaGUI.LoadShadowOfDeathSubTab(widgets)
@@ -992,6 +1058,10 @@ function RoRotaGUI.LoadShadowOfDeathSubTab(widgets)
     end
     if widgets.shadowElitesCheck and p.abilities and p.abilities.ShadowOfDeath then
         widgets.shadowElitesCheck:SetChecked(p.abilities.ShadowOfDeath.onlyElites and 1 or nil)
+    end
+    if widgets.shadowRefreshEB and p.abilities and p.abilities.ShadowOfDeath then
+        local val = p.abilities.ShadowOfDeath.refreshThreshold or p.finisherRefreshThreshold or 2
+        widgets.shadowRefreshEB:SetText(string.format("%.1f", val))
     end
 end
 
@@ -2204,7 +2274,7 @@ function RoRotaGUI.CreateImmunitiesTab(parent, frame)
     contentArea:SetHeight(500)
     contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
     
-    local subtabs = {"Bleed", "Stun", "Incapacitate"}
+    local subtabs = {"Bleed", "Stun", "Incapacitate", "Immunity\nBuffs"}
     frame.immunitySubtabs = {}
     frame.immunitySubtabFrames = {}
     
@@ -2227,6 +2297,9 @@ function RoRotaGUI.CreateImmunitiesTab(parent, frame)
         RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[1], "bleed")
         RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[2], "stun")
         RoRotaGUI.CreateImmunitySubTab(frame.immunitySubtabFrames[3], "incapacitate")
+    end
+    if RoRotaGUI.CreateImmunityBuffsSubTab then
+        RoRotaGUI.CreateImmunityBuffsSubTab(frame.immunitySubtabFrames[4])
     end
     
     RoRotaGUI.ShowImmunitySubTab(frame, 1)
@@ -2513,6 +2586,169 @@ function RoRotaGUI.LoadImmunitiesTab(frame)
             frame.immunitySubtabFrames[i]:Refresh()
         end
     end
+    if frame.immunitySubtabFrames[4] and frame.immunitySubtabFrames[4].Refresh then
+        frame.immunitySubtabFrames[4]:Refresh()
+    end
+end
+
+function RoRotaGUI.CreateImmunityBuffsSubTab(parent)
+    local y = -10
+    
+    local topLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    topLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    topLabel:SetText("Buff names that prevent attacks")
+    y = y - 20
+    
+    local scroll = CreateFrame("ScrollFrame", nil, parent)
+    scroll:SetWidth(350)
+    scroll:SetHeight(380)
+    scroll:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    
+    local list = CreateFrame("Frame", nil, scroll)
+    list:SetWidth(350)
+    list:SetHeight(1)
+    scroll:SetScrollChild(list)
+    
+    local slider = CreateFrame("Slider", nil, scroll)
+    slider:SetPoint("TOPRIGHT", scroll, "TOPRIGHT", 18, 0)
+    slider:SetPoint("BOTTOMRIGHT", scroll, "BOTTOMRIGHT", 18, 0)
+    slider:SetWidth(16)
+    slider:SetOrientation("VERTICAL")
+    slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Vertical")
+    slider:SetMinMaxValues(0, 100)
+    slider:SetValue(0)
+    slider:SetScript("OnValueChanged", function()
+        scroll:SetVerticalScroll(this:GetValue())
+    end)
+    parent.slider = slider
+    parent.sliderMax = 100
+    scroll:EnableMouseWheel(true)
+    scroll:SetScript("OnMouseWheel", function()
+        if not parent.slider then return end
+        local current = parent.slider:GetValue()
+        local maxVal = parent.sliderMax or 100
+        local step = 20
+        if arg1 > 0 then
+            parent.slider:SetValue(math.max(0, current - step))
+        else
+            parent.slider:SetValue(math.min(maxVal, current + step))
+        end
+    end)
+    
+    parent.list = list
+    
+    function parent:Refresh()
+        if not RoRotaDB or not RoRotaDB.immunityBuffs then
+            RoRotaDB.immunityBuffs = {}
+        end
+        
+        local children = {self.list:GetChildren()}
+        for i = 1, table.getn(children) do
+            children[i]:Hide()
+        end
+        
+        local buffs = {}
+        for buffName in pairs(RoRotaDB.immunityBuffs) do
+            table.insert(buffs, buffName)
+        end
+        table.sort(buffs)
+        
+        local yPos = -5
+        for _, buffName in ipairs(buffs) do
+            local row = CreateFrame("Frame", nil, self.list)
+            row:SetWidth(360)
+            row:SetHeight(22)
+            row:SetPoint("TOPLEFT", self.list, "TOPLEFT", 0, yPos)
+            
+            local nameText = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            nameText:SetPoint("LEFT", row, "LEFT", 5, 0)
+            nameText:SetText(buffName)
+            
+            local deleteBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+            deleteBtn:SetWidth(50)
+            deleteBtn:SetHeight(18)
+            deleteBtn:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+            deleteBtn:SetText("Delete")
+            deleteBtn.buffName = buffName
+            RoRotaGUI.SkinButton(deleteBtn)
+            deleteBtn:SetScript("OnClick", function()
+                RoRotaDB.immunityBuffs[this.buffName] = nil
+                parent:Refresh()
+            end)
+            
+            yPos = yPos - 24
+        end
+        
+        local height = math.max(1, math.abs(yPos))
+        self.list:SetHeight(height)
+        if self.slider then
+            local maxVal = math.max(0, height - 380)
+            self.slider:SetMinMaxValues(0, maxVal)
+            self.sliderMax = maxVal
+        end
+    end
+    
+    y = y - 390
+    
+    local addBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    addBtn:SetWidth(100)
+    addBtn:SetHeight(25)
+    addBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    addBtn:SetText("Add Buff")
+    RoRotaGUI.SkinButton(addBtn)
+    addBtn:SetScript("OnClick", function()
+        StaticPopupDialogs["ROROTA_ADD_IMMUNITY_BUFF"] = {
+            text = "Enter buff name:",
+            button1 = "Add",
+            button2 = "Cancel",
+            hasEditBox = 1,
+            maxLetters = 50,
+            OnAccept = function()
+                local name = getglobal(this:GetParent():GetName().."EditBox"):GetText()
+                if name and name ~= "" then
+                    if not RoRotaDB.immunityBuffs then
+                        RoRotaDB.immunityBuffs = {}
+                    end
+                    RoRotaDB.immunityBuffs[name] = true
+                    RoRota:Print("Added immunity buff: "..name)
+                    parent:Refresh()
+                end
+            end,
+            OnShow = function()
+                getglobal(this:GetName().."EditBox"):SetFocus()
+            end,
+            EditBoxOnEnterPressed = function()
+                local name = this:GetText()
+                if name and name ~= "" then
+                    if not RoRotaDB.immunityBuffs then
+                        RoRotaDB.immunityBuffs = {}
+                    end
+                    RoRotaDB.immunityBuffs[name] = true
+                    RoRota:Print("Added immunity buff: "..name)
+                    parent:Refresh()
+                end
+                this:GetParent():Hide()
+            end,
+            EditBoxOnEscapePressed = function()
+                this:GetParent():Hide()
+            end,
+            timeout = 0,
+            whileDead = 1,
+            hideOnEscape = 1
+        }
+        StaticPopup_Show("ROROTA_ADD_IMMUNITY_BUFF")
+    end)
+    
+    local clearBtn = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    clearBtn:SetWidth(80)
+    clearBtn:SetHeight(25)
+    clearBtn:SetPoint("LEFT", addBtn, "RIGHT", 10, 0)
+    clearBtn:SetText("Clear All")
+    RoRotaGUI.SkinButton(clearBtn)
+    clearBtn:SetScript("OnClick", function()
+        RoRotaDB.immunityBuffs = {}
+        parent:Refresh()
+    end)
 end
 
 RoRotaGUIImmunitiesLoaded = true

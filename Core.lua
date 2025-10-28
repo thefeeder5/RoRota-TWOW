@@ -72,6 +72,9 @@ function RoRota:OnEnable()
     if not RoRotaDB.uninterruptible then
         RoRotaDB.uninterruptible = {}
     end
+    if not RoRotaDB.immunityBuffs then
+        RoRotaDB.immunityBuffs = {}
+    end
     
     -- Note: CleanBannedTargets removed - dummies can now be tracked if desired
     
@@ -84,6 +87,7 @@ function RoRota:OnEnable()
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE")
+    self:RegisterEvent("CHAT_MSG_SPELL_DMGSHIELDS_ON_OTHERS")
     self:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
     self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES")
     self:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")

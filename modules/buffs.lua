@@ -91,5 +91,33 @@ function RoRota:GetDebuffTimeRemaining(debuffName)
     return 0
 end
 
+function RoRota:TargetHasImmunityBuff()
+    if not UnitExists("target") or not RoRotaDB or not RoRotaDB.immunityBuffs then
+        return false
+    end
+    
+    if not RoRotaBuffTooltip then
+        CreateFrame("GameTooltip", "RoRotaBuffTooltip", nil, "GameTooltipTemplate")
+        RoRotaBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+    end
+    
+    local i = 1
+    while UnitBuff("target", i) do
+        local texture = UnitBuff("target", i)
+        if texture then
+            RoRotaBuffTooltip:ClearLines()
+            RoRotaBuffTooltip:SetUnitBuff("target", i)
+            local tooltipText = RoRotaBuffTooltipTextLeft1:GetText()
+            if tooltipText and RoRotaDB.immunityBuffs[tooltipText] then
+                return true
+            end
+        end
+        i = i + 1
+        if i > 32 then break end
+    end
+    
+    return false
+end
+
 -- mark module as loaded
 RoRota.buffs = true

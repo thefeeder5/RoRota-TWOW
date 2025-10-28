@@ -169,7 +169,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	if state.energy < cache.energyCosts[finisher] then return false end
 	
 	local timeRemaining = cache.buffTimes[finisher] or 0
-	local threshold = cache.refreshThreshold
+	local threshold = cfg.refreshThreshold or cache.refreshThreshold
 	
 	if timeRemaining <= threshold then return true end
 	
@@ -268,6 +268,20 @@ function RoRota:PlanRotation(state)
 		return cache.mainBuilder, REASON.BUILD, 1
 	end
 	
+	-- Execute phase: Smart Eviscerate (kill at any CP) - HIGHEST PRIORITY
+	local evisConfig = cache.abilities.Eviscerate or {}
+	if state.cp >= 1 and evisConfig.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
+		local evisCost = cache.energyCosts["Eviscerate"] or 30
+		if self:CanKillWithEviscerate(state.cp) and state.energy >= evisCost then
+			if evisConfig.useColdBlood and state.cp >= (evisConfig.coldBloodMinCP or 4) then
+				if self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
+					return "Cold Blood", REASON.EXECUTE, state.cp
+				end
+			end
+			return "Eviscerate", REASON.EXECUTE, state.cp
+		end
+	end
+	
 	-- CP overflow prevention: at 5 CP, check if we should wait for deadline
 	if state.cp == 5 then
 		-- Check if Cold Blood Eviscerate is enabled and high priority (only if player has CB)
@@ -327,20 +341,6 @@ function RoRota:PlanRotation(state)
 	end
 	
 	local finisher, reason, data = self:GetOptimalFinisherWithTimeline(state, pacing, cache)
-	
-	-- Execute phase: Smart Eviscerate (kill at any CP) - OVERRIDES finisher priority
-	local evisConfig = cache.abilities.Eviscerate or {}
-	if state.cp >= 1 and evisConfig.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
-		if self:CanKillWithEviscerate(state.cp) and state.energy >= cache.energyCosts["Eviscerate"] then
-			-- Use Cold Blood if configured and available
-			if evisConfig.useColdBlood and state.cp >= (evisConfig.coldBloodMinCP or 4) then
-				if self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
-					return "Cold Blood", REASON.EXECUTE, state.cp
-				end
-			end
-			return "Eviscerate", REASON.EXECUTE, state.cp
-		end
-	end
 	
 	if finisher then
 		return finisher, reason, data

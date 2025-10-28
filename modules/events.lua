@@ -39,6 +39,10 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
 end
 
+function RoRota:CHAT_MSG_SPELL_DMGSHIELDS_ON_OTHERS()
+    -- Suppress spam from teammate evades
+end
+
 function RoRota:CHAT_MSG_COMBAT_SELF_MISSES()
     if string.find(arg1, "You parry") then
         if not self.ReactiveAbilities then self.ReactiveAbilities = {} end

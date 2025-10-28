@@ -129,6 +129,12 @@ local function RoRotaRunRotationInternal()
 		return
 	end
 	
+	-- Check for immunity buffs (skip damaging abilities)
+	if RoRota.TargetHasImmunityBuff and RoRota:TargetHasImmunityBuff() then
+		if RoRota.Debug then RoRota.Debug:EndTimer() end
+		return
+	end
+	
 	-- 6. Opener
 	ability = RoRota.GetOpenerAbility and RoRota:GetOpenerAbility()
 	if ability then

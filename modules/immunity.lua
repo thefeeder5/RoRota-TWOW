@@ -115,20 +115,25 @@ function RoRota:OnErrorMessage(msg)
 end
 
 function RoRota:IsSpellUninterruptible(spellName)
-    if not spellName or not RoRotaDB or not RoRotaDB.uninterruptible then
+    if not spellName or not RoRotaDB or not RoRotaDB.uninterruptible or not UnitExists("target") then
         return false
     end
-    return RoRotaDB.uninterruptible[spellName]
+    local targetName = UnitName("target")
+    return RoRotaDB.uninterruptible[targetName] and RoRotaDB.uninterruptible[targetName][spellName]
 end
 
 function RoRota:MarkSpellUninterruptible(spellName)
-    if not spellName then return end
+    if not spellName or not UnitExists("target") then return end
+    local targetName = UnitName("target")
     if not RoRotaDB.uninterruptible then
         RoRotaDB.uninterruptible = {}
     end
-    if not RoRotaDB.uninterruptible[spellName] then
-        RoRotaDB.uninterruptible[spellName] = true
-        self:Print("Spell '"..spellName.."' cannot be interrupted - will skip")
+    if not RoRotaDB.uninterruptible[targetName] then
+        RoRotaDB.uninterruptible[targetName] = {}
+    end
+    if not RoRotaDB.uninterruptible[targetName][spellName] then
+        RoRotaDB.uninterruptible[targetName][spellName] = true
+        self:Print(targetName.."'s '"..spellName.."' cannot be interrupted - will skip")
     end
 end
 

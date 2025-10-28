@@ -48,6 +48,16 @@ function RoRota:GetThreatSituation()
     if UnitThreatSituation then
         return UnitThreatSituation("player", "target") or 0
     end
+    -- Vanilla fallback: estimate threat based on target's target
+    if not UnitExists("target") then return 0 end
+    if not UnitExists("targettarget") then return 0 end
+    if UnitIsUnit("targettarget", "player") then
+        return 3  -- High threat (being targeted)
+    end
+    -- Check if in group and someone else has aggro
+    if self:IsInGroupOrRaid() then
+        return 1  -- Low threat (in group, not targeted)
+    end
     return 0
 end
 
