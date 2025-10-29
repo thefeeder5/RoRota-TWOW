@@ -17,13 +17,13 @@ function RoRota:GetDefensiveAbility()
 	-- Vanish at low HP
 	local playerHP = state.healthPercent or self:GetPlayerHealthPercent()
 	if defensive.useVanish and playerHP <= (defensive.vanishHP or 0) then
-		if self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish") then
+		if self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish", true) then
 			return "Vanish"
 		end
 	end
 	
 	-- Feint (group/raid only)
-	if defensive.useFeint and self:IsInGroupOrRaid() and self:HasSpell("Feint") and self:HasEnoughEnergy("Feint") and not self:IsOnCooldown("Feint") then
+	if defensive.useFeint and self:IsInGroupOrRaid() and self:HasSpell("Feint") and self:HasEnoughEnergy("Feint") and not self:IsOnCooldown("Feint", true) then
 		local shouldFeint = false
 		if defensive.feintMode == "Always" then
 			shouldFeint = true

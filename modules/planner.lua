@@ -354,27 +354,21 @@ function RoRota:PlanRotation(state)
 	-- Build phase: CP < 5, need to build
 	if state.cp < 5 then
 		if cache.defensive.useRiposte then
-			if self:HasSpell("Riposte") and self:HasEnoughEnergy("Riposte") and not self:IsOnCooldown("Riposte") then
-				local now = GetTime()
-				if self.ReactiveAbilities and self.ReactiveAbilities.riposteUntil and now < self.ReactiveAbilities.riposteUntil then
-					local targetMinHP = cache.defensive.riposteTargetMinHP or 0
-					local targetMaxHP = cache.defensive.riposteTargetMaxHP or 100
-					if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
-						return "Riposte", REASON.BUILD, state.cp + 1
-					end
+			if self:IsReactiveUsable("Riposte") and self:HasEnoughEnergy("Riposte") then
+				local targetMinHP = cache.defensive.riposteTargetMinHP or 0
+				local targetMaxHP = cache.defensive.riposteTargetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					return "Riposte", REASON.BUILD, state.cp + 1
 				end
 			end
 		end
 		
 		if cache.defensive.useSurpriseAttack then
-			if self:HasSpell("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") and not self:IsOnCooldown("Surprise Attack") then
-				local now = GetTime()
-				if self.ReactiveAbilities and self.ReactiveAbilities.surpriseUntil and now < self.ReactiveAbilities.surpriseUntil then
-					local targetMinHP = cache.defensive.surpriseTargetMinHP or 0
-					local targetMaxHP = cache.defensive.surpriseTargetMaxHP or 100
-					if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
-						return "Surprise Attack", REASON.BUILD, state.cp + 2
-					end
+			if self:IsReactiveUsable("Surprise Attack") and self:HasEnoughEnergy("Surprise Attack") then
+				local targetMinHP = cache.defensive.surpriseTargetMinHP or 0
+				local targetMaxHP = cache.defensive.surpriseTargetMaxHP or 100
+				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
+					return "Surprise Attack", REASON.BUILD, state.cp + 2
 				end
 			end
 		end

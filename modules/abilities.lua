@@ -64,12 +64,19 @@ function RoRota:GetSpellID(spellName)
 	return nil
 end
 
-function RoRota:IsOnCooldown(spellName)
+function RoRota:IsOnCooldown(spellName, ignoreGCD)
 	local spellID = self:GetSpellID(spellName)
 	if not spellID then return false end
 	
 	local start, duration = GetSpellCooldown(spellID, BOOKTYPE_SPELL)
-	if start and start > 0 and duration and duration > 1.5 then
+	if not start or not duration then return false end
+	
+	-- Ignore GCD (<=1.5s) if requested
+	if ignoreGCD and duration > 0 and duration <= 1.5 then
+		return false
+	end
+	
+	if start > 0 and duration > 1.5 then
 		return true
 	end
 	return false
@@ -137,6 +144,35 @@ function RoRota:GetAbilityCP(abilityName)
 	end
 	
 	return baseCP
+end
+
+-- Action bar slot cache for reactive abilities
+RoRota.ActionSlotCache = {}
+
+function RoRota:FindActionSlot(spellName)
+	if self.ActionSlotCache[spellName] then
+		return self.ActionSlotCache[spellName]
+	end
+	
+	for slot = 1, 120 do
+		local actionText = GetActionText(slot)
+		if actionText == spellName then
+			self.ActionSlotCache[spellName] = slot
+			return slot
+		end
+	end
+	return nil
+end
+
+function RoRota:IsReactiveUsable(spellName)
+	local slot = self:FindActionSlot(spellName)
+	if not slot then return false end
+	
+	local isUsable = IsUsableAction(slot)
+	local start, duration = GetActionCooldown(slot)
+	
+	-- Usable and not on cooldown (or only GCD)
+	return isUsable and (start == 0 or duration == 1.5)
 end
 
 RoRota.abilities = true
