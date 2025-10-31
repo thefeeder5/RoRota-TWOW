@@ -83,6 +83,12 @@ end
 
 function RoRota:PLAYER_REGEN_ENABLED()
     if self.CheckPendingSwitch then self:CheckPendingSwitch() end
+    if self.ResetTTKTracking then
+        local success, err = pcall(self.ResetTTKTracking, self)
+        if not success then
+            -- Silent fail
+        end
+    end
 end
 
 -- Aura changes

@@ -67,4 +67,19 @@ RoRotaDefaultProfile = {
 		mainHandPoison = "None",
 		offHandPoison = "None",
 	},
+	ttk = {
+		enabled = true,
+		dyingThreshold = 10,
+		sampleWindow = 3,
+		excludeBosses = false,
+	},
+	aoe = {
+		useInterrupts = true,
+		useDefensive = true,
+		builder = "Sinister Strike",
+		finisher = "Eviscerate",
+		finisherMinCP = 5,
+		useSnD = true,
+		sndMaxCP = 5,
+	},
 }

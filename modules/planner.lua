@@ -166,6 +166,16 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		return false
 	end
 	
+	-- TTK: skip long DoTs on dying targets
+	if finisher == "Rupture" or finisher == "Garrote" then
+		if self.IsTargetDyingSoon then
+			local success, isDying = pcall(self.IsTargetDyingSoon, self)
+			if success and isDying then
+				return false
+			end
+		end
+	end
+	
 	if state.energy < cache.energyCosts[finisher] then return false end
 	
 	local timeRemaining = cache.buffTimes[finisher] or 0

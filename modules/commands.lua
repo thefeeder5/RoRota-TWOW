@@ -112,11 +112,41 @@ function RoRota:RegisterSlashCommands()
                 RoRota:ClearImmunities()
             end
             return
+        elseif msg == "ttk" then
+            if not RoRota.ttk then
+                RoRota:Print("TTK module not loaded")
+                return
+            end
+            if not RoRota.db or not RoRota.db.profile or not RoRota.db.profile.ttk then
+                RoRota:Print("TTK config missing in profile")
+                return
+            end
+            local profile = RoRota.db.profile
+            local ttk = profile.ttk
+            RoRota:Print("=== TTK Status ===")
+            RoRota:Print("Enabled: "..(ttk.enabled and "Yes" or "No"))
+            RoRota:Print("Dying Threshold: "..(ttk.dyingThreshold or 0).."s")
+            RoRota:Print("Min Samples: "..(ttk.minSamplesRequired or 0))
+            RoRota:Print("Exclude Bosses: "..(ttk.excludeBosses and "Yes" or "No"))
+            RoRota:Print("Current Samples: "..table.getn(RoRota.ttk.samples))
+            if UnitExists("target") then
+                local ttk = RoRota:EstimateTTK()
+                if ttk then
+                    RoRota:Print("Target TTK: "..string.format("%.1f", ttk).."s")
+                    RoRota:Print("Is Dying Soon: "..(RoRota:IsTargetDyingSoon() and "Yes" or "No"))
+                else
+                    RoRota:Print("Target TTK: Not enough data")
+                end
+            else
+                RoRota:Print("No target selected")
+            end
+            return
         elseif msg == "help" then
             RoRota:Print("=== RoRota Commands ===")
             RoRota:Print("/rr - Open settings")
             RoRota:Print("/rr debug - Open debug window")
             RoRota:Print("/rr preview - Toggle rotation preview")
+            RoRota:Print("/rr ttk - Show TTK status and debug info")
             RoRota:Print("/rr immunity - List all immune targets")
             RoRota:Print("/rr immunity remove <name> - Remove target")
             RoRota:Print("/rr immunity clear - Clear all immunities")

@@ -62,6 +62,14 @@ function RoRota.Cache:Update()
 		self.targetHealthPercent = 100
 	end
 	
+	-- TTK tracking
+	if RoRota.UpdateTTKSample then
+		local success, err = pcall(RoRota.UpdateTTKSample, RoRota)
+		if not success then
+			-- Silent fail
+		end
+	end
+	
 	return true
 end
 

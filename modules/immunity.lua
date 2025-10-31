@@ -101,6 +101,11 @@ function RoRota:OnErrorMessage(msg)
     
     if string.find(msg, "immune") then
         if not UnitExists("target") then return end
+        
+        if self:TargetHasImmunityBuff() then
+            return
+        end
+        
         local targetName = UnitName("target")
         
         -- Use last ability cast if within 1 second

@@ -87,6 +87,13 @@ local function RoRotaRunRotationInternal()
 			RoRota.exposeArmorExpiry = 0
 			RoRota.exposeArmorTarget = nil
 		end
+		
+		if RoRota.StartTTKTracking then
+			local success, err = pcall(RoRota.StartTTKTracking, RoRota)
+			if not success then
+				-- Silent fail
+			end
+		end
 	end
 	
 	-- Stealth detection
@@ -229,6 +236,12 @@ end
 
 -- Main entry point (error handling wrapper)
 function RoRotaRunRotation()
+	-- Cancel Blade Flurry if active
+	if RoRota:HasPlayerBuff("Blade Flurry") then
+		CastSpellByName("Blade Flurry")
+		return
+	end
+	
 	local success, err = pcall(RoRotaRunRotationInternal)
 	
 	if not success then
@@ -244,3 +257,5 @@ function RoRotaRunRotation()
 		end
 	end
 end
+
+-- AoE rotation moved to rotationaoe.lua

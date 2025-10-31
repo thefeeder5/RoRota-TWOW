@@ -274,15 +274,15 @@ function RoRotaGUI.CreatePercentEditBox(name, parent, x, y, callback)
     return eb
 end
 
--- create editbox for flat HP (0-9999999)
+-- create editbox for flat HP in thousands (0-99999k = 0-99999000)
 function RoRotaGUI.CreateFlatHPEditBox(name, parent, x, y, callback)
     local eb = CreateFrame("EditBox", name, parent)
-    eb:SetWidth(80)
+    eb:SetWidth(60)
     eb:SetHeight(20)
     eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
     eb:SetAutoFocus(false)
     eb:SetNumeric(true)
-    eb:SetMaxLetters(10)
+    eb:SetMaxLetters(5)
     
     RoRotaGUI.CreateBackdrop(eb)
     eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
@@ -294,9 +294,9 @@ function RoRotaGUI.CreateFlatHPEditBox(name, parent, x, y, callback)
         this:ClearFocus()
         local value = tonumber(this:GetText()) or 0
         if value < 0 then value = 0 end
-        if value > 9999999 then value = 9999999 end
+        if value > 99999 then value = 99999 end
         this:SetText(tostring(value))
-        if callback then callback(value) end
+        if callback then callback(value * 1000) end
     end)
     eb:SetScript("OnEscapePressed", function()
         this:ClearFocus()
