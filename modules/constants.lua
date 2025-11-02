@@ -82,14 +82,7 @@ RoRotaConstants = {
 		["Mark for Death"] = "Interface\\Icons\\Spell_Shadow_ChillTouch",
 		["Shadow of Death"] = "Interface\\Icons\\Spell_Shadow_Possession",
 	},
-	POISON_REAGENTS = {
-		["Instant Poison"] = {item = "Dust of Deterioration", count = 1},
-		["Deadly Poison"] = {item = "Dust of Decay", count = 1},
-		["Wound Poison"] = {item = "Dust of Deterioration", count = 1},
-		["Crippling Poison"] = {item = "Essence of Pain", count = 1},
-		["Mind-numbing Poison"] = {item = "Essence of Agony", count = 1},
-	},
-	POISON_TYPES = {
+		POISON_TYPES = {
 		"Agitating Poison",
 		"Corrosive Poison",
 		"Crippling Poison",
@@ -134,5 +127,15 @@ RoRotaConstants = {
 		["Instant Poison"] = "^Instant Poison",
 		["Mind-numbing Poison"] = "^Mind%-numbing Poison",
 		["Wound Poison"] = "^Wound Poison",
+	},
+	HEALTH_POTIONS = {
+		"Major Healing Potion",
+		"Superior Healing Potion",
+		"Combat Healing Potion",
+		"Greater Healing Potion",
+		"Healing Potion",
+		"Discolored Healing Potion",
+		"Lesser Healing Potion",
+		"Minor Healing Potion",
 	},
 }

@@ -14,8 +14,15 @@ function RoRota:GetDefensiveAbility()
 	local defensive = self.db.profile.defensive or {}
 	local state = self.State or {}
 	
-	-- Vanish at low HP
+	-- Health potion at low HP
 	local playerHP = state.healthPercent or self:GetPlayerHealthPercent()
+	if defensive.useHealthPotion and self.UseHealthPotion then
+		if self:UseHealthPotion() then
+			return nil
+		end
+	end
+	
+	-- Vanish at low HP
 	if defensive.useVanish and playerHP <= (defensive.vanishHP or 0) then
 		if self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish", true) then
 			return "Vanish"

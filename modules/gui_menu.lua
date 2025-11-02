@@ -483,15 +483,15 @@ function RoRotaGUI.CreateSndSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.sndTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaSndTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
         RoRota.db.profile.abilities.SliceAndDice.targetMinHPFlat = tonumber(value) or 0
     end)
     y = y - 30
-    
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.sndTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaSndTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.SliceAndDice then RoRota.db.profile.abilities.SliceAndDice = {} end
@@ -616,7 +616,7 @@ function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.ruptTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaRuptTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
@@ -624,7 +624,7 @@ function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.ruptTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaRuptTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Rupture then RoRota.db.profile.abilities.Rupture = {} end
@@ -758,7 +758,7 @@ function RoRotaGUI.CreateExposeSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.exposeTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaExposeTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
@@ -766,7 +766,7 @@ function RoRotaGUI.CreateExposeSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.exposeTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaExposeTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.ExposeArmor then RoRota.db.profile.abilities.ExposeArmor = {} end
@@ -885,7 +885,7 @@ function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.envTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEnvTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
@@ -893,7 +893,7 @@ function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.envTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEnvTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Envenom then RoRota.db.profile.abilities.Envenom = {} end
@@ -1012,7 +1012,7 @@ function RoRotaGUI.CreateShadowOfDeathSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.shadowTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaShadowTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.ShadowOfDeath then RoRota.db.profile.abilities.ShadowOfDeath = {} end
@@ -1020,7 +1020,7 @@ function RoRotaGUI.CreateShadowOfDeathSubTab(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.shadowTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaShadowTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.ShadowOfDeath then RoRota.db.profile.abilities.ShadowOfDeath = {} end
@@ -1147,7 +1147,7 @@ function RoRotaGUI.CreateEviscerateSub(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Min HP (flat, in thousands)")
     widgets.evisTargetMinFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEvisTargetMinFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
@@ -1155,7 +1155,7 @@ function RoRotaGUI.CreateEviscerateSub(parent, widgets)
     end)
     y = y - 30
     
-    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat)")
+    RoRotaGUI.CreateLabel(parent, 10, y, "Target Max HP (flat, in thousands)")
     widgets.evisTargetMaxFlatEB = RoRotaGUI.CreateFlatHPEditBox("RoRotaEvisTargetMaxFlatEB", parent, 260, y, function(value)
         if not RoRota.db.profile.abilities then RoRota.db.profile.abilities = {} end
         if not RoRota.db.profile.abilities.Eviscerate then RoRota.db.profile.abilities.Eviscerate = {} end
@@ -1665,10 +1665,31 @@ end
 -- Defensive Global Subtab
 function RoRotaGUI.CreateDefensiveGlobalSubTab(parent, widgets)
     local y = -20
-    RoRotaGUI.CreateLabel(parent, 10, y, "Reserved for future settings")
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Auto-use Health Potions")
+    widgets.useHealthPotionCheck = RoRotaGUI.CreateCheckbox("RoRotaUseHealthPotionCheck", parent, 260, y, "", function()
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.useHealthPotion = (this:GetChecked() == 1)
+    end)
+    y = y - 30
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Health Potion HP% Threshold")
+    widgets.healthPotionHPEB = RoRotaGUI.CreateEditBox("RoRotaHealthPotionHPEB", parent, 260, y, 50, function(value)
+        if not RoRota.db.profile.defensive then RoRota.db.profile.defensive = {} end
+        RoRota.db.profile.defensive.healthPotionHP = tonumber(value) or 30
+    end)
 end
 
 function RoRotaGUI.LoadDefensiveGlobalSubTab(widgets)
+    local p = RoRota.db.profile
+    if not p then return end
+    
+    if widgets.useHealthPotionCheck and p.defensive then
+        widgets.useHealthPotionCheck:SetChecked(p.defensive.useHealthPotion and 1 or nil)
+    end
+    if widgets.healthPotionHPEB and p.defensive then
+        widgets.healthPotionHPEB:SetText(tostring(p.defensive.healthPotionHP or 30))
+    end
 end
 
 -- Interrupts Subtab
@@ -1789,11 +1810,6 @@ function RoRotaGUI.CreateAoETab(parent, frame)
     title:SetText("AoE Rotation Settings")
     y = y - 40
     
-    local desc = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    desc:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
-    desc:SetText("Configure abilities for AoE rotation (Blade Flurry mode)")
-    y = y - 30
-    
     local builders = {"Sinister Strike", "Backstab", "Noxious Assault"}
     local finishers = {"Eviscerate", "Rupture", "Envenom"}
     
@@ -1845,39 +1861,7 @@ function RoRotaGUI.CreateAoETab(parent, frame)
         RoRota.db.profile.aoe.finisherMinCP = value
     end)
     y = y - 50
-    
-    local macroTitle = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    macroTitle:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
-    macroTitle:SetText("Macro Setup:")
-    y = y - 25
-    
-    local macroBtn = RoRotaGUI.CreateButton(nil, parent, 180, 25, "Create AoE Macro")
-    macroBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
-    macroBtn:SetScript("OnClick", function()
-        local macroIndex = GetMacroIndexByName("RoRotaAoE")
-        if macroIndex == 0 then
-            CreateMacro("RoRotaAoE", 1, "/script RoRotaRunAOERotation()", 1, 1)
-            RoRota:Print("Macro 'RoRotaAoE' created!")
-        else
-            EditMacro(macroIndex, "RoRotaAoE", 1, "/script RoRotaRunAOERotation()")
-            RoRota:Print("Macro 'RoRotaAoE' updated!")
-        end
-    end)
-    y = y - 40
-    
-    local info1 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    info1:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
-    info1:SetText("• AoE Macro: Enables Blade Flurry, uses AoE rotation")
-    y = y - 18
-    
-    local info2 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    info2:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
-    info2:SetText("• Single Target Macro: Cancels Blade Flurry if active")
-    y = y - 18
-    
-    local info3 = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    info3:SetPoint("TOPLEFT", parent, "TOPLEFT", 40, y)
-    info3:SetText("• Blade Flurry is a toggle that reduces energy regen")
+   
 end
 
 function RoRotaGUI.LoadAoETab(frame)

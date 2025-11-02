@@ -57,6 +57,8 @@ RoRotaDefaultProfile = {
 		useSurpriseAttack = false,
 		surpriseTargetMinHP = 0,
 		surpriseTargetMaxHP = 100,
+		useHealthPotion = false,
+		healthPotionHP = 30,
 	},
 	poisons = {
 		enabled = true,
