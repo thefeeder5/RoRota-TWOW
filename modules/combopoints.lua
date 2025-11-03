@@ -32,10 +32,7 @@ function RoRota:IsFinisher(ability)
 end
 
 function RoRota:UpdateCPTalents()
-	local now = GetTime()
-	if now - self.CPTalents.lastUpdate < 5 then return end
-	
-	self.CPTalents.lastUpdate = now
+	self.CPTalents.lastUpdate = GetTime()
 	
 	-- Reset all
 	self.CPTalents.ruthlessness = 0

@@ -149,5 +149,14 @@ function RoRota:GetRuthlessnessChance()
     return 0
 end
 
--- mark module as loaded
+local talentFrame = CreateFrame("Frame")
+talentFrame:RegisterEvent("PLAYER_TALENT_UPDATE")
+talentFrame:RegisterEvent("CHARACTER_POINTS_CHANGED")
+talentFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+talentFrame:SetScript("OnEvent", function()
+    if RoRota.UpdateAllTalents then
+        RoRota:UpdateAllTalents()
+    end
+end)
+
 RoRota.talents = true

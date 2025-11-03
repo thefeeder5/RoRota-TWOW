@@ -141,9 +141,47 @@ function RoRota:RegisterSlashCommands()
                 RoRota:Print("No target selected")
             end
             return
+        elseif msg == "cachestats" or msg == "cacheinfo" then
+            DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00=== Cache Status ===")
+            
+            if RoRota.BuffCache then
+                local playerBuffs = 0
+                for _ in pairs(RoRota.BuffCache.player) do playerBuffs = playerBuffs + 1 end
+                local targetDebuffs = 0
+                for _ in pairs(RoRota.BuffCache.target) do targetDebuffs = targetDebuffs + 1 end
+                local targetBuffs = 0
+                if RoRota.BuffCache.targetBuffs then
+                    for _ in pairs(RoRota.BuffCache.targetBuffs) do targetBuffs = targetBuffs + 1 end
+                end
+                local lastUpdate = GetTime() - RoRota.BuffCache.lastUpdate
+                DEFAULT_CHAT_FRAME:AddMessage("Buff Cache: "..playerBuffs.." player, "..targetDebuffs.." target debuffs, "..targetBuffs.." target buffs")
+                DEFAULT_CHAT_FRAME:AddMessage("Last update: "..lastUpdate.." seconds ago")
+            end
+            
+            if RoRota.SpellbookCache then
+                local spellCount = 0
+                for _ in pairs(RoRota.SpellbookCache.spells) do spellCount = spellCount + 1 end
+                DEFAULT_CHAT_FRAME:AddMessage("Spellbook Cache: "..spellCount.." spells")
+                DEFAULT_CHAT_FRAME:AddMessage("Dirty: "..(RoRota.SpellbookCache.dirty and "Yes" or "No"))
+            end
+            
+            if RoRota.ActionSlotCache then
+                local slotCount = 0
+                for _ in pairs(RoRota.ActionSlotCache) do slotCount = slotCount + 1 end
+                DEFAULT_CHAT_FRAME:AddMessage("Action Slots: "..slotCount.." cached")
+            end
+            
+            if RoRota.Cache then
+                local stats = RoRota.Cache:GetStats()
+                local hitRate = stats.total > 0 and (stats.hits * 100 / stats.total) or 0
+                DEFAULT_CHAT_FRAME:AddMessage("State Cache: "..stats.total.." calls ("..math.floor(hitRate).."% throttled)")
+            end
+            
+            return
         elseif msg == "help" then
             RoRota:Print("=== RoRota Commands ===")
             RoRota:Print("/rr - Open settings")
+            RoRota:Print("/rr cachestats - Show cache statistics")
             RoRota:Print("/rr debug - Open debug window")
             RoRota:Print("/rr preview - Toggle rotation preview")
             RoRota:Print("/rr ttk - Show TTK status and debug info")

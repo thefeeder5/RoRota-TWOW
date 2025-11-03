@@ -111,7 +111,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		
 		-- Target HP flat amount check (only if enabled)
 		if cfg.useFlatHP then
-			local targetHP = UnitHealth("target")
+			local targetHP = self.Cache and self.Cache.targetHealth or 0
 			local minFlat = cfg.targetMinHPFlat or 0
 			local maxFlat = cfg.targetMaxHPFlat or 9999999
 			if targetHP < minFlat or targetHP > maxFlat then
@@ -148,7 +148,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	-- Target HP flat amount check (only if enabled)
 	if cfg.useFlatHP then
-		local targetHP = UnitHealth("target")
+		local targetHP = self.Cache and self.Cache.targetHealth or 0
 		local minFlat = cfg.targetMinHPFlat or 0
 		local maxFlat = cfg.targetMaxHPFlat or 9999999
 		if targetHP < minFlat or targetHP > maxFlat then
@@ -247,8 +247,8 @@ function RoRota:PlanRotation(state)
 		finisherPrio = self.db.profile.finisherPriority or {"Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Shadow of Death"},
 		refreshThreshold = self.db.profile.finisherRefreshThreshold or 2,
 		mainBuilder = state.mainBuilder,
-		targetHPPct = UnitHealth("target") / UnitHealthMax("target") * 100,
-		playerHPPct = UnitHealth("player") / UnitHealthMax("player") * 100,
+		targetHPPct = self.Cache and self.Cache.targetHealthPercent or 100,
+		playerHPPct = self.Cache and self.Cache.healthPercent or 100,
 		-- Use cached values from global cache
 		energyCosts = self.RotationCache.energyCosts,
 		maxEnergy = self.RotationCache.maxEnergy,

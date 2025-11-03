@@ -1,9 +1,9 @@
 --[[ abilities ]]--
--- Read-only ability information queries.
--- Handles spell availability, energy costs, cooldowns, and spell ranks.
+-- Cached ability information queries.
+-- Event-driven spellbook indexing for O(1) lookups.
 --
 -- Key functions:
---   HasSpell(name) - Check if spell is learned
+--   HasSpell(name) - Check if spell is learned (cached)
 --   GetEnergyCost(name) - Get energy cost with talents
 --   IsOnCooldown(name) - Check if ability is on cooldown
 --   GetCooldownRemaining(name) - Get cooldown time remaining
@@ -13,15 +13,31 @@
 if not RoRota then return end
 if RoRota.abilities then return end
 
-function RoRota:HasSpell(spellName)
+RoRota.SpellbookCache = {
+    spells = {},
+    dirty = true,
+}
+
+function RoRota:BuildSpellbookIndex()
+    local cache = self.SpellbookCache.spells
+    for k in pairs(cache) do cache[k] = nil end
+    
     local i = 1
     while true do
-        local spell = GetSpellName(i, BOOKTYPE_SPELL)
-        if not spell then break end
-        if spell == spellName then return true end
+        local name = GetSpellName(i, BOOKTYPE_SPELL)
+        if not name then break end
+        cache[name] = i
         i = i + 1
     end
-    return false
+    
+    self.SpellbookCache.dirty = false
+end
+
+function RoRota:HasSpell(spellName)
+    if self.SpellbookCache.dirty then
+        self:BuildSpellbookIndex()
+    end
+    return self.SpellbookCache.spells[spellName] ~= nil
 end
 
 function RoRota:GetEnergyCost(spellName)
@@ -54,14 +70,10 @@ function RoRota:HasEnoughEnergy(spellName)
 end
 
 function RoRota:GetSpellID(spellName)
-	local i = 1
-	while true do
-		local name = GetSpellName(i, BOOKTYPE_SPELL)
-		if not name then break end
-		if name == spellName then return i end
-		i = i + 1
+	if self.SpellbookCache.dirty then
+		self:BuildSpellbookIndex()
 	end
-	return nil
+	return self.SpellbookCache.spells[spellName]
 end
 
 function RoRota:IsOnCooldown(spellName, ignoreGCD)
@@ -95,17 +107,13 @@ function RoRota:GetCooldownRemaining(spellName)
 end
 
 function RoRota:GetSpellRank(spellName)
-    local i = 1
-    while true do
-        local name, rank = GetSpellName(i, BOOKTYPE_SPELL)
-        if not name then break end
-        if name == spellName then
-            if rank and string.find(rank, "Rank ") then
-                local r = tonumber(string.sub(rank, 6))
-                if r then return r end
-            end
-        end
-        i = i + 1
+    local spellID = self:GetSpellID(spellName)
+    if not spellID then return nil end
+    
+    local name, rank = GetSpellName(spellID, BOOKTYPE_SPELL)
+    if rank and string.find(rank, "Rank ") then
+        local r = tonumber(string.sub(rank, 6))
+        if r then return r end
     end
     return nil
 end
@@ -174,5 +182,21 @@ function RoRota:IsReactiveUsable(spellName)
 	-- Usable and not on cooldown (or only GCD)
 	return isUsable and (start == 0 or duration == 1.5)
 end
+
+local spellFrame = CreateFrame("Frame")
+spellFrame:RegisterEvent("SPELLS_CHANGED")
+spellFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+spellFrame:SetScript("OnEvent", function()
+    RoRota.SpellbookCache.dirty = true
+end)
+
+local actionFrame = CreateFrame("Frame")
+actionFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+actionFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+actionFrame:SetScript("OnEvent", function()
+    for k in pairs(RoRota.ActionSlotCache) do
+        RoRota.ActionSlotCache[k] = nil
+    end
+end)
 
 RoRota.abilities = true

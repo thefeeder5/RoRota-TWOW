@@ -23,6 +23,10 @@ RoRota.Cache = {
 	stealthed = false,
 	healthPercent = 100,
 	targetHealthPercent = 100,
+	targetHealth = 0,
+	targetHealthMax = 1,
+	playerHealth = 0,
+	playerHealthMax = 1,
 	
 	-- Stats
 	hits = 0,
@@ -47,7 +51,11 @@ function RoRota.Cache:Update()
 	self.hasTarget = UnitExists("target") and not UnitIsDead("target")
 	self.targetName = self.hasTarget and UnitName("target") or nil
 	self.inCombat = UnitAffectingCombat("player")
-	self.healthPercent = (UnitHealth("player") / UnitHealthMax("player")) * 100
+	
+	-- Player health (absolute and percent)
+	self.playerHealth = UnitHealth("player")
+	self.playerHealthMax = UnitHealthMax("player")
+	self.healthPercent = (self.playerHealth / self.playerHealthMax) * 100
 	
 	-- Stealth detection (use tooltip for accuracy)
 	self.stealthed = false
@@ -55,10 +63,14 @@ function RoRota.Cache:Update()
 		self.stealthed = RoRota:HasPlayerBuff("Stealth")
 	end
 	
-	-- Target health
+	-- Target health (absolute and percent)
 	if self.hasTarget then
-		self.targetHealthPercent = (UnitHealth("target") / UnitHealthMax("target")) * 100
+		self.targetHealth = UnitHealth("target")
+		self.targetHealthMax = UnitHealthMax("target")
+		self.targetHealthPercent = (self.targetHealth / self.targetHealthMax) * 100
 	else
+		self.targetHealth = 0
+		self.targetHealthMax = 1
 		self.targetHealthPercent = 100
 	end
 	

@@ -17,7 +17,7 @@ end
 
 function RoRota:WouldOverkill(spellName, cp)
     if not self.db.profile.overkillPrevention then return false end
-    local targetHP = UnitHealth("target")
+    local targetHP = self.Cache and self.Cache.targetHealth or 0
     local damage = 0
     local ap = self:GetAttackPower()
     
@@ -51,7 +51,7 @@ function RoRota:WouldOverkill(spellName, cp)
 end
 
 function RoRota:CanKillWithEviscerate(cp)
-    local targetHP = UnitHealth("target")
+    local targetHP = self.Cache and self.Cache.targetHealth or 0
     local rank = self:GetSpellRank("Eviscerate")
     if not rank then return false end
     local rankData = RoRotaConstants.EVISCERATE_DAMAGE[rank]

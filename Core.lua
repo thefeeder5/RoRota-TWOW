@@ -76,8 +76,6 @@ function RoRota:OnEnable()
         RoRotaDB.immunityBuffs = {}
     end
     
-    -- Note: CleanBannedTargets removed - dummies can now be tracked if desired
-    
     -- event registration (handlers in modules/events.lua)
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("CHARACTER_POINTS_CHANGED")

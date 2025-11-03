@@ -45,7 +45,10 @@ local function RoRotaRunRotationInternal()
 	last_rotation_time = now
 	cached_ability = nil
 	
-	-- 1. Update cache
+	-- 1. Update caches
+	if RoRota.UpdateBuffCache then
+		RoRota:UpdateBuffCache()
+	end
 	if RoRota.Cache then
 		RoRota.Cache:Update()
 	end
@@ -196,6 +199,9 @@ end
 
 -- Get current ability without casting (for preview)
 function RoRota:GetCurrentAbility()
+	if self.UpdateBuffCache then
+		self:UpdateBuffCache()
+	end
 	if self.Cache then
 		self.Cache:Update()
 	end

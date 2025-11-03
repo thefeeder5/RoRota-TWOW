@@ -15,7 +15,7 @@ function RoRota:GetDefensiveAbility()
 	local state = self.State or {}
 	
 	-- Health potion at low HP
-	local playerHP = state.healthPercent or self:GetPlayerHealthPercent()
+	local playerHP = self.Cache and self.Cache.healthPercent or 100
 	if defensive.useHealthPotion and self.UseHealthPotion then
 		if self:UseHealthPotion() then
 			return nil
