@@ -2,10 +2,6 @@
 
 **One-button rotation addon for Rogues on Turtle WoW**
 
-Version 0.8.2 | Vanilla WoW 1.12.1 | By feeder5
-
----
-
 ## What is RoRota?
 
 RoRota automates your rogue rotation into a single keybind. Press one button and the addon executes the optimal ability based on your current situation - handling openers, combo point builders, finishers, interrupts, and defensive cooldowns intelligently.
