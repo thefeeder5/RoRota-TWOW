@@ -16,6 +16,12 @@ function RoRota:CreateRotationPreview()
 	f:SetScript("OnDragStart", function() this:StartMoving() end)
 	f:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
 	
+	-- Lock indicator
+	f.lockText = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	f.lockText:SetPoint("BOTTOM", f, "TOP", 0, 2)
+	f.lockText:SetTextColor(1, 0.5, 0)
+	f.lockText:Hide()
+	
 	-- Create ability rows (3 max)
 	f.rows = {}
 	for i = 1, 3 do
@@ -60,7 +66,34 @@ function RoRota:CreateRotationPreview()
 		
 		if not shouldShow then
 			for i = 1, 3 do this.rows[i]:Hide() end
+			this.lockText:Hide()
 			return
+		end
+		
+		-- Show lock status
+		if RoRota.CastState then
+			local state, reason = RoRota.CastState:GetState()
+			if state == "LOCKED" and reason then
+				local remaining = RoRota.CastState.lockUntil - GetTime()
+				if remaining > 0 then
+					this.lockText:SetText(reason.." ("..string.format("%.1f", remaining).."s)")
+					this.lockText:Show()
+				else
+					this.lockText:Hide()
+				end
+			elseif state == "GCD" and RoRota.CombatLog then
+				local gcdRemaining = RoRota.CombatLog.gcdEnd - GetTime()
+				if gcdRemaining > 0 then
+					this.lockText:SetText("GCD ("..string.format("%.1f", gcdRemaining).."s)")
+					this.lockText:Show()
+				else
+					this.lockText:Hide()
+				end
+			else
+				this.lockText:Hide()
+			end
+		else
+			this.lockText:Hide()
 		end
 		
 		-- Get depth

@@ -48,6 +48,10 @@ function RoRota:GetNextEnergyTick()
 	return remaining
 end
 
+function RoRota:GetTimeToNextTick()
+	return self:GetNextEnergyTick()
+end
+
 function RoRota:GetEnergyTickTime()
 	local tickTime = RoRotaConstants.ENERGY_TICK_TIME
 	

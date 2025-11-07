@@ -5,12 +5,19 @@
 if not RoRota then return end
 if RoRota.ttk then return end
 
+-- Automatic constants (not user-configurable)
+local SAMPLE_INTERVAL = 0.25  -- Sample every 0.25s for accuracy
+local SAMPLE_WINDOW = 3.0     -- Use 3s window for DPS calculation
+local DYING_THRESHOLD = 8.0   -- Consider dying when TTK < 8s
+local MIN_SAMPLES = 3         -- Require at least 3 samples
+
 RoRota.ttk = {
     targetGUID = nil,
     startHP = nil,
     startTime = nil,
     samples = {},
     lastSampleTime = 0,
+    lastHP = nil,
 }
 
 function RoRota:StartTTKTracking()
@@ -56,8 +63,8 @@ function RoRota:UpdateTTKSample()
     
     local currentTime = GetTime()
     
-    -- Only record sample every 0.5 seconds
-    if currentTime - self.ttk.lastSampleTime < 0.5 then
+    -- Sample every 0.25s for better accuracy
+    if currentTime - self.ttk.lastSampleTime < SAMPLE_INTERVAL then
         return
     end
     
@@ -67,22 +74,24 @@ function RoRota:UpdateTTKSample()
         return
     end
     
+    -- Detect healing: if HP increased, reset tracking
+    if self.ttk.lastHP and currentHP > self.ttk.lastHP then
+        self:StartTTKTracking()
+        return
+    end
+    
     table.insert(self.ttk.samples, {
         hp = currentHP,
         time = currentTime
     })
     
     self.ttk.lastSampleTime = currentTime
+    self.ttk.lastHP = currentHP
     
-    -- Remove samples older than needed
-    if not self.db or not self.db.profile or not self.db.profile.ttk then
-        return
-    end
-    local windowSize = self.db.profile.ttk.sampleWindow or 3
-    
+    -- Remove samples older than window
     while table.getn(self.ttk.samples) > 0 do
         local oldestSample = self.ttk.samples[1]
-        if currentTime - oldestSample.time > windowSize then
+        if currentTime - oldestSample.time > SAMPLE_WINDOW then
             table.remove(self.ttk.samples, 1)
         else
             break
@@ -98,22 +107,19 @@ function RoRota:EstimateTTK()
         return nil
     end
     
-    if not self.db or not self.db.profile or not self.db.profile.ttk then
-        return nil
-    end
-    
     local sampleCount = table.getn(self.ttk.samples)
-    if sampleCount < 2 then
+    
+    -- Require minimum samples for accuracy
+    if sampleCount < MIN_SAMPLES then
         return nil
     end
     
-    local windowSize = self.db.profile.ttk.sampleWindow or 3
     local firstSample = self.ttk.samples[1]
     local lastSample = self.ttk.samples[sampleCount]
     local timeElapsed = lastSample.time - firstSample.time
     
-    -- Need at least the configured window size of data
-    if timeElapsed < windowSize then
+    -- Need at least 1 second of data
+    if timeElapsed < 1.0 then
         return nil
     end
     
@@ -134,18 +140,16 @@ function RoRota:EstimateTTK()
     return ttk
 end
 
-function RoRota:IsTargetDyingSoon(threshold)
+function RoRota:IsTargetDyingSoon()
     if not self.db or not self.db.profile or not self.db.profile.ttk then
         return false
     end
-    local ttk = self.db.profile.ttk
-    if not ttk.enabled then
+    if not self.db.profile.ttk.enabled then
         return false
     end
     
-    threshold = threshold or ttk.dyingThreshold or 10
-    
-    if ttk.excludeBosses and UnitClassification("target") == "worldboss" then
+    -- Exclude bosses if configured
+    if self.db.profile.ttk.excludeBosses and UnitClassification("target") == "worldboss" then
         return false
     end
     
@@ -154,5 +158,5 @@ function RoRota:IsTargetDyingSoon(threshold)
         return false
     end
     
-    return ttk <= threshold and ttk > 0
+    return ttk <= DYING_THRESHOLD and ttk > 0
 end

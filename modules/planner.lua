@@ -87,6 +87,38 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		if self:HasPlayerBuff("Taste for Blood") then
 			return false
 		end
+	elseif finisher == "Flourish" then
+		-- Flourish is defensive, check player HP instead of target
+		if not cfg or not cfg.enabled then return false end
+		if state.cp < (cfg.minCP or 1) then return false end
+		if state.cp > (cfg.maxCP or 5) then return false end
+		
+		if self:IsOnCooldown("Flourish") then return false end
+		
+		local playerMinHP = cfg.playerMinHP or 0
+		local playerMaxHP = cfg.playerMaxHP or 100
+		if cache.playerHPPct < playerMinHP or cache.playerHPPct > playerMaxHP then
+			return false
+		end
+		
+		if cfg.onlyElites and not self:IsTargetElite() then
+			return false
+		end
+		
+		if state.energy < cache.energyCosts[finisher] then return false end
+		
+		if self.Conditions then
+			local condPass, mergedCfg = self.Conditions:CheckAbilityConditions(finisher, cfg)
+			if not condPass then return false end
+			cfg = mergedCfg
+		end
+		
+		local timeRemaining = cache.buffTimes[finisher] or 0
+		local threshold = cfg.refreshThreshold or cache.refreshThreshold
+		
+		if timeRemaining <= threshold then return true end
+		
+		return false
 	elseif self:IsTargetImmune(finisher) then
 		return false
 	end
@@ -177,6 +209,13 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	end
 	
 	if state.energy < cache.energyCosts[finisher] then return false end
+	
+	-- Check custom conditions before time check
+	if self.Conditions then
+		local condPass, mergedCfg = self.Conditions:CheckAbilityConditions(finisher, cfg)
+		if not condPass then return false end
+		cfg = mergedCfg
+	end
 	
 	local timeRemaining = cache.buffTimes[finisher] or 0
 	local threshold = cfg.refreshThreshold or cache.refreshThreshold
@@ -356,8 +395,36 @@ function RoRota:PlanRotation(state)
 		return finisher, reason, data
 	end
 	
-	-- If saving CP for deadline, return early (don't fall through to fallback)
+	-- Smart pooling: if we need a finisher but lack energy, lock until we have it
+	if state.cp >= 3 then
+		for i, fin in ipairs(cache.finisherPrio) do
+			local finCfg = cache.abilities[GetFinisherKey(fin)]
+			if finCfg and finCfg.enabled then
+				local minCP = finCfg.minCP or 1
+				local maxCP = finCfg.maxCP or 5
+				if state.cp >= minCP and state.cp <= maxCP then
+					local cost = cache.energyCosts[fin] or 30
+					local deficit = cost - state.energy
+					if deficit > 0 and deficit <= 20 then
+						if RoRota.CastState and RoRota.GetTimeToNextTick then
+							local nextTick = RoRota:GetTimeToNextTick()
+							if nextTick > 0.1 then
+								RoRota.CastState:LockRotation(nextTick, "Pooling for "..fin)
+								return nil, REASON.POOL_ENERGY, deficit
+							end
+						end
+					end
+					break
+				end
+			end
+		end
+	end
+	
+	-- If saving CP for deadline, lock rotation
 	if reason == REASON.SAVE_CP then
+		if RoRota.CastState and data > 0 then
+			RoRota.CastState:LockRotation(data, "Saving CP for deadline")
+		end
 		return nil, reason, data
 	end
 	
@@ -368,7 +435,12 @@ function RoRota:PlanRotation(state)
 				local targetMinHP = cache.defensive.riposteTargetMinHP or 0
 				local targetMaxHP = cache.defensive.riposteTargetMaxHP or 100
 				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
-					return "Riposte", REASON.BUILD, state.cp + 1
+					if self.Conditions then
+						local condPass = self.Conditions:CheckAbilityConditions("Riposte", cache.defensive)
+						if condPass then return "Riposte", REASON.BUILD, state.cp + 1 end
+					else
+						return "Riposte", REASON.BUILD, state.cp + 1
+					end
 				end
 			end
 		end
@@ -378,7 +450,9 @@ function RoRota:PlanRotation(state)
 				local targetMinHP = cache.defensive.surpriseTargetMinHP or 0
 				local targetMaxHP = cache.defensive.surpriseTargetMaxHP or 100
 				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
-					return "Surprise Attack", REASON.BUILD, state.cp + 2
+					if not self.Conditions or self.Conditions:CheckAbilityConditions("Surprise Attack", cache.defensive) then
+						return "Surprise Attack", REASON.BUILD, state.cp + 2
+					end
 				end
 			end
 		end
@@ -390,7 +464,9 @@ function RoRota:PlanRotation(state)
 				if cache.targetHPPct >= targetMinHP and cache.targetHPPct <= targetMaxHP then
 					if cache.abilities.MarkForDeath.onlyElites and not self:IsTargetElite() then
 					else
-						return "Mark for Death", REASON.BUILD, state.cp + 2
+						if not self.Conditions or self.Conditions:CheckAbilityConditions("Mark for Death", cache.abilities.MarkForDeath) then
+							return "Mark for Death", REASON.BUILD, state.cp + 2
+						end
 					end
 				end
 			end
@@ -407,7 +483,7 @@ function RoRota:PlanRotation(state)
 						if cache.abilities.Hemorrhage.onlyWhenMissing then
 							shouldUse = not self:HasTargetDebuff("Hemorrhage")
 						end
-						if shouldUse then
+						if shouldUse and (not self.Conditions or self.Conditions:CheckAbilityConditions("Hemorrhage", cache.abilities.Hemorrhage)) then
 							return "Hemorrhage", REASON.BUILD, state.cp + 1
 						end
 					end
@@ -420,7 +496,9 @@ function RoRota:PlanRotation(state)
 				if cache.targetHPPct <= (cache.defensive.ghostlyTargetMaxHP or 100) and 
 				   cache.playerHPPct >= (cache.defensive.ghostlyPlayerMinHP or 0) and 
 				   cache.playerHPPct <= (cache.defensive.ghostlyPlayerMaxHP or 100) then
-					return "Ghostly Strike", REASON.GHOSTLY, 0
+					if not self.Conditions or self.Conditions:CheckAbilityConditions("Ghostly Strike", cache.defensive) then
+						return "Ghostly Strike", REASON.GHOSTLY, 0
+					end
 				end
 			end
 		end
@@ -456,7 +534,13 @@ function RoRota:PlanRotation(state)
 			return builder, REASON.BUILD, state.cp + 1
 		end
 		
-		-- Not enough energy: DON'T increment failsafe counter, just wait
+		-- Not enough energy: lock until next tick
+		if RoRota.CastState and RoRota.GetTimeToNextTick then
+			local nextTick = RoRota:GetTimeToNextTick()
+			if nextTick > 0.1 then
+				RoRota.CastState:LockRotation(nextTick, "Pooling energy for builder")
+			end
+		end
 		return nil, REASON.TICK_WAIT, 0
 	end
 	
@@ -465,6 +549,14 @@ function RoRota:PlanRotation(state)
 		local cost = cache.energyCosts["Eviscerate"] or 30
 		if state.energy >= cost then
 			return "Eviscerate", REASON.CP_DUMP, 0
+		else
+			-- Pool energy for finisher
+			if RoRota.CastState and RoRota.GetTimeToNextTick then
+				local nextTick = RoRota:GetTimeToNextTick()
+				if nextTick > 0.1 then
+					RoRota.CastState:LockRotation(nextTick, "Pooling energy for finisher")
+				end
+			end
 		end
 	end
 	
@@ -584,6 +676,12 @@ function RoRota:CalculateFinisherDuration(finisher, cp)
 			duration = duration * (1 + (self.TalentCache.improvedBladeTactics * 0.15))
 		end
 		return duration
+	elseif finisher == "Flourish" then
+		local duration = 6 + (cp * 2)
+		if self.TalentCache and self.TalentCache.improvedBladeTactics then
+			duration = duration * (1 + (self.TalentCache.improvedBladeTactics * 0.15))
+		end
+		return duration
 	elseif finisher == "Envenom" then
 		return 8 + (cp * 4)
 	elseif finisher == "Rupture" then
@@ -594,6 +692,8 @@ function RoRota:CalculateFinisherDuration(finisher, cp)
 		return duration
 	elseif finisher == "Expose Armor" then
 		return 30
+	elseif finisher == "Kidney Shot" then
+		return 1 + cp
 	end
 	return 0
 end

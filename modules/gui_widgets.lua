@@ -33,13 +33,7 @@ function RoRotaGUI.SkinButton(button)
     button:SetNormalTexture("")
     button:SetHighlightTexture("")
     button:SetPushedTexture("")
-    
-    button:SetScript("OnEnter", function()
-        this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
-    end)
-    button:SetScript("OnLeave", function()
-        this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-    end)
+    RoRotaGUI.SetHighlight(button)
 end
 
 -- skin checkbox
@@ -63,9 +57,8 @@ end
 -- create dropdown (borderless)
 function RoRotaGUI.CreateDropdown(name, parent, x, y, width, items, callback)
     local dd = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    local offset = (width or 100) - 100
-    dd:SetPoint("TOPLEFT", parent, "TOPLEFT", x - 16 - offset, y + 4)
     UIDropDownMenu_SetWidth(width or 100, dd)
+    dd.dropdownWidth = width or 100
     
     local left = getglobal(name.."Left")
     local middle = getglobal(name.."Middle")
@@ -148,9 +141,8 @@ function RoRotaGUI.CreateDropdownNumeric(name, parent, x, y, min, max, step, cal
         table.insert(items, tostring(i))
     end
     local dd = CreateFrame("Frame", name, parent, "UIDropDownMenuTemplate")
-    local offset = 80 - 100
-    dd:SetPoint("TOPLEFT", parent, "TOPLEFT", x - 16 - offset, y + 4)
     UIDropDownMenu_SetWidth(80, dd)
+    dd.dropdownWidth = 80
     
     local left = getglobal(name.."Left")
     local middle = getglobal(name.."Middle")
@@ -176,7 +168,11 @@ end
 
 -- create sidebar button
 function RoRotaGUI.CreateSidebarButton(parent, y, text, onClick)
+    if not parent then return nil end
+    
     local btn = CreateFrame("Button", nil, parent)
+    if not btn then return nil end
+    
     btn:SetWidth(90)
     btn:SetHeight(30)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, y)
@@ -189,14 +185,7 @@ function RoRotaGUI.CreateSidebarButton(parent, y, text, onClick)
     btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
     btn.text:SetText(text)
     
-    btn:SetScript("OnEnter", function()
-        this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
-    end)
-    btn:SetScript("OnLeave", function()
-        if not this.active then
-            this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-        end
-    end)
+    RoRotaGUI.SetHighlight(btn)
     btn:SetScript("OnClick", onClick)
     
     return btn
@@ -335,6 +324,64 @@ function RoRotaGUI.CreateDecimalEditBox(name, parent, x, y, width, min, max, cal
     return eb
 end
 
+-- create editbox for text input (comma-separated lists)
+function RoRotaGUI.CreateTextEditBox(name, parent, x, y, width, callback)
+    local eb = CreateFrame("EditBox", name, parent)
+    eb:SetWidth(width or 200)
+    eb:SetHeight(20)
+    eb:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 85, y + 2)
+    eb:SetAutoFocus(false)
+    eb:SetMaxLetters(200)
+    
+    RoRotaGUI.CreateBackdrop(eb)
+    eb:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    
+    eb:SetFontObject("GameFontHighlight")
+    eb:SetTextInsets(5, 5, 0, 0)
+    
+    eb:SetScript("OnEnterPressed", function()
+        this:ClearFocus()
+        if callback then callback(this:GetText()) end
+    end)
+    eb:SetScript("OnEscapePressed", function()
+        this:ClearFocus()
+    end)
+    
+    return eb
+end
+
+-- create multi-line editbox for conditions
+function RoRotaGUI.CreateMultiLineEditBox(name, parent, x, y, width, height, callback)
+    local scroll = CreateFrame("ScrollFrame", name.."Scroll", parent)
+    scroll:SetWidth(width or 350)
+    scroll:SetHeight(height or 80)
+    scroll:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    
+    RoRotaGUI.CreateBackdrop(scroll)
+    scroll:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    
+    local eb = CreateFrame("EditBox", name, scroll)
+    eb:SetWidth(width - 10 or 340)
+    eb:SetHeight(height or 80)
+    eb:SetMultiLine(true)
+    eb:SetAutoFocus(false)
+    eb:SetMaxLetters(500)
+    eb:SetFontObject("GameFontHighlightSmall")
+    eb:SetTextInsets(5, 5, 5, 5)
+    
+    scroll:SetScrollChild(eb)
+    
+    eb:SetScript("OnEscapePressed", function()
+        this:ClearFocus()
+        if callback then callback(this:GetText()) end
+    end)
+    eb:SetScript("OnEditFocusLost", function()
+        if callback then callback(this:GetText()) end
+    end)
+    
+    return eb
+end
+
 -- create setting row (label left, control right)
 function RoRotaGUI.CreateSettingRow(parent, y, labelText, controlX)
     local label = RoRotaGUI.CreateLabel(parent, 20, y, labelText)
@@ -343,7 +390,11 @@ end
 
 -- create horizontal tab button
 function RoRotaGUI.CreateHorizontalTab(parent, x, text, onClick)
+    if not parent then return nil end
+    
     local btn = CreateFrame("Button", nil, parent)
+    if not btn then return nil end
+    
     btn:SetWidth(85)
     btn:SetHeight(25)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, 0)
@@ -356,16 +407,7 @@ function RoRotaGUI.CreateHorizontalTab(parent, x, text, onClick)
     btn.text:SetPoint("CENTER", btn, "CENTER", 0, 0)
     btn.text:SetText(text)
     
-    btn:SetScript("OnEnter", function()
-        if not this.active then
-            this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
-        end
-    end)
-    btn:SetScript("OnLeave", function()
-        if not this.active then
-            this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-        end
-    end)
+    RoRotaGUI.SetHighlight(btn)
     btn:SetScript("OnClick", onClick)
     
     return btn
@@ -385,7 +427,11 @@ function RoRotaGUI.SetHorizontalTabActive(btn, active)
 end
 
 function RoRotaGUI.CreateSubTab(parent, y, text, onClick)
+    if not parent then return nil end
+    
     local btn = CreateFrame("Button", nil, parent)
+    if not btn then return nil end
+    
     btn:SetWidth(80)
     btn:SetHeight(30)
     btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, y)
@@ -400,16 +446,7 @@ function RoRotaGUI.CreateSubTab(parent, y, text, onClick)
     btn.text:SetJustifyH("CENTER")
     btn.text:SetWidth(75)
     
-    btn:SetScript("OnEnter", function()
-        if not this.active then
-            this:SetBackdropBorderColor(0.2, 1, 0.8, 1)
-        end
-    end)
-    btn:SetScript("OnLeave", function()
-        if not this.active then
-            this:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
-        end
-    end)
+    RoRotaGUI.SetHighlight(btn)
     btn:SetScript("OnClick", onClick)
     
     return btn
@@ -426,6 +463,158 @@ function RoRotaGUI.SetSubTabActive(btn, active)
         btn.text:SetTextColor(0.6, 0.6, 0.6)
         btn.active = false
     end
+end
+
+-- ============================================================================
+-- LAYOUT SYSTEM
+-- ============================================================================
+
+-- Layout manager for automatic positioning
+function RoRotaGUI.CreateLayout(parent, startX, startY)
+    return {
+        parent = parent,
+        x = startX or 20,
+        y = startY or -20,
+        
+        -- Add a row (label + control)
+        Row = function(self, label, control, spacing, tooltip)
+            local lbl = RoRotaGUI.CreateLabel(self.parent, self.x, self.y, label)
+            if tooltip and lbl then
+                RoRotaGUI.SetTooltip(lbl, tooltip)
+            end
+            if control and type(control) == "table" and control.SetPoint then
+                control:ClearAllPoints()
+                local parentWidth = self.parent:GetWidth() or 480
+                local rightEdge = parentWidth < 450 and 345 or 435
+                local xPos = rightEdge
+                local name = control.GetName and control:GetName() or ""
+                if string.find(name, "DD") or string.find(name, "DropDown") then
+                    local dropdownWidth = control.dropdownWidth or 100
+                    xPos = rightEdge - dropdownWidth
+                else
+                    xPos = rightEdge - 20
+                end
+                control:SetPoint("TOPLEFT", self.parent, "TOPLEFT", xPos, self.y)
+                if tooltip then
+                    RoRotaGUI.SetTooltip(control, tooltip)
+                end
+            end
+            self.y = self.y - (spacing or 20)
+            return control
+        end,
+        
+        -- Add spacing
+        Space = function(self, amount)
+            self.y = self.y - (amount or 10)
+        end,
+        
+        -- Add custom widget at current position
+        Add = function(self, widget, spacing)
+            widget:SetPoint("TOPLEFT", self.parent, "TOPLEFT", self.x, self.y)
+            self.y = self.y - (spacing or 20)
+            return widget
+        end,
+        
+        -- Get current Y position
+        GetY = function(self)
+            return self.y
+        end,
+        
+        -- Set Y position
+        SetY = function(self, y)
+            self.y = y
+        end
+    }
+end
+
+-- ============================================================================
+-- HIGHLIGHT SYSTEM
+-- ============================================================================
+
+-- Automatic hover highlight with lock support
+function RoRotaGUI.SetHighlight(frame, r, g, b)
+    if not frame then return end
+    
+    r, g, b = r or 0.2, g or 1, b or 0.8
+    
+    frame.highlightColor = {r, g, b}
+    frame.normalColor = {0.3, 0.3, 0.3}
+    
+    local origEnter = frame:GetScript("OnEnter")
+    local origLeave = frame:GetScript("OnLeave")
+    
+    frame:SetScript("OnEnter", function()
+        if origEnter then origEnter() end
+        if not frame.locked then
+            frame:SetBackdropBorderColor(unpack(frame.highlightColor))
+        end
+    end)
+    
+    frame:SetScript("OnLeave", function()
+        if origLeave then origLeave() end
+        if not frame.locked then
+            frame:SetBackdropBorderColor(unpack(frame.normalColor))
+        end
+    end)
+    
+    frame.LockHighlight = function(self)
+        self.locked = true
+        self:SetBackdropBorderColor(unpack(self.highlightColor))
+    end
+    
+    frame.UnlockHighlight = function(self)
+        self.locked = false
+        self:SetBackdropBorderColor(unpack(self.normalColor))
+    end
+end
+
+-- ============================================================================
+-- TOOLTIP SYSTEM
+-- ============================================================================
+
+-- Add tooltip to any frame (single line)
+function RoRotaGUI.SetTooltip(frame, text)
+    if not frame or not text or text == "" then return end
+    if not frame.GetScript then return end
+    
+    local origEnter = frame:GetScript("OnEnter")
+    local origLeave = frame:GetScript("OnLeave")
+    
+    frame:SetScript("OnEnter", function()
+        if origEnter then origEnter() end
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:SetText(text, 1, 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    
+    frame:SetScript("OnLeave", function()
+        if origLeave then origLeave() end
+        GameTooltip:Hide()
+    end)
+end
+
+-- Add tooltip with title and description
+function RoRotaGUI.SetTooltipMulti(frame, title, description)
+    if not frame or not title then return end
+    if not frame.GetScript then return end
+    
+    local origEnter = frame:GetScript("OnEnter")
+    local origLeave = frame:GetScript("OnLeave")
+    
+    frame:SetScript("OnEnter", function()
+        if origEnter then origEnter() end
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:SetText(title, 1, 1, 1)
+        if description then
+            GameTooltip:AddLine(description, 0.8, 0.8, 0.8, true)
+        end
+        GameTooltip:Show()
+    end)
+    
+    frame:SetScript("OnLeave", function()
+        if origLeave then origLeave() end
+        GameTooltip:Hide()
+    end)
 end
 
 RoRotaGUIWidgetsLoaded = true

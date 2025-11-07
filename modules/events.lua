@@ -114,4 +114,11 @@ function RoRota:CHARACTER_POINTS_CHANGED()
     if self.UpdateAllTalents then self:UpdateAllTalents() end
 end
 
+-- SuperWoW UNIT_CASTEVENT
+function RoRota:UNIT_CASTEVENT()
+    if self.CombatLog then
+        self.CombatLog:OnUnitCastEvent(arg1, arg2, arg3, arg4, arg5)
+    end
+end
+
 RoRota.events = true

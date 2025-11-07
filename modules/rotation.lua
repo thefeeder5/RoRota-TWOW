@@ -13,10 +13,10 @@
 --
 -- Entry Point: RoRotaRunRotation()
 
--- Throttling
+-- Throttling (legacy, now using CastState)
 local last_rotation_time = 0
 local cached_ability = nil
-local THROTTLE_INTERVAL = 0.1
+local THROTTLE_INTERVAL = 0.05
 
 -- State tracking
 local last_target = nil
@@ -34,11 +34,13 @@ RoRota.exposeArmorTarget = nil
 local function RoRotaRunRotationInternal()
 	local now = GetTime()
 	
-	-- Throttle check
+	-- Cast state guard (prevents button mashing)
+	if RoRota.CastState and not RoRota.CastState:CanCast() then
+		return
+	end
+	
+	-- Throttle check (minimal, state machine does heavy lifting)
 	if now - last_rotation_time < THROTTLE_INTERVAL then
-		if cached_ability then
-			CastSpellByName(cached_ability)
-		end
 		return
 	end
 	
@@ -51,6 +53,14 @@ local function RoRotaRunRotationInternal()
 	end
 	if RoRota.Cache then
 		RoRota.Cache:Update()
+	end
+	
+	-- 2. Update TTK tracking
+	if RoRota.UpdateTTKSample and UnitExists("target") and not UnitIsDead("target") then
+		if not RoRota.ttk.targetGUID then
+			RoRota:StartTTKTracking()
+		end
+		RoRota:UpdateTTKSample()
 	end
 	
 	-- Performance tracking
@@ -119,7 +129,7 @@ local function RoRotaRunRotationInternal()
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
-		CastSpellByName(ability)
+		CastSpellByName(RoRota:T(ability))
 		RoRota.targetCasting = false
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
@@ -134,7 +144,7 @@ local function RoRotaRunRotationInternal()
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
-		CastSpellByName(ability)
+		CastSpellByName(RoRota:T(ability))
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
 	end
@@ -154,7 +164,7 @@ local function RoRotaRunRotationInternal()
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
-		CastSpellByName(ability)
+		CastSpellByName(RoRota:T(ability))
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
 	end
@@ -183,7 +193,7 @@ local function RoRotaRunRotationInternal()
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
-		CastSpellByName(ability)
+		CastSpellByName(RoRota:T(ability))
 		
 		-- Update finisher timers
 		if RoRota.IsFinisher and RoRota:IsFinisher(ability) and RoRota.UpdateFinisherTimer then
@@ -244,7 +254,7 @@ end
 function RoRotaRunRotation()
 	-- Cancel Blade Flurry if active
 	if RoRota:HasPlayerBuff("Blade Flurry") then
-		CastSpellByName("Blade Flurry")
+		CastSpellByName(RoRota:T("Blade Flurry"))
 		return
 	end
 	
@@ -259,7 +269,7 @@ function RoRotaRunRotation()
 		
 		-- Safe fallback
 		if RoRota:HasSpell("Sinister Strike") and RoRota:HasEnoughEnergy("Sinister Strike") then
-			CastSpellByName("Sinister Strike")
+			CastSpellByName(RoRota:T("Sinister Strike"))
 		end
 	end
 end

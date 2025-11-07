@@ -3,6 +3,8 @@
 	<Script file="commands.lua"/>
 	<Script file="debug.lua"/>
 	<Script file="state.lua"/>
+	<Script file="combatlog.lua"/>
+	<Script file="caststate.lua"/>
 	
 	<!-- Ability and combat modules -->
 	<Script file="abilities.lua"/>

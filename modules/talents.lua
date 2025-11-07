@@ -20,9 +20,10 @@ RoRota.TalentCache = {
 	aggression = 0,
 	improvedGhostlyStrike = 0,
 	improvedHemorrhage = 0,
-	vigor = 0,  -- +10 max energy per rank AND 50% chance per rank for 2 energy on poison application
+	vigor = 0,
 	tasteForBlood = 0,
 	bladeRush = 0,
+	dirtyDeeds = 0,
 }
 
 function RoRota:UpdateAllTalents()
@@ -52,6 +53,8 @@ function RoRota:UpdateAllTalents()
 					self.TalentCache.tasteForBlood = rank or 0
 				elseif string.find(name, "Blade Rush") then
 					self.TalentCache.bladeRush = rank or 0
+				elseif string.find(name, "Dirty Deeds") then
+					self.TalentCache.dirtyDeeds = rank or 0
 				end
 			end
 		end
@@ -81,28 +84,23 @@ function RoRota:GetImprovedEviscerateMod()
 end
 
 function RoRota:GetRelentlessStrikesMod()
-    local i = 1
-    while UnitBuff("player", i) do
-        local texture, stacks = UnitBuff("player", i)
-        if texture and string.find(texture, "Relentless Strikes") then
-            return 1.0 + (stacks or 1) * 0.05
+    if self.BuffCache and self.BuffCache.player then
+        local buff = self.BuffCache.player["Relentless Strikes"]
+        if buff and buff[2] then
+            return 1.0 + buff[2] * 0.05
         end
-        i = i + 1
     end
     return 1.0
 end
 
 function RoRota:GetTasteForBloodMod()
-    local _, _, _, _, talentRank = GetTalentInfo(1, 10)
-    if talentRank == 0 then return 1.0 end
-    local dmgPerCP = talentRank * 0.01
-    local i = 1
-    while UnitBuff("player", i) do
-        local texture, stacks = UnitBuff("player", i)
-        if texture and string.find(texture, "Taste for Blood") then
-            return 1.0 + (stacks or 0) * dmgPerCP
+    if not self.TalentCache or self.TalentCache.tasteForBlood == 0 then return 1.0 end
+    local dmgPerCP = self.TalentCache.tasteForBlood * 0.01
+    if self.BuffCache and self.BuffCache.player then
+        local buff = self.BuffCache.player["Taste for Blood"]
+        if buff and buff[2] then
+            return 1.0 + buff[2] * dmgPerCP
         end
-        i = i + 1
     end
     return 1.0
 end

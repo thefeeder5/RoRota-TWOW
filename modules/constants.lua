@@ -22,7 +22,7 @@ RoRotaConstants = {
 		["Hemorrhage"] = 40, ["Envenom"] = 20, ["Noxious Assault"] = 45,
 		["Pick Pocket"] = 0, ["Ghostly Strike"] = 40, ["Feint"] = 20,
 		["Expose Armor"] = 20, ["Riposte"] = 10, ["Surprise Attack"] = 40,
-		["Mark for Death"] = 40, ["Shadow of Death"] = 30,
+		["Mark for Death"] = 40, ["Shadow of Death"] = 30, ["Flourish"] = 20,
 	},
 	EVISCERATE_DAMAGE = {
 		[1] = {[1] = 8, [2] = 13, [3] = 18, [4] = 23, [5] = 28},
@@ -81,6 +81,7 @@ RoRotaConstants = {
 		["Sprint"] = "Interface\\Icons\\Ability_Rogue_Sprint",
 		["Mark for Death"] = "Interface\\Icons\\Spell_Shadow_ChillTouch",
 		["Shadow of Death"] = "Interface\\Icons\\Spell_Shadow_Possession",
+		["Flourish"] = "Interface\\Icons\\Ability_Parry",
 	},
 		POISON_TYPES = {
 		"Agitating Poison",

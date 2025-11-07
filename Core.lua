@@ -56,7 +56,6 @@ function RoRota:OnEnable()
     local _, class = UnitClass("player")
     if class ~= "ROGUE" then
         self:Print("RoRota is only for Rogues. Addon disabled.")
-        self:Disable()
         return
     end
     
@@ -96,9 +95,22 @@ function RoRota:OnEnable()
     self:RegisterEvent("PARTY_MEMBERS_CHANGED")
     self:RegisterEvent("RAID_ROSTER_UPDATE")
     
+    -- SuperWoW UNIT_CASTEVENT for precise cast tracking
+    if UnitCastingInfo then
+        self:RegisterEvent("UNIT_CASTEVENT")
+        if self.CombatLog then
+            self.CombatLog:Initialize()
+        end
+    end
+    
     -- slash command registration (handlers in modules/commands.lua)
     if self.RegisterSlashCommands then
         self:RegisterSlashCommands()
+    end
+    
+    -- build reverse locale map
+    if self.BuildReverseMap then
+        self:BuildReverseMap()
     end
     
     -- initialize rotation cache
@@ -119,6 +131,11 @@ function RoRota:OnEnable()
     -- compatibility fixes (in modules/fixes.lua)
     if self.ApplyCompatibilityFixes then
         self:ApplyCompatibilityFixes()
+    end
+    
+    -- initialize cast state tracking
+    if self.CastState then
+        self.CastState.state = "IDLE"
     end
 end
 

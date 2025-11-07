@@ -3,15 +3,17 @@
 
 RoRotaDefaultProfile = {
 	abilities = {
-		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2},
+		SliceAndDice = {enabled = true, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
 		Eviscerate = {enabled = true, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, smartEviscerate = true, useColdBlood = false, coldBloodMinCP = 4},
 		SinisterStrike = {enabled = true},
 		NoxiousAssault = {enabled = false},
-		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2},
-		Rupture = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 15, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2},
-		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2},
+		Envenom = {enabled = false, minCP = 1, maxCP = 2, targetMinHP = 10, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
+		Rupture = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 15, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
+		ExposeArmor = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
 		ColdBloodEviscerate = {enabled = false, minCP = 4, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		ShadowOfDeath = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2},
+		ShadowOfDeath = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
+		KidneyShot = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, conditions = ""},
+		Flourish = {enabled = false, minCP = 1, maxCP = 2, playerMinHP = 0, playerMaxHP = 100, onlyElites = false, refreshThreshold = 2, conditions = ""},
 		MarkForDeath = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
 		Hemorrhage = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, onlyWhenMissing = false},
 		Backstab = {enabled = false, failsafeAttempts = 3},
@@ -34,12 +36,8 @@ RoRotaDefaultProfile = {
 		useKidneyShot = false,
 		kidneyMaxCP = 2,
 	},
-	finisherPriority = {"Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Cold Blood Eviscerate"},
+	finisherPriority = {"Slice and Dice", "Flourish", "Envenom", "Rupture", "Expose Armor", "Shadow of Death", "Kidney Shot", "Cold Blood Eviscerate"},
 	smartRupture = true,
-	energyPooling = {
-		enabled = true,
-		threshold = 10,
-	},
 	finisherRefreshThreshold = 2,  -- refresh finishers when <= X seconds remaining (0-3s)
 	previewDepth = 1,  -- show 1-3 abilities in preview window
 	defensive = {
@@ -71,8 +69,6 @@ RoRotaDefaultProfile = {
 	},
 	ttk = {
 		enabled = true,
-		dyingThreshold = 10,
-		sampleWindow = 3,
 		excludeBosses = false,
 	},
 	aoe = {

@@ -42,22 +42,21 @@ end
 
 function RoRota:GetEnergyCost(spellName)
 	local baseCost = RoRotaConstants.ENERGY_COSTS[spellName] or 0
-	-- Improved Ghostly Strike talent (Subtlety 3,8)
+	if not self.TalentCache then return baseCost end
+	
 	if spellName == "Ghostly Strike" then
-		local _, _, _, _, rank = GetTalentInfo(3, 8)
+		local rank = self.TalentCache.improvedGhostlyStrike
 		if rank == 1 then baseCost = baseCost - 3
 		elseif rank == 2 then baseCost = baseCost - 6
 		elseif rank == 3 then baseCost = baseCost - 10
 		end
-	-- Improved Hemorrhage talent (Subtlety 3,17)
 	elseif spellName == "Hemorrhage" then
-		local _, _, _, _, rank = GetTalentInfo(3, 17)
+		local rank = self.TalentCache.improvedHemorrhage
 		if rank == 1 then baseCost = baseCost - 2
 		elseif rank == 2 then baseCost = baseCost - 5
 		end
-	-- Dirty Deeds talent (Subtlety 3,14): -10/-20 energy for Cheap Shot and Garrote
 	elseif spellName == "Cheap Shot" or spellName == "Garrote" then
-		local _, _, _, _, rank = GetTalentInfo(3, 14)
+		local rank = self.TalentCache.dirtyDeeds or 0
 		if rank == 1 then baseCost = baseCost - 10
 		elseif rank == 2 then baseCost = baseCost - 20
 		end
@@ -119,7 +118,7 @@ function RoRota:GetSpellRank(spellName)
 end
 
 function RoRota:IsFinisher(abilityName)
-	local finishers = {"Eviscerate", "Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Kidney Shot", "Shadow of Death"}
+	local finishers = {"Eviscerate", "Slice and Dice", "Rupture", "Envenom", "Expose Armor", "Kidney Shot", "Shadow of Death", "Flourish"}
 	for _, finisher in ipairs(finishers) do
 		if abilityName == finisher then return true end
 	end

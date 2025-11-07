@@ -125,20 +125,27 @@ function RoRota:RegisterSlashCommands()
             local ttk = profile.ttk
             RoRota:Print("=== TTK Status ===")
             RoRota:Print("Enabled: "..(ttk.enabled and "Yes" or "No"))
-            RoRota:Print("Dying Threshold: "..(ttk.dyingThreshold or 0).."s")
-            RoRota:Print("Min Samples: "..(ttk.minSamplesRequired or 0))
             RoRota:Print("Exclude Bosses: "..(ttk.excludeBosses and "Yes" or "No"))
             RoRota:Print("Current Samples: "..table.getn(RoRota.ttk.samples))
             if UnitExists("target") then
-                local ttk = RoRota:EstimateTTK()
-                if ttk then
-                    RoRota:Print("Target TTK: "..string.format("%.1f", ttk).."s")
+                local estimate = RoRota:EstimateTTK()
+                if estimate then
+                    RoRota:Print("Target TTK: "..string.format("%.1f", estimate).."s")
                     RoRota:Print("Is Dying Soon: "..(RoRota:IsTargetDyingSoon() and "Yes" or "No"))
                 else
                     RoRota:Print("Target TTK: Not enough data")
                 end
             else
                 RoRota:Print("No target selected")
+            end
+            return
+        elseif msg == "buffs" then
+            if RoRota.BuffCache then
+                RoRota:UpdateBuffCache()
+                RoRota:Print("=== Player Buffs ===")
+                for name in pairs(RoRota.BuffCache.player) do
+                    RoRota:Print(name)
+                end
             end
             return
         elseif msg == "cachestats" or msg == "cacheinfo" then
@@ -178,10 +185,88 @@ function RoRota:RegisterSlashCommands()
             end
             
             return
+        elseif msg == "bufftimers" or msg == "bt" then
+            if RoRota.CombatLog then
+                RoRota:Print("=== Buff Timers ===")
+                local hasBuffs = false
+                for buffName, expiry in pairs(RoRota.CombatLog.buffTimers) do
+                    local remaining = expiry - GetTime()
+                    if remaining > 0 then
+                        RoRota:Print(buffName..": "..string.format("%.1f", remaining).."s")
+                        hasBuffs = true
+                    end
+                end
+                if not hasBuffs then
+                    RoRota:Print("No active buffs tracked")
+                end
+                
+                RoRota:Print("=== Debuff Timers ===")
+                local hasDebuffs = false
+                for debuffName, data in pairs(RoRota.CombatLog.debuffTimers) do
+                    local remaining = data.expiry - GetTime()
+                    if remaining > 0 then
+                        local targetInfo = data.target and (" on "..data.target) or ""
+                        RoRota:Print(debuffName..targetInfo..": "..string.format("%.1f", remaining).."s")
+                        hasDebuffs = true
+                    end
+                end
+                if not hasDebuffs then
+                    RoRota:Print("No active debuffs tracked")
+                end
+            else
+                RoRota:Print("CombatLog module not loaded")
+            end
+            return
+        elseif msg == "caststate" or msg == "cs" then
+            if RoRota.CastState then
+                local state, reason = RoRota.CastState:GetState()
+                RoRota:Print("=== Cast State ===")
+                RoRota:Print("State: "..state)
+                if reason then
+                    RoRota:Print("Lock Reason: "..reason)
+                end
+                if state == "LOCKED" and RoRota.CastState.lockUntil then
+                    local remaining = RoRota.CastState.lockUntil - GetTime()
+                    if remaining > 0 then
+                        RoRota:Print("Lock Expires: "..string.format("%.2f", remaining).."s")
+                    end
+                end
+                RoRota:Print("Can Cast: "..(RoRota.CastState:CanCast() and "Yes" or "No"))
+                if RoRota.CombatLog then
+                    RoRota:Print("On GCD: "..(RoRota.CombatLog:IsOnGCD() and "Yes" or "No"))
+                    if RoRota.CombatLog.gcdEnd > GetTime() then
+                        local gcdRemaining = RoRota.CombatLog.gcdEnd - GetTime()
+                        RoRota:Print("GCD Expires: "..string.format("%.2f", gcdRemaining).."s")
+                    end
+                    RoRota:Print("Casting: "..(RoRota.CombatLog:IsCasting() and "Yes" or "No"))
+                    local spell, action, time = RoRota.CombatLog:GetLastCast()
+                    if spell then
+                        RoRota:Print("Last Cast: "..spell.." ("..action..")")
+                    end
+                    local history = RoRota.CombatLog:GetCastHistory()
+                    if table.getn(history) > 0 then
+                        RoRota:Print("Recent casts:")
+                        for i = 1, math.min(5, table.getn(history)) do
+                            local cast = history[i]
+                            RoRota:Print("  "..cast.spell.." ("..string.format("%.1f", GetTime() - cast.time).."s ago)")
+                        end
+                    end
+                end
+                if RoRota.GetTimeToNextTick then
+                    local nextTick = RoRota:GetTimeToNextTick()
+                    RoRota:Print("Next Energy Tick: "..string.format("%.2f", nextTick).."s")
+                end
+            else
+                RoRota:Print("CastState module not loaded")
+            end
+            return
         elseif msg == "help" then
             RoRota:Print("=== RoRota Commands ===")
             RoRota:Print("/rr - Open settings")
+            RoRota:Print("/rr buffs - List all player buffs")
+            RoRota:Print("/rr bufftimers - Show tracked buff/debuff timers")
             RoRota:Print("/rr cachestats - Show cache statistics")
+            RoRota:Print("/rr caststate - Show cast state and history")
             RoRota:Print("/rr debug - Open debug window")
             RoRota:Print("/rr preview - Toggle rotation preview")
             RoRota:Print("/rr ttk - Show TTK status and debug info")

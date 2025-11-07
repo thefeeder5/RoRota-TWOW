@@ -11,35 +11,89 @@ if RoRota.casting then return end
 
 RoRota.currentTargetSpell = nil
 RoRota.lastInterruptAttempt = 0
+RoRota.spellTracking = {}  -- GUID-based spell tracking
 
 function RoRota:IsTargetCasting()
+    return self:IsUnitCasting("target")
+end
+
+-- Check if unit is casting (optionally check for specific spell)
+function RoRota:IsUnitCasting(unit, spellName)
+    if not UnitExists(unit) then return false end
+    
     -- SuperWoW API: check for regular casts
     if UnitCastingInfo then
-        local spell = UnitCastingInfo("target")
-        if spell then return true end
+        local spell = UnitCastingInfo(unit)
+        if spell then
+            if not spellName then return true end
+            return spell == spellName
+        end
     end
+    
     -- SuperWoW API: check for channeled spells
     if UnitChannelInfo then
-        local spell = UnitChannelInfo("target")
-        if spell then return true end
+        local spell = UnitChannelInfo(unit)
+        if spell then
+            if not spellName then return true end
+            return spell == spellName
+        end
     end
-    -- fallback: combat log tracking with 3-second timeout
-    if RoRota.targetCasting and GetTime() > RoRota.castingTimeout then
-        RoRota.targetCasting = false
+    
+    -- Fallback: GUID-based tracking
+    local _, guid = UnitExists(unit)
+    if guid and self.spellTracking[guid] then
+        local tracking = self.spellTracking[guid]
+        -- Timeout after 10 seconds
+        if GetTime() - tracking.startTime > 10 then
+            self.spellTracking[guid] = nil
+            return false
+        end
+        
+        if not spellName then return true end
+        
+        -- Check specific spell
+        if tracking.spellId and SpellInfo then
+            return SpellInfo(tracking.spellId) == spellName
+        end
+        
+        return tracking.spellName == spellName
     end
-    return RoRota.targetCasting or false
+    
+    -- Legacy fallback for target only
+    if unit == "target" and self.targetCasting then
+        if GetTime() > self.castingTimeout then
+            self.targetCasting = false
+            return false
+        end
+        if not spellName then return true end
+        return self.currentTargetSpell == spellName
+    end
+    
+    return false
 end
 
 -- Event Handlers (called from events.lua router)
 
 function RoRota:OnCastingEvent(eventType, msg)
     if not UnitExists("target") or not msg then return end
-    if string.find(msg, UnitName("target")) and string.find(msg, "begins to cast") then
+    local targetName = UnitName("target")
+    
+    if string.find(msg, targetName) and string.find(msg, "begins to cast") then
         self.targetCasting = true
         self.castingTimeout = GetTime() + 3
-        if eventType == "BUFF" then
-            for spell in string.gmatch(msg, "begins to cast (.+)%.") do
-                self.currentTargetSpell = spell
+        
+        -- Extract spell name
+        local spellName = string.match(msg, "begins to cast (.+)%.")
+        if spellName then
+            self.currentTargetSpell = spellName
+            
+            -- Store in GUID tracking
+            local _, guid = UnitExists("target")
+            if guid then
+                self.spellTracking[guid] = {
+                    spellName = spellName,
+                    startTime = GetTime()
+                }
             end
         end
     end
@@ -53,6 +107,12 @@ function RoRota:OnSelfSpellEvent(msg)
         self.targetCasting = false
         self.castingTimeout = 0
         self.currentTargetSpell = nil
+        
+        -- Clear GUID tracking
+        local _, guid = UnitExists("target")
+        if guid then
+            self.spellTracking[guid] = nil
+        end
     end
     
     if (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot")) then

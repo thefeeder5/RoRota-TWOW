@@ -43,6 +43,17 @@ end
 function RoRota:ProcessImmunity(targetName, ability)
     if UnitIsPlayer("target") then return end
     
+    -- Never track immunity for builders
+    local builders = {
+        ["Sinister Strike"] = true,
+        ["Backstab"] = true,
+        ["Noxious Assault"] = true,
+        ["Hemorrhage"] = true,
+        ["Ghostly Strike"] = true,
+        ["Ambush"] = true,
+    }
+    if builders[ability] then return end
+    
     -- Check if ignored for this immunity group
     if not RoRotaDB.immunityIgnored then RoRotaDB.immunityIgnored = {} end
     for groupName, abilities in pairs(immunity_groups) do
