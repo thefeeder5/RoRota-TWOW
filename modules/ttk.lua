@@ -29,7 +29,7 @@ function RoRota:StartTTKTracking()
         return
     end
     
-    local guid = UnitGUID("target")
+    local guid = UnitGUID and UnitGUID("target") or UnitName("target")
     if guid ~= self.ttk.targetGUID then
         self.ttk.targetGUID = guid
         self.ttk.startHP = UnitHealth("target")
@@ -56,7 +56,8 @@ function RoRota:UpdateTTKSample()
         return
     end
     
-    if UnitGUID("target") ~= self.ttk.targetGUID then
+    local guid = UnitGUID and UnitGUID("target") or UnitName("target")
+    if guid ~= self.ttk.targetGUID then
         self:StartTTKTracking()
         return
     end

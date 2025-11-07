@@ -19,75 +19,7 @@ RoRota.BuffCache = {
     throttle = 0.05,
 }
 
-function RoRota:ScanPlayerBuffs()
-    local cache = self.BuffCache.player
-    for k in pairs(cache) do cache[k] = nil end
-    
-    if not RoRotaBuffTooltip then
-        CreateFrame("GameTooltip", "RoRotaBuffTooltip", nil, "GameTooltipTemplate")
-        RoRotaBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    local i = 1
-    while UnitBuff("player", i) do
-        local texture, stacks, debuffType, duration, timeLeft = UnitBuff("player", i)
-        if texture then
-            local name = string.match(texture, "Interface\\Icons\\(.+)")
-            if name then
-                cache[name] = {texture, stacks, duration, timeLeft}
-            end
-            
-            RoRotaBuffTooltip:ClearLines()
-            RoRotaBuffTooltip:SetUnitBuff("player", i)
-            local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
-            if tooltipName then
-                cache[tooltipName] = {texture, stacks, duration, timeLeft}
-                local englishKey = RoRota:FromLocale(tooltipName)
-                if englishKey ~= tooltipName then
-                    cache[englishKey] = {texture, stacks, duration, timeLeft}
-                end
-            end
-        end
-        i = i + 1
-        if i > 32 then break end
-    end
-end
 
-function RoRota:ScanTargetDebuffs()
-    local cache = self.BuffCache.target
-    for k in pairs(cache) do cache[k] = nil end
-    
-    if not UnitExists("target") then return end
-    
-    if not RoRotaBuffTooltip then
-        CreateFrame("GameTooltip", "RoRotaBuffTooltip", nil, "GameTooltipTemplate")
-        RoRotaBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    local i = 1
-    while UnitDebuff("target", i) do
-        local texture, stacks, debuffType, duration, timeLeft = UnitDebuff("target", i)
-        if texture then
-            local name = string.match(texture, "Interface\\Icons\\(.+)")
-            if name then
-                cache[name] = {texture, stacks, duration, timeLeft}
-            end
-            
-            RoRotaBuffTooltip:ClearLines()
-            RoRotaBuffTooltip:SetUnitDebuff("target", i)
-            local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
-            if tooltipName then
-                cache[tooltipName] = {texture, stacks, duration, timeLeft}
-                local englishKey = RoRota:FromLocale(tooltipName)
-                if englishKey ~= tooltipName then
-                    cache[englishKey] = {texture, stacks, duration, timeLeft}
-                end
-            end
-        end
-        i = i + 1
-        if i > 32 then break end
-    end
-end
 
 function RoRota:CheckSpecificBuff(unit, buffName)
     if not RoRotaBuffTooltip then
@@ -101,10 +33,13 @@ function RoRota:CheckSpecificBuff(unit, buffName)
         RoRotaBuffTooltip:ClearLines()
         RoRotaBuffTooltip:SetUnitBuff(unit, i)
         local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
-        if tooltipName == buffName or RoRota:FromLocale(tooltipName) == buffName then
-            local texture, stacks, debuffType, duration, timeLeft = UnitBuff(unit, i)
-            cache[buffName] = {texture, stacks, duration, timeLeft}
-            return true
+        if tooltipName then
+            local englishKey = self:FromLocale(tooltipName)
+            if tooltipName == buffName or englishKey == buffName then
+                local texture, stacks, debuffType, duration, timeLeft = UnitBuff(unit, i)
+                cache[buffName] = {texture, stacks, duration, timeLeft}
+                return true
+            end
         end
         i = i + 1
         if i > 32 then break end
@@ -125,10 +60,13 @@ function RoRota:CheckSpecificDebuff(unit, debuffName)
         RoRotaBuffTooltip:ClearLines()
         RoRotaBuffTooltip:SetUnitDebuff(unit, i)
         local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
-        if tooltipName == debuffName or RoRota:FromLocale(tooltipName) == debuffName then
-            local texture, stacks, debuffType, duration, timeLeft = UnitDebuff(unit, i)
-            cache[debuffName] = {texture, stacks, duration, timeLeft}
-            return true
+        if tooltipName then
+            local englishKey = self:FromLocale(tooltipName)
+            if tooltipName == debuffName or englishKey == debuffName then
+                local texture, stacks, debuffType, duration, timeLeft = UnitDebuff(unit, i)
+                cache[debuffName] = {texture, stacks, duration, timeLeft}
+                return true
+            end
         end
         i = i + 1
         if i > 32 then break end
@@ -239,42 +177,7 @@ function RoRota:GetDebuffTimeRemaining(debuffName)
     return 0
 end
 
-function RoRota:ScanTargetBuffs()
-    local cache = self.BuffCache.targetBuffs or {}
-    self.BuffCache.targetBuffs = cache
-    for k in pairs(cache) do cache[k] = nil end
-    
-    if not UnitExists("target") then return end
-    
-    if not RoRotaBuffTooltip then
-        CreateFrame("GameTooltip", "RoRotaBuffTooltip", nil, "GameTooltipTemplate")
-        RoRotaBuffTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-    end
-    
-    local i = 1
-    while UnitBuff("target", i) do
-        local texture, stacks, debuffType, duration, timeLeft = UnitBuff("target", i)
-        if texture then
-            local name = string.match(texture, "Interface\\Icons\\(.+)")
-            if name then
-                cache[name] = {texture, stacks, duration, timeLeft}
-            end
-            
-            RoRotaBuffTooltip:ClearLines()
-            RoRotaBuffTooltip:SetUnitBuff("target", i)
-            local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
-            if tooltipName then
-                cache[tooltipName] = {texture, stacks, duration, timeLeft}
-                local englishKey = RoRota:FromLocale(tooltipName)
-                if englishKey ~= tooltipName then
-                    cache[englishKey] = {texture, stacks, duration, timeLeft}
-                end
-            end
-        end
-        i = i + 1
-        if i > 32 then break end
-    end
-end
+
 
 function RoRota:TargetHasImmunityBuff()
     if not UnitExists("target") or not RoRotaDB or not RoRotaDB.immunityBuffs then
