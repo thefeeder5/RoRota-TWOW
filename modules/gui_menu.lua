@@ -173,7 +173,7 @@ RoRotaGUIOpenersLoaded = true
 function RoRotaGUI.CreateFinishersTab(parent, frame)
     local subtabBar = CreateFrame("Frame", nil, parent)
     subtabBar:SetWidth(90)
-    subtabBar:SetHeight(500)
+    subtabBar:SetHeight(460)
     subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     subtabBar:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -549,6 +549,12 @@ function RoRotaGUI.CreateRuptureSubTab(parent, widgets)
         RoRotaGUI.CreateDecimalEditBox("RoRotaRuptRefreshEB", parent, 0, 0, 50, 0, 10, function(v)
             cfg.refreshThreshold = v
         end), 20, "Refresh Rupture when this many seconds remain")
+    
+    RoRotaGUI.CreateLabel(parent, 10, layout:GetY(), "Extra Conditions")
+    layout:Space(20)
+    widgets.ruptConditionsEB = RoRotaGUI.CreateMultiLineEditBox("RoRotaRuptConditionsEB", parent, 10, layout:GetY(), 360, 90, function(v)
+        cfg.conditions = v
+    end)
 end
 
 function RoRotaGUI.LoadRuptureSubTab(widgets)
@@ -595,6 +601,9 @@ function RoRotaGUI.LoadRuptureSubTab(widgets)
     if widgets.ruptRefreshEB and p.abilities and p.abilities.Rupture then
         local val = p.abilities.Rupture.refreshThreshold or p.finisherRefreshThreshold or 2
         widgets.ruptRefreshEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.ruptConditionsEB and p.abilities and p.abilities.Rupture then
+        widgets.ruptConditionsEB:SetText(p.abilities.Rupture.conditions or "")
     end
 end
 
@@ -652,6 +661,12 @@ function RoRotaGUI.CreateExposeSubTab(parent, widgets)
         RoRotaGUI.CreateDecimalEditBox("RoRotaExposeRefreshEB", parent, 0, 0, 50, 0, 10, function(v)
             cfg.refreshThreshold = v
         end), 20, "Refresh Expose Armor when this many seconds remain")
+    
+    RoRotaGUI.CreateLabel(parent, 10, layout:GetY(), "Extra Conditions")
+    layout:Space(20)
+    widgets.exposeConditionsEB = RoRotaGUI.CreateMultiLineEditBox("RoRotaExposeConditionsEB", parent, 10, layout:GetY(), 360, 90, function(v)
+        cfg.conditions = v
+    end)
 end
 
 function RoRotaGUI.LoadExposeSubTab(widgets)
@@ -692,6 +707,9 @@ function RoRotaGUI.LoadExposeSubTab(widgets)
     if widgets.exposeRefreshEB and p.abilities and p.abilities.ExposeArmor then
         local val = p.abilities.ExposeArmor.refreshThreshold or p.finisherRefreshThreshold or 2
         widgets.exposeRefreshEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.exposeConditionsEB and p.abilities and p.abilities.ExposeArmor then
+        widgets.exposeConditionsEB:SetText(p.abilities.ExposeArmor.conditions or "")
     end
 end
 
@@ -749,6 +767,12 @@ function RoRotaGUI.CreateEnvenomSubTab(parent, widgets)
         RoRotaGUI.CreateDecimalEditBox("RoRotaEnvRefreshEB", parent, 0, 0, 50, 0, 10, function(v)
             cfg.refreshThreshold = v
         end), 20, "Refresh Envenom when this many seconds remain")
+    
+    RoRotaGUI.CreateLabel(parent, 10, layout:GetY(), "Extra Conditions")
+    layout:Space(20)
+    widgets.envConditionsEB = RoRotaGUI.CreateMultiLineEditBox("RoRotaEnvConditionsEB", parent, 10, layout:GetY(), 360, 90, function(v)
+        cfg.conditions = v
+    end)
 end
 
 function RoRotaGUI.LoadEnvenomSubTab(widgets)
@@ -789,6 +813,9 @@ function RoRotaGUI.LoadEnvenomSubTab(widgets)
     if widgets.envRefreshEB and p.abilities and p.abilities.Envenom then
         local val = p.abilities.Envenom.refreshThreshold or p.finisherRefreshThreshold or 2
         widgets.envRefreshEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.envConditionsEB and p.abilities and p.abilities.Envenom then
+        widgets.envConditionsEB:SetText(p.abilities.Envenom.conditions or "")
     end
 end
 
@@ -846,6 +873,12 @@ function RoRotaGUI.CreateShadowOfDeathSubTab(parent, widgets)
         RoRotaGUI.CreateDecimalEditBox("RoRotaShadowRefreshEB", parent, 0, 0, 50, 0, 10, function(v)
             cfg.refreshThreshold = v
         end), 20, "Refresh Shadow of Death when this many seconds remain")
+    
+    RoRotaGUI.CreateLabel(parent, 10, layout:GetY(), "Extra Conditions")
+    layout:Space(20)
+    widgets.shadowConditionsEB = RoRotaGUI.CreateMultiLineEditBox("RoRotaShadowConditionsEB", parent, 10, layout:GetY(), 360, 90, function(v)
+        cfg.conditions = v
+    end)
 end
 
 function RoRotaGUI.LoadShadowOfDeathSubTab(widgets)
@@ -886,6 +919,9 @@ function RoRotaGUI.LoadShadowOfDeathSubTab(widgets)
     if widgets.shadowRefreshEB and p.abilities and p.abilities.ShadowOfDeath then
         local val = p.abilities.ShadowOfDeath.refreshThreshold or p.finisherRefreshThreshold or 2
         widgets.shadowRefreshEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.shadowConditionsEB and p.abilities and p.abilities.ShadowOfDeath then
+        widgets.shadowConditionsEB:SetText(p.abilities.ShadowOfDeath.conditions or "")
     end
 end
 
@@ -993,7 +1029,7 @@ RoRotaGUIFinishersLoaded = true
 function RoRotaGUI.CreateBuildersTab(parent, frame)
     local subtabBar = CreateFrame("Frame", nil, parent)
     subtabBar:SetWidth(90)
-    subtabBar:SetHeight(500)
+    subtabBar:SetHeight(460)
     subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     subtabBar:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -1306,6 +1342,11 @@ function RoRotaGUI.CreateGhostlySubTab(parent, widgets)
         RoRotaGUI.CreatePercentEditBox("RoRotaGSPlayerMaxEB", parent, 0, 0, function(v)
             cfg.ghostlyPlayerMaxHP = v
         end), 20, "Only use Ghostly Strike if player HP is below this")
+    
+    widgets.gsTargetedOnlyCheck = layout:Row("Use when targeted only",
+        RoRotaGUI.CreateCheckbox("RoRotaGSTargetedOnlyCheck", parent, 0, 0, "", function()
+            cfg.ghostlyTargetedOnly = (this:GetChecked() == 1)
+        end), 20, "Only use Ghostly Strike when target is attacking you")
 end
 
 function RoRotaGUI.LoadGhostlySubTab(widgets)
@@ -1324,6 +1365,9 @@ function RoRotaGUI.LoadGhostlySubTab(widgets)
     if widgets.gsPlayerMaxEB and p.defensive then
         widgets.gsPlayerMaxEB:SetText(tostring(p.defensive.ghostlyPlayerMaxHP or 90))
     end
+    if widgets.gsTargetedOnlyCheck and p.defensive then
+        widgets.gsTargetedOnlyCheck:SetChecked(p.defensive.ghostlyTargetedOnly and 1 or nil)
+    end
 end
 
 RoRotaGUIBuildersLoaded = true
@@ -1335,7 +1379,7 @@ RoRotaGUIBuildersLoaded = true
 function RoRotaGUI.CreateDefensiveTab(parent, frame)
     local subtabBar = CreateFrame("Frame", nil, parent)
     subtabBar:SetWidth(90)
-    subtabBar:SetHeight(500)
+    subtabBar:SetHeight(460)
     subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     subtabBar:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -1436,6 +1480,11 @@ function RoRotaGUI.CreateInterruptsSubTab(parent, widgets)
             cfg.useKick = (this:GetChecked() == 1)
         end), 20, "Use Kick to interrupt enemy casts")
     
+    widgets.deadlyThrowCheck = layout:Row("Use Deadly Throw",
+        RoRotaGUI.CreateCheckbox("RoRotaDeadlyThrowCheck", parent, 0, 0, "", function()
+            cfg.useDeadlyThrow = (this:GetChecked() == 1)
+        end), 20, "Use Deadly Throw to interrupt at range (requires thrown weapon)")
+    
     widgets.gougeCheck = layout:Row("Use Gouge",
         RoRotaGUI.CreateCheckbox("RoRotaGougeCheck", parent, 0, 0, "", function()
             cfg.useGouge = (this:GetChecked() == 1)
@@ -1458,6 +1507,9 @@ function RoRotaGUI.LoadInterruptsSubTab(widgets)
     
     if widgets.kickCheck and p.interrupt then
         widgets.kickCheck:SetChecked(p.interrupt.useKick and 1 or nil)
+    end
+    if widgets.deadlyThrowCheck and p.interrupt then
+        widgets.deadlyThrowCheck:SetChecked(p.interrupt.useDeadlyThrow and 1 or nil)
     end
     if widgets.gougeCheck and p.interrupt then
         widgets.gougeCheck:SetChecked(p.interrupt.useGouge and 1 or nil)
@@ -2094,7 +2146,7 @@ RoRotaGUIProfilesLoaded = true
 function RoRotaGUI.CreateImmunitiesTab(parent, frame)
     local subtabBar = CreateFrame("Frame", nil, parent)
     subtabBar:SetWidth(90)
-    subtabBar:SetHeight(500)
+    subtabBar:SetHeight(460)
     subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     subtabBar:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -2760,6 +2812,12 @@ function RoRotaGUI.CreateFlourishSubTab(parent, widgets)
         RoRotaGUI.CreateDecimalEditBox("RoRotaFlourishRefreshEB", parent, 0, 0, 50, 0, 10, function(v)
             cfg.refreshThreshold = v
         end), 20, "Refresh Flourish when this many seconds remain")
+    
+    RoRotaGUI.CreateLabel(parent, 10, layout:GetY(), "Extra Conditions")
+    layout:Space(20)
+    widgets.flourishConditionsEB = RoRotaGUI.CreateMultiLineEditBox("RoRotaFlourishConditionsEB", parent, 10, layout:GetY(), 360, 90, function(v)
+        cfg.conditions = v
+    end)
 end
 
 function RoRotaGUI.LoadFlourishSubTab(widgets)
@@ -2788,6 +2846,9 @@ function RoRotaGUI.LoadFlourishSubTab(widgets)
     if widgets.flourishRefreshEB and p.abilities and p.abilities.Flourish then
         local val = p.abilities.Flourish.refreshThreshold or 0
         widgets.flourishRefreshEB:SetText(string.format("%.1f", val))
+    end
+    if widgets.flourishConditionsEB and p.abilities and p.abilities.Flourish then
+        widgets.flourishConditionsEB:SetText(p.abilities.Flourish.conditions or "")
     end
 end
 

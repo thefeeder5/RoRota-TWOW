@@ -9,7 +9,9 @@ RoRota.CastState = {
 	state = "IDLE",
 	lockUntil = 0,
 	lockReason = nil,
-	lastAbility = nil
+	lastAbility = nil,
+	queuedAbility = nil,
+	queuedReason = nil
 }
 
 function RoRota.CastState:CanCast()
@@ -28,6 +30,20 @@ function RoRota.CastState:CanCast()
 	end
 	
 	return true
+end
+
+function RoRota.CastState:QueueAbility(ability, reason)
+	self.queuedAbility = ability
+	self.queuedReason = reason
+end
+
+function RoRota.CastState:GetQueuedAbility()
+	return self.queuedAbility, self.queuedReason
+end
+
+function RoRota.CastState:ClearQueue()
+	self.queuedAbility = nil
+	self.queuedReason = nil
 end
 
 function RoRota.CastState:OnCastStart(ability, castTime)

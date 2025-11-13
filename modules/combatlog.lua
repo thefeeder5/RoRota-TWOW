@@ -45,7 +45,7 @@ function RoRota.CombatLog:OnUnitCastEvent(caster, target, action, spellID, castT
 		
 	elseif action == "CAST" then
 		self.lastCast.action = "CAST"
-		self.gcdEnd = now + 1.5
+		self.gcdEnd = now + 1.0
 		
 		if RoRota.CastState then
 			RoRota.CastState:OnCastSuccess(spellName)

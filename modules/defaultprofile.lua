@@ -14,8 +14,8 @@ RoRotaDefaultProfile = {
 		ShadowOfDeath = {enabled = false, minCP = 5, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, refreshThreshold = 2, conditions = ""},
 		KidneyShot = {enabled = false, minCP = 1, maxCP = 5, targetMinHP = 0, targetMaxHP = 100, useFlatHP = false, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, conditions = ""},
 		Flourish = {enabled = false, minCP = 1, maxCP = 2, playerMinHP = 0, playerMaxHP = 100, onlyElites = false, refreshThreshold = 2, conditions = ""},
-		MarkForDeath = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false},
-		Hemorrhage = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, onlyWhenMissing = false},
+		MarkForDeath = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, conditions = ""},
+		Hemorrhage = {enabled = false, targetMinHP = 0, targetMaxHP = 100, targetMinHPFlat = 0, targetMaxHPFlat = 9999999, onlyElites = false, onlyWhenMissing = false, conditions = ""},
 		Backstab = {enabled = false, failsafeAttempts = 3},
 	},
 	mainBuilder = "Sinister Strike",
@@ -24,17 +24,31 @@ RoRotaDefaultProfile = {
 	smartBuilders = false,
 	buffPriority = "Slice and Dice",
 	opener = {
+		-- Legacy support (converted to priority list on load)
 		ability = "Ambush",
 		secondaryAbility = "Sinister Strike",
 		failsafeAttempts = 3,
 		pickPocket = false,
+		useColdBlood = false,
 		sapFailAction = "None",
+		-- New priority system
+		priority = {
+			{ability = "Ambush", conditions = ""},
+			{ability = "Garrote", conditions = ""},
+			{ability = "Cheap Shot", conditions = ""},
+		},
+		useBuilderFallback = true,  -- Use builder if all openers fail
+		equipmentSet = nil,  -- Equipment set to swap to before stealth opener
 	},
 	interrupt = {
 		useKick = true,
+		useDeadlyThrow = false,
 		useGouge = false,
 		useKidneyShot = false,
 		kidneyMaxCP = 2,
+		filterMode = "Interrupt All (Ignore List)",
+		filterList = {},
+		history = {},
 	},
 	finisherPriority = {"Slice and Dice", "Flourish", "Envenom", "Rupture", "Expose Armor", "Shadow of Death", "Kidney Shot", "Cold Blood Eviscerate"},
 	smartRupture = true,
@@ -43,20 +57,32 @@ RoRotaDefaultProfile = {
 	defensive = {
 		useVanish = false,
 		vanishHP = 20,
+		vanishConditions = "",
 		useGhostlyStrike = false,
 		ghostlyTargetMaxHP = 30,
 		ghostlyPlayerMinHP = 1,
 		ghostlyPlayerMaxHP = 90,
+		ghostlyTargetedOnly = false,
+		ghostlyConditions = "",
 		useFeint = false,
 		feintMode = "Always",
 		useRiposte = false,
 		riposteTargetMinHP = 0,
 		riposteTargetMaxHP = 100,
+		riposteConditions = "",
 		useSurpriseAttack = false,
 		surpriseTargetMinHP = 0,
 		surpriseTargetMaxHP = 100,
+		surpriseConditions = "",
 		useHealthPotion = false,
 		healthPotionHP = 30,
+		evasion = {enabled = false, hpThreshold = 30},
+	},
+	cooldowns = {
+		coldBlood = {enabled = false},
+		sprint = {enabled = false},
+		adrenalineRush = {enabled = false},
+		bladeFlurry = {enabled = false},
 	},
 	poisons = {
 		enabled = true,
@@ -79,5 +105,28 @@ RoRotaDefaultProfile = {
 		finisherMinCP = 5,
 		useSnD = true,
 		sndMaxCP = 5,
+	},
+	equipmentSets = {},
+	vanishOpener = {
+		priority = {
+			{ability = "Ambush", conditions = ""},
+			{ability = "Garrote", conditions = ""},
+		},
+		useBuilderFallback = true,
+		equipmentSet = nil,  -- Equipment set to swap to after Vanish
+	},
+	profileSwitching = {
+		enabled = false,
+		solo = "Default",
+		group = "Default",
+		raid = "Default",
+	},
+	preview = {enabled = false},
+	notifications = {
+		addonMessages = true,
+		interruptAnnounce = "None",
+	},
+	consumables = {
+		thistleTea = {enabled = false, energyThreshold = 20},
 	},
 }

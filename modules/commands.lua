@@ -63,7 +63,10 @@ function RoRota:RegisterSlashCommands()
             end
             return
         elseif msg == "debug on" then
-            if RoRota.Debug then RoRota.Debug:SetEnabled(true) end
+            if RoRota.Debug then RoRota.Debug:SetEnabled(true, "normal") end
+            return
+        elseif msg == "debug full" then
+            if RoRota.Debug then RoRota.Debug:SetEnabled(true, "full") end
             return
         elseif msg == "debug off" then
             if RoRota.Debug then RoRota.Debug:SetEnabled(false) end
@@ -260,9 +263,24 @@ function RoRota:RegisterSlashCommands()
                 RoRota:Print("CastState module not loaded")
             end
             return
+
+        elseif msg == "testswap" or msg == "swap" then
+            if not RoRota.Equipment then
+                RoRota:Print("Equipment module not loaded")
+                return
+            end
+            local setName = RoRota.db.profile.opener.equipmentSet
+            if not setName then
+                RoRota:Print("No equipment set configured for stealth opener")
+                return
+            end
+            RoRota:Print("Testing equipment swap to: "..setName)
+            RoRota.Equipment:SwapToSet(setName)
+            return
         elseif msg == "help" then
             RoRota:Print("=== RoRota Commands ===")
             RoRota:Print("/rr - Open settings")
+            RoRota:Print("/rr testswap - Test equipment swap manually")
             RoRota:Print("/rr buffs - List all player buffs")
             RoRota:Print("/rr bufftimers - Show tracked buff/debuff timers")
             RoRota:Print("/rr cachestats - Show cache statistics")
@@ -274,7 +292,9 @@ function RoRota:RegisterSlashCommands()
             RoRota:Print("/rr immunity remove <name> - Remove target")
             RoRota:Print("/rr immunity clear - Clear all immunities")
             RoRota:Print("/rr integration - Show SuperWoW/Nampower status")
-            RoRota:Print("/rr debug on/off - Toggle debug mode")
+            RoRota:Print("/rr debug on - Enable debug (normal)")
+            RoRota:Print("/rr debug full - Enable debug (full logs)")
+            RoRota:Print("/rr debug off - Disable debug")
             RoRota:Print("/rr trace on/off - Toggle rotation trace")
             RoRota:Print("/rr state - Show current state")
             RoRota:Print("/rr logs - Show recent debug logs")
@@ -283,17 +303,11 @@ function RoRota:RegisterSlashCommands()
             return
         end
         
-        -- default: open GUI
-        if not RoRotaGUIFrame then
-            if RoRota.CreateGUI then
-                RoRota:CreateGUI()
-            else
-                RoRota:Print("GUI module not loaded. Please /reload")
-                return
-            end
-        end
-        if RoRotaGUIFrame then
-            RoRotaGUIFrame:Show()
+        -- default: open new menu
+        if RoRotaMainMenu and RoRotaMainMenu.Show then
+            RoRotaMainMenu:Show()
+        else
+            RoRota:Print("MainMenu module not loaded. Please /reload")
         end
     end
 end

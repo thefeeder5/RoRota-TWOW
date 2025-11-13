@@ -24,6 +24,7 @@ RoRota.TalentCache = {
 	tasteForBlood = 0,
 	bladeRush = 0,
 	dirtyDeeds = 0,
+	throwingWeaponSpec = 0,
 }
 
 function RoRota:UpdateAllTalents()
@@ -55,6 +56,8 @@ function RoRota:UpdateAllTalents()
 					self.TalentCache.bladeRush = rank or 0
 				elseif string.find(name, "Dirty Deeds") then
 					self.TalentCache.dirtyDeeds = rank or 0
+				elseif string.find(name, "Throwing Weapon Specialization") then
+					self.TalentCache.throwingWeaponSpec = rank or 0
 				end
 			end
 		end

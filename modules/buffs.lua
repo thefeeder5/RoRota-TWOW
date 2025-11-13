@@ -92,12 +92,16 @@ function RoRota:UpdateBuffCache()
     -- Check Blade Flurry (for canceling)
     self:CheckSpecificBuff("player", "Blade Flurry")
     
-    -- Check Cold Blood if CB Eviscerate enabled
+    -- Check finisher buffs for condition system
     if self.db and self.db.profile and self.db.profile.abilities then
         if self.db.profile.abilities.ColdBloodEviscerate and self.db.profile.abilities.ColdBloodEviscerate.enabled then
             self:CheckSpecificBuff("player", "Cold Blood")
         end
     end
+    
+    -- Always check finisher buffs that might be used in conditions
+    self:CheckSpecificBuff("player", "Slice and Dice")
+    self:CheckSpecificBuff("player", "Envenom")
     
     -- Check target debuffs only if abilities enabled
     if UnitExists("target") then
@@ -120,7 +124,10 @@ function RoRota:HasPlayerBuff(buffName)
     if now - self.BuffCache.lastUpdate > 0.1 then
         self:UpdateBuffCache()
     end
-    return self.BuffCache.player[buffName] ~= nil
+    if self.BuffCache.player[buffName] ~= nil then
+        return true
+    end
+    return self:CheckSpecificBuff("player", buffName)
 end
 
 function RoRota:HasTargetDebuff(debuffName)
@@ -128,7 +135,10 @@ function RoRota:HasTargetDebuff(debuffName)
     if now - self.BuffCache.lastUpdate > 0.1 then
         self:UpdateBuffCache()
     end
-    return self.BuffCache.target[debuffName] ~= nil
+    if self.BuffCache.target[debuffName] ~= nil then
+        return true
+    end
+    return self:CheckSpecificDebuff("target", debuffName)
 end
 
 function RoRota:GetBuffTimeRemaining(buffName)
@@ -197,11 +207,29 @@ function RoRota:TargetHasImmunityBuff()
         ["Hemorrhage"] = true,
     }
     
-    -- Only scan target buffs when checking immunity
+    -- Check target buffs
     local i = 1
     while UnitBuff("target", i) do
         RoRotaBuffTooltip:ClearLines()
         RoRotaBuffTooltip:SetUnitBuff("target", i)
+        local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
+        if tooltipName then
+            local englishKey = RoRota:FromLocale(tooltipName)
+            if RoRotaDB.immunityBuffs[tooltipName] or RoRotaDB.immunityBuffs[englishKey] then
+                if not rogueDebuffs[tooltipName] and not rogueDebuffs[englishKey] then
+                    return true
+                end
+            end
+        end
+        i = i + 1
+        if i > 32 then break end
+    end
+    
+    -- Check target debuffs (e.g. Banish)
+    i = 1
+    while UnitDebuff("target", i) do
+        RoRotaBuffTooltip:ClearLines()
+        RoRotaBuffTooltip:SetUnitDebuff("target", i)
         local tooltipName = RoRotaBuffTooltipTextLeft1:GetText()
         if tooltipName then
             local englishKey = RoRota:FromLocale(tooltipName)

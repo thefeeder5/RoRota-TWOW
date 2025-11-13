@@ -26,6 +26,11 @@ function RoRota.Integration:HasNampower()
     return has_nampower
 end
 
+-- detect unitxp sp3
+function RoRota.Integration:HasUnitXP()
+    return UnitXP ~= nil
+end
+
 -- get energy with Nampower precision if available
 function RoRota.Integration:GetEnergy()
     if self:HasNampower() and Nampower and Nampower.GetEnergy then
@@ -46,10 +51,12 @@ end
 function RoRota.Integration:PrintStatus()
     local superWow = self:HasSuperWoW()
     local nampower = self:HasNampower()
+    local unitxp = self:HasUnitXP()
     
     RoRota:Print("Integration Status:")
     RoRota:Print(string.format("  SuperWoW: %s", superWow and "|cFF00FF00Detected|r" or "|cFFFF0000Not Found|r"))
     RoRota:Print(string.format("  Nampower: %s", nampower and "|cFF00FF00Detected|r" or "|cFFFF0000Not Found|r"))
+    RoRota:Print(string.format("  UnitXP: %s", unitxp and "|cFF00FF00Detected|r" or "|cFFFF0000Not Found|r"))
     
     if superWow then
         RoRota:Print("  - Enhanced buff/debuff timers active")
@@ -59,6 +66,10 @@ function RoRota.Integration:PrintStatus()
     
     if nampower then
         RoRota:Print("  - Precise energy tracking active")
+    end
+    
+    if unitxp then
+        RoRota:Print("  - Distance checking available")
     end
 end
 

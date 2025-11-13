@@ -24,6 +24,26 @@ end
 function RoRota:CHAT_MSG_SPELL_SELF_DAMAGE()
     if self.OnSelfSpellEvent then self:OnSelfSpellEvent(arg1) end
     
+    -- Detect successful interrupts
+    if string.find(arg1, "interrupted") or string.find(arg1, "Interrupt") then
+        local targetName = UnitName("target")
+        local spellName = self.currentTargetSpell or (self.interruptState and self.interruptState.lastInterruptedSpell)
+        if targetName and spellName and self.StoreInterruptedSpell then
+            self:StoreInterruptedSpell(targetName, spellName)
+        end
+    end
+    
+    -- Detect Vanish cast for Vanish opener mode
+    if string.find(arg1, "Vanish") and self.SetVanishOpenerMode then
+        self:SetVanishOpenerMode()
+        
+        -- Swap equipment if configured
+        local vanishCfg = self.db and self.db.profile and self.db.profile.vanishOpener
+        if vanishCfg and vanishCfg.equipmentSet and self.Equipment then
+            self.Equipment:SwapToSet(vanishCfg.equipmentSet)
+        end
+    end
+    
     if self.OnBuilderCast and self.db and self.db.profile then
         local mainBuilder = self.db.profile.mainBuilder
         local secondaryBuilder = self.db.profile.secondaryBuilder
@@ -39,8 +59,8 @@ function RoRota:CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE()
     if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
 end
 
-function RoRota:CHAT_MSG_SPELL_DMGSHIELDS_ON_OTHERS()
-    -- Suppress spam from teammate evades
+function RoRota:CHAT_MSG_SPELL_DAMAGESHIELDS_ON_OTHERS()
+    -- Suppress spam from damage shields (thorns, etc)
 end
 
 function RoRota:CHAT_MSG_COMBAT_SELF_MISSES()
@@ -59,6 +79,22 @@ end
 
 function RoRota:CHAT_MSG_COMBAT_HOSTILE_DEATH()
     if self.OnCreatureSpellEvent then self:OnCreatureSpellEvent(arg1) end
+end
+
+function RoRota:CHAT_MSG_SPELL_AURA_GONE_OTHER()
+    -- Detect interrupts via aura removal
+    if self.Debug and self.Debug.enabled then
+        if string.find(arg1, "interrupted") or string.find(arg1, "Interrupt") then
+            self.Debug:Log("[INTERRUPT] AURA_GONE_OTHER: " .. arg1)
+        end
+    end
+    if string.find(arg1, "interrupted") or string.find(arg1, "Interrupt") then
+        local targetName = UnitName("target")
+        local spellName = self.currentTargetSpell or (self.interruptState and self.interruptState.lastInterruptedSpell)
+        if targetName and spellName and self.StoreInterruptedSpell then
+            self:StoreInterruptedSpell(targetName, spellName)
+        end
+    end
 end
 
 function RoRota:UI_ERROR_MESSAGE()
@@ -93,7 +129,16 @@ end
 
 -- Aura changes
 function RoRota:UNIT_AURA()
-    -- Cache will update on next rotation cycle
+    if arg1 == "player" then
+        local isStealthed = self.HasPlayerBuff and self:HasPlayerBuff("Stealth") or false
+        
+        if isStealthed and not UnitAffectingCombat("player") then
+            local openerCfg = self.db and self.db.profile and self.db.profile.opener
+            if openerCfg and openerCfg.equipmentSet and openerCfg.equipmentSet ~= "" and self.Equipment then
+                self.Equipment:SwapToSet(openerCfg.equipmentSet)
+            end
+        end
+    end
 end
 
 -- Group state
@@ -118,6 +163,13 @@ end
 function RoRota:UNIT_CASTEVENT()
     if self.CombatLog then
         self.CombatLog:OnUnitCastEvent(arg1, arg2, arg3, arg4, arg5)
+    end
+end
+
+-- Equipment swapping
+function RoRota:ITEM_LOCK_CHANGED()
+    if self.Equipment then
+        self.Equipment:OnItemLockChanged()
     end
 end
 

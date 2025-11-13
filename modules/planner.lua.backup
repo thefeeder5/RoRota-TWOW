@@ -83,19 +83,9 @@ end
 function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	local cfg = cache.abilities[GetFinisherKey(finisher)]
 	
-	if finisher == "Rupture" and cfg and cfg.tasteForBlood then
-		-- If target is immune to bleed but we don't have the buff, allow Rupture to get buff
-		if self:IsTargetImmune(finisher) then
-			if self:HasPlayerBuff("Taste for Blood") then
-				-- Already have buff, skip Rupture on immune target
-				return false
-			else
-				-- Don't have buff, allow Rupture to get it (skip other checks)
-				if state.cp < (cfg.minCP or 1) then return false end
-				if state.cp > (cfg.maxCP or 5) then return false end
-				if state.energy < (cache.energyCosts[finisher] or 35) then return false end
-				return true
-			end
+	if finisher == "Rupture" and cfg and cfg.tasteForBlood and self:IsTargetImmune(finisher) then
+		if self:HasPlayerBuff("Taste for Blood") then
+			return false
 		end
 	elseif finisher == "Flourish" then
 		-- Flourish is defensive, check player HP instead of target
@@ -115,7 +105,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 			return false
 		end
 		
-		if state.energy < (cache.energyCosts[finisher] or 35) then return false end
+		if state.energy < cache.energyCosts[finisher] then return false end
 		
 		if self.Conditions then
 			local condPass, mergedCfg = self.Conditions:CheckAbilityConditions(finisher, cfg)
@@ -169,12 +159,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		return true
 	end
 	
-	if not cfg or not cfg.enabled then
-		if RoRota.Debug and RoRota.Debug.enabled and finisher == "Envenom" then
-			RoRota.Debug:Log("[FINISHER DEBUG] Envenom: not enabled or no config")
-		end
-		return false
-	end
+	if not cfg or not cfg.enabled then return false end
 	
 	-- CP range check
 	if finisher == "Eviscerate" then
@@ -182,18 +167,8 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		if state.cp < 5 then return false end
 	else
 		-- All other finishers check minCP/maxCP
-		if state.cp < (cfg.minCP or 1) then
-			if RoRota.Debug and RoRota.Debug.enabled and finisher == "Envenom" then
-				RoRota.Debug:Log(string.format("[FINISHER DEBUG] Envenom: CP %d < minCP %d", state.cp, cfg.minCP or 1))
-			end
-			return false
-		end
-		if state.cp > (cfg.maxCP or 5) then
-			if RoRota.Debug and RoRota.Debug.enabled and finisher == "Envenom" then
-				RoRota.Debug:Log(string.format("[FINISHER DEBUG] Envenom: CP %d > maxCP %d", state.cp, cfg.maxCP or 5))
-			end
-			return false
-		end
+		if state.cp < (cfg.minCP or 1) then return false end
+		if state.cp > (cfg.maxCP or 5) then return false end
 	end
 	
 	-- Target HP percentage check
@@ -233,7 +208,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 		end
 	end
 	
-	if state.energy < (cache.energyCosts[finisher] or 35) then return false end
+	if state.energy < cache.energyCosts[finisher] then return false end
 	
 	-- Check custom conditions before time check
 	if self.Conditions then
@@ -289,7 +264,7 @@ function RoRota:GetOptimalFinisherWithTimeline(state, pacing, cache)
 	end
 	
 	-- Fallback: dump CP at 5 with Eviscerate
-	if pacing and pacing.shouldDump and state.cp >= 5 then
+	if pacing.shouldDump and state.cp >= 5 then
 		local cost = cache.energyCosts["Eviscerate"] or 30
 		if state.energy >= cost then
 			return "Eviscerate", REASON.CP_DUMP, 0
@@ -300,10 +275,6 @@ function RoRota:GetOptimalFinisherWithTimeline(state, pacing, cache)
 end
 
 function RoRota:PlanRotation(state)
-	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] START: CP=%d Energy=%d", state.cp, state.energy))
-	end
-	
 	-- Update global rotation cache if dirty (optimization #1, #2)
 	if self.RotationCache.dirty then
 		self:UpdateRotationCache()
@@ -327,11 +298,9 @@ function RoRota:PlanRotation(state)
 		buffTimes = {
 			["Slice and Dice"] = self:GetBuffTimeRemaining("Slice and Dice"),
 			["Envenom"] = self:GetBuffTimeRemaining("Envenom"),
-			["Flourish"] = self:GetBuffTimeRemaining("Flourish"),
 			["Rupture"] = self:GetDebuffTimeRemaining("Rupture"),
 			["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor"),
-			["Shadow of Death"] = self:GetDebuffTimeRemaining("Shadow of Death"),
-			["Kidney Shot"] = self:GetDebuffTimeRemaining("Kidney Shot")
+			["Shadow of Death"] = self:GetDebuffTimeRemaining("Shadow of Death")
 		}
 	}
 	
@@ -347,9 +316,6 @@ function RoRota:PlanRotation(state)
 	
 	-- Early exit: CP = 0 always builds (optimization #3)
 	if state.cp == 0 then
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log("[PLAN] CP=0, returning builder")
-		end
 		return cache.mainBuilder, REASON.BUILD, 1
 	end
 	
@@ -398,7 +364,7 @@ function RoRota:PlanRotation(state)
 		
 		-- Don't use finisher if deadline expires within 5s (wait for refresh)
 		-- UNLESS: high energy risks overcap OR deadline finisher can't be used at current CP
-		if pacing and pacing.deadline and not pacing.deadline.virtual and pacing.deadline.expiresIn and pacing.deadline.expiresIn > 0 and pacing.deadline.expiresIn <= 5 then
+		if pacing.deadline and not pacing.deadline.virtual and pacing.deadline.expiresIn > 0 and pacing.deadline.expiresIn <= 5 then
 			local deadlineCfg = cache.abilities[GetFinisherKey(pacing.deadline.name)]
 			
 			-- Check if deadline finisher can be used at current CP
@@ -425,32 +391,47 @@ function RoRota:PlanRotation(state)
 		end
 	else
 		-- Not at 5 CP, check if any finisher is available
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log(string.format("[PLAN] CP=%d, checking finishers", state.cp))
-		end
 		local finisher, reason, data = self:GetOptimalFinisherWithTimeline(state, pacing, cache)
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log(string.format("[PLAN] Finisher result: %s", tostring(finisher)))
-		end
 		if finisher then
-			if RoRota.Debug and RoRota.Debug.enabled then
-				RoRota.Debug:Log(string.format("[PLAN] Returning finisher: %s", finisher))
-			end
 			return finisher, reason, data
-		end
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log("[PLAN] No finisher, continuing to build phase")
 		end
 	end
 	
-	-- Build phase: CP < 5, need to build
-	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] Entering build phase check: CP=%d < 5 = %s", state.cp, tostring(state.cp < 5)))
-	end
-	if state.cp < 5 then
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log("[PLAN] Inside build phase")
+	-- Smart pooling: if we need a finisher but lack energy, lock until we have it
+	if state.cp >= 3 then
+		for i, fin in ipairs(cache.finisherPrio) do
+			local finCfg = cache.abilities[GetFinisherKey(fin)]
+			if finCfg and finCfg.enabled then
+				local minCP = finCfg.minCP or 1
+				local maxCP = finCfg.maxCP or 5
+				if state.cp >= minCP and state.cp <= maxCP then
+					local cost = cache.energyCosts[fin] or 30
+					local deficit = cost - state.energy
+					if deficit > 0 and deficit <= 20 then
+						if RoRota.CastState and RoRota.GetTimeToNextTick then
+							local nextTick = RoRota:GetTimeToNextTick()
+							if nextTick > 0.1 then
+								RoRota.CastState:LockRotation(nextTick, "Pooling for "..fin)
+								return nil, REASON.POOL_ENERGY, deficit
+							end
+						end
+						break
+					end
+				end
+			end
 		end
+	end
+	
+	-- If saving CP for deadline, lock rotation
+	if reason == REASON.SAVE_CP then
+		if RoRota.CastState and data > 0 then
+			RoRota.CastState:LockRotation(data, "Saving CP for deadline")
+		end
+		return nil, reason, data
+	end
+	
+	-- Build phase: CP < 5, need to build
+	if state.cp < 5 then
 		if cache.defensive.useRiposte then
 			if self:IsReactiveUsable("Riposte") and self:HasEnoughEnergy("Riposte") then
 				local targetMinHP = cache.defensive.riposteTargetMinHP or 0
@@ -502,11 +483,7 @@ function RoRota:PlanRotation(state)
 					else
 						local shouldUse = true
 						if cache.abilities.Hemorrhage.onlyWhenMissing then
-							local hasDebuff = self:HasTargetDebuff("Hemorrhage")
-							shouldUse = not hasDebuff
-							if self.Debug and self.Debug.enabled then
-								self.Debug:Log("Hemorrhage check: hasDebuff="..tostring(hasDebuff)..", shouldUse="..tostring(shouldUse))
-							end
+							shouldUse = not self:HasTargetDebuff("Hemorrhage")
 						end
 						if shouldUse and (not self.Conditions or self.Conditions:CheckAbilityConditions("Hemorrhage", cache.abilities.Hemorrhage)) then
 							return "Hemorrhage", REASON.BUILD, state.cp + 1
@@ -522,13 +499,12 @@ function RoRota:PlanRotation(state)
 				   cache.playerHPPct >= (cache.defensive.ghostlyPlayerMinHP or 0) and 
 				   cache.playerHPPct <= (cache.defensive.ghostlyPlayerMaxHP or 100) then
 					-- Check if targeted only setting is enabled
-					local targetedCheck = true
 					if cache.defensive.ghostlyTargetedOnly then
 						if not UnitExists("target") or UnitName("target") ~= UnitName("targettarget") then
-							targetedCheck = false
+							return nil
 						end
 					end
-					if targetedCheck and (not self.Conditions or self.Conditions:CheckAbilityConditions("Ghostly Strike", {conditions = cache.defensive.ghostlyConditions or ""})) then
+					if not self.Conditions or self.Conditions:CheckAbilityConditions("Ghostly Strike", {conditions = cache.defensive.ghostlyConditions or ""}) then
 						return "Ghostly Strike", REASON.GHOSTLY, 0
 					end
 				end
@@ -540,30 +516,6 @@ function RoRota:PlanRotation(state)
 		if builder_attempts >= failsafeThreshold and cache.db.secondaryBuilder then
 			builder = cache.db.secondaryBuilder
 		end
-		
-		-- Skip Hemorrhage if onlyWhenMissing and debuff exists
-		if builder == "Hemorrhage" and cache.abilities.Hemorrhage and cache.abilities.Hemorrhage.onlyWhenMissing and self:HasTargetDebuff("Hemorrhage") then
-			if cache.db.secondaryBuilder and cache.db.secondaryBuilder ~= "Hemorrhage" then
-				builder = cache.db.secondaryBuilder
-			else
-				return nil, REASON.BUILD, 0
-			end
-		end
-		
-		-- Check conditions on builder
-		if builder == "Hemorrhage" and cache.abilities.Hemorrhage then
-			if self.Conditions then
-				local condPass = self.Conditions:CheckAbilityConditions(builder, cache.abilities.Hemorrhage)
-				if not condPass then
-					if cache.db.secondaryBuilder and cache.db.secondaryBuilder ~= "Hemorrhage" then
-						builder = cache.db.secondaryBuilder
-					else
-						return nil, REASON.BUILD, 0
-					end
-				end
-			end
-		end
-		
 		local builderCost = cache.energyCosts[builder] or 40
 		
 		-- Check immunity before using builder
@@ -579,13 +531,7 @@ function RoRota:PlanRotation(state)
 		end
 		
 		-- Check if we have energy for builder
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log(string.format("[PLAN] Builder=%s Cost=%d Energy=%d", builder, builderCost, state.energy))
-		end
 		if state.energy >= builderCost then
-			if RoRota.Debug and RoRota.Debug.enabled then
-				RoRota.Debug:Log("[PLAN] Have energy, returning builder")
-			end
 			-- Smart builders: check swing timer
 			if cache.db.smartBuilders and (builder == "Sinister Strike" or builder == "Backstab" or builder == "Noxious Assault") then
 				if self.SwingTimer and not self.SwingTimer:CanUseBuilder() then
@@ -603,24 +549,13 @@ function RoRota:PlanRotation(state)
 				RoRota.CastState:LockRotation(nextTick, "Pooling energy for builder")
 			end
 		end
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log("[PLAN] Not enough energy, returning TICK_WAIT")
-		end
 		return nil, REASON.TICK_WAIT, 0
-	end
-	
-	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] After build phase: CP=%d", state.cp))
 	end
 	
 	-- Fallback: dump CP at 5 with Eviscerate (bypasses HP thresholds)
 	if state.cp >= 5 and not self:IsTargetImmune("Eviscerate") then
 		local evisConfig = cache.abilities.Eviscerate
-		if evisConfig and evisConfig.enabled == false then
-			-- Eviscerate disabled, don't use fallback
-			return nil, REASON.CP_DUMP, 0
-		end
-		if true then
+		if not evisConfig or evisConfig.enabled ~= false then
 			local cost = cache.energyCosts["Eviscerate"] or 30
 			if state.energy >= cost then
 				return "Eviscerate", REASON.CP_DUMP, 0

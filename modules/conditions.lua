@@ -104,11 +104,69 @@ local evaluators = {
 	
 	-- Casting conditions
 	target_casting = function(spellName)
+		if not RoRota or not RoRota.IsUnitCasting then return false end
 		return RoRota:IsUnitCasting("target", spellName)
 	end,
 	
 	target_not_casting = function(spellName)
+		if not RoRota or not RoRota.IsUnitCasting then return true end
 		return not RoRota:IsUnitCasting("target", spellName)
+	end,
+	
+	-- Equipment conditions
+	equipped = function(weaponType)
+		if not weaponType then return false end
+		local mhLink = GetInventoryItemLink("player", 16)
+		if not mhLink then return false end
+		local _, _, _, _, _, itemType, itemSubType = GetItemInfo(mhLink)
+		if not itemSubType then return false end
+		local wType = string.lower(weaponType)
+		if wType == "dagger" or wType == "daggers" then
+			return string.find(string.lower(itemSubType), "dagger")
+		elseif wType == "sword" or wType == "swords" then
+			return string.find(string.lower(itemSubType), "sword")
+		elseif wType == "mace" or wType == "maces" then
+			return string.find(string.lower(itemSubType), "mace")
+		elseif wType == "axe" or wType == "axes" then
+			return string.find(string.lower(itemSubType), "axe")
+		elseif wType == "fist" or wType == "fist weapon" then
+			return string.find(string.lower(itemSubType), "fist")
+		end
+		return false
+	end,
+	
+	-- Immunity conditions
+	noimmunity = function(immunityType)
+		if not immunityType or not UnitExists("target") then return true end
+		if not RoRota or not RoRota.IsTargetImmune then return true end
+		local iType = string.lower(immunityType)
+		if iType == "bleed" then
+			return not RoRota:IsTargetImmune("Rupture")
+		elseif iType == "stun" then
+			return not RoRota:IsTargetImmune("Kidney Shot")
+		elseif iType == "incapacitate" or iType == "incap" then
+			return not RoRota:IsTargetImmune("Gouge")
+		end
+		return true
+	end,
+	
+	-- Distance conditions
+	distance = function(operator, yards)
+		if not RoRota or not RoRota.GetTargetDistance then return false end
+		local distance = RoRota:GetTargetDistance()
+		if not distance then return false end
+		if operator == "<" then return distance < yards
+		elseif operator == ">" then return distance > yards
+		elseif operator == "<=" then return distance <= yards
+		elseif operator == ">=" then return distance >= yards
+		elseif operator == "=" then return distance == yards
+		end
+		return false
+	end,
+	
+	meleerange = function()
+		if not RoRota or not RoRota.IsTargetInMeleeRange then return false end
+		return RoRota:IsTargetInMeleeRange()
 	end,
 }
 
@@ -203,13 +261,14 @@ end
 function RoRota.Conditions:EvaluateCondition(cond)
 	local condType, value = string.match(cond, "^([^:]+):(.+)$")
 	if not condType then condType, value = cond, nil end
-	-- DEBUG: condType and value
-	if condType == "buff" or condType == "nobuff" then
+	-- Player buffs
+	if condType == "pbuff" or condType == "pnobuff" then
+		local isNegated = (condType == "pnobuff")
 		if not value then return true end
 		local name, op, num = string.match(value, "^(.+)([<>=]+)#?(%d+)$")
 		if name then
 			local hasBuff = RoRota:HasPlayerBuff(name)
-			if condType == "nobuff" then return not hasBuff end
+			if isNegated then return not hasBuff end
 			if not hasBuff then return false end
 			if not string.find(value, "#") then
 				local time = RoRota:GetBuffTimeRemaining(name)
@@ -219,14 +278,57 @@ function RoRota.Conditions:EvaluateCondition(cond)
 			return true
 		else
 			local hasBuff = RoRota:HasPlayerBuff(value)
-			return condType == "buff" and hasBuff or not hasBuff
+			if RoRota.Debug and RoRota.Debug.enabled then
+				RoRota.Debug:Log(string.format("[COND] HasPlayerBuff(%s) = %s", value, tostring(hasBuff)))
+			end
+			if isNegated then return not hasBuff else return hasBuff end
 		end
-	elseif condType == "debuff" or condType == "nodebuff" then
+	-- Player debuffs
+	elseif condType == "pdebuff" or condType == "pnodebuff" then
+		local isNegated = (condType == "pnodebuff")
+		if not value then return true end
+		local name, op, num = string.match(value, "^(.+)([<>=]+)#?(%d+)$")
+		if name then
+			local hasDebuff = RoRota:HasPlayerDebuff(name)
+			if isNegated then return not hasDebuff end
+			if not hasDebuff then return false end
+			if not string.find(value, "#") then
+				local time = RoRota:GetPlayerDebuffTimeRemaining(name)
+				if op == "<" then return time < tonumber(num)
+				elseif op == ">" then return time > tonumber(num) end
+			end
+			return true
+		else
+			local hasDebuff = RoRota:HasPlayerDebuff(value)
+			if isNegated then return not hasDebuff else return hasDebuff end
+		end
+	-- Target buffs
+	elseif condType == "tbuff" or condType == "tnobuff" then
+		local isNegated = (condType == "tnobuff")
+		if not value then return true end
+		local name, op, num = string.match(value, "^(.+)([<>=]+)#?(%d+)$")
+		if name then
+			local hasBuff = RoRota:HasTargetBuff(name)
+			if isNegated then return not hasBuff end
+			if not hasBuff then return false end
+			if not string.find(value, "#") then
+				local time = RoRota:GetTargetBuffTimeRemaining(name)
+				if op == "<" then return time < tonumber(num)
+				elseif op == ">" then return time > tonumber(num) end
+			end
+			return true
+		else
+			local hasBuff = RoRota:HasTargetBuff(value)
+			if isNegated then return not hasBuff else return hasBuff end
+		end
+	-- Target debuffs
+	elseif condType == "tdebuff" or condType == "tnodebuff" then
+		local isNegated = (condType == "tnodebuff")
 		if not value then return true end
 		local name, op, num = string.match(value, "^(.+)([<>=]+)#?(%d+)$")
 		if name then
 			local hasDebuff = RoRota:HasTargetDebuff(name)
-			if condType == "nodebuff" then return not hasDebuff end
+			if isNegated then return not hasDebuff end
 			if not hasDebuff then return false end
 			if not string.find(value, "#") then
 				local time = RoRota:GetDebuffTimeRemaining(name)
@@ -236,12 +338,19 @@ function RoRota.Conditions:EvaluateCondition(cond)
 			return true
 		else
 			local hasDebuff = RoRota:HasTargetDebuff(value)
-			return condType == "debuff" and hasDebuff or not hasDebuff
+			if RoRota.Debug and RoRota.Debug.enabled then
+				RoRota.Debug:Log(string.format("[COND] HasTargetDebuff(%s) = %s, isNegated = %s", value, tostring(hasDebuff), tostring(isNegated)))
+			end
+			if isNegated then return not hasDebuff else return hasDebuff end
 		end
 	elseif condType == "type" or condType == "notype" then
 		local classification = UnitClassification("target")
 		local match = (string.lower(value) == "boss" and classification == "worldboss") or (string.lower(value) == "worldboss" and classification == "worldboss") or (string.lower(value) == "elite" and (classification == "elite" or classification == "rareelite"))
-		return condType == "type" and match or not match
+		if condType == "type" then
+			return match
+		else
+			return not match
+		end
 	elseif condType == "combo" then
 		local cp = GetComboPoints("player", "target")
 		local op, num = string.match(value, "^([<>=]+)#?(%d+)$")
@@ -253,7 +362,19 @@ function RoRota.Conditions:EvaluateCondition(cond)
 			elseif op == "<=" then return cp <= num
 			elseif op == "=" then return cp == num end
 		end
-	elseif condType == "hp" then
+	-- Player HP
+	elseif condType == "php" then
+		local hp = RoRota.Cache and RoRota.Cache.healthPercent or 100
+		local op, num = string.match(value, "^([<>=]+)(%d+)$")
+		if op and num then
+			num = tonumber(num)
+			if op == ">" then return hp > num
+			elseif op == "<" then return hp < num
+			elseif op == ">=" then return hp >= num
+			elseif op == "<=" then return hp <= num end
+		end
+	-- Target HP
+	elseif condType == "thp" then
 		local hp = RoRota.Cache and RoRota.Cache.targetHealthPercent or 100
 		local op, num = string.match(value, "^([<>=]+)(%d+)$")
 		if op and num then
@@ -263,32 +384,94 @@ function RoRota.Conditions:EvaluateCondition(cond)
 			elseif op == ">=" then return hp >= num
 			elseif op == "<=" then return hp <= num end
 		end
+	elseif condType == "equipped" then
+		if not value then return false end
+		local mhLink = GetInventoryItemLink("player", 16)
+		if not mhLink then return false end
+		local _, _, _, _, _, itemType, itemSubType = GetItemInfo(mhLink)
+		if not itemSubType then return false end
+		local wType = string.lower(value)
+		local subType = string.lower(itemSubType)
+		if wType == "dagger" or wType == "daggers" then
+			return string.find(subType, "dagger")
+		elseif wType == "sword" or wType == "swords" then
+			return string.find(subType, "sword")
+		elseif wType == "mace" or wType == "maces" then
+			return string.find(subType, "mace")
+		elseif wType == "axe" or wType == "axes" then
+			return string.find(subType, "axe")
+		elseif wType == "fist" or wType == "fist weapon" then
+			return string.find(subType, "fist")
+		end
+		return false
+	elseif condType == "noimmunity" then
+		if not value or not UnitExists("target") then return true end
+		if not RoRota or not RoRota.IsTargetImmune then return true end
+		local iType = string.lower(value)
+		if iType == "bleed" then
+			return not RoRota:IsTargetImmune("Rupture")
+		elseif iType == "stun" then
+			return not RoRota:IsTargetImmune("Kidney Shot")
+		elseif iType == "incapacitate" or iType == "incap" then
+			return not RoRota:IsTargetImmune("Gouge")
+		end
+		return true
+	elseif condType == "distance" then
+		if not value then return false end
+		local op, num = string.match(value, "^([<>=]+)(%d+)$")
+		if not op or not num then return false end
+		if not RoRota or not RoRota.GetTargetDistance then return false end
+		local distance = RoRota:GetTargetDistance()
+		if not distance then return false end
+		num = tonumber(num)
+		if op == ">" then return distance > num
+		elseif op == "<" then return distance < num
+		elseif op == ">=" then return distance >= num
+		elseif op == "<=" then return distance <= num
+		elseif op == "=" then return distance == num
+		end
+		return false
+	elseif condType == "meleerange" then
+		if not RoRota or not RoRota.IsTargetInMeleeRange then return false end
+		return RoRota:IsTargetInMeleeRange()
 	end
 	return true
 end
 
 -- Check ability conditions with multi-line support
 function RoRota.Conditions:CheckAbilityConditions(abilityName, config)
-	if not config or not config.conditions or config.conditions == "" then return true, config end
+	if not config then return true, {} end
+	if not config.conditions or config.conditions == "" then return true, config end
 	local lines = self:ParseConditionLines(config.conditions)
 	if not lines then return true, config end
-	-- DEBUG: Checking conditions
+	if RoRota.Debug and RoRota.Debug.enabled then
+		RoRota.Debug:Log(string.format("[COND] Checking %s: %s", abilityName, config.conditions))
+	end
 	for _, line in ipairs(lines) do
 		local conditions, overrides = self:ParseConditionLine(line)
 		local allMatch = true
 		for _, cond in ipairs(conditions) do
 			local result = self:EvaluateCondition(cond)
+			if RoRota.Debug and RoRota.Debug.enabled then
+				RoRota.Debug:Log(string.format("[COND] %s -> %s = %s", abilityName, cond, tostring(result)))
+			end
 			if not result then
 				allMatch = false
 				break
 			end
 		end
 		if allMatch then
+			if RoRota.Debug and RoRota.Debug.enabled then
+				RoRota.Debug:Log(string.format("[COND] %s PASSED", abilityName))
+			end
 			local mergedConfig = {}
 			for k, v in pairs(config) do mergedConfig[k] = v end
 			for k, v in pairs(overrides) do mergedConfig[k] = v end
 			return true, mergedConfig
 		end
+	end
+	if RoRota.Debug and RoRota.Debug.enabled then
+		RoRota.Debug:Log(string.format("[COND] %s FAILED", abilityName))
 	end
 	return false, config
 end

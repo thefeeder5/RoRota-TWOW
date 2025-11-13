@@ -59,7 +59,7 @@ function RoRota:OnEnable()
         return
     end
     
-    self:Print("RoRota enabled. Type /rorota or /rr to open settings.")
+    self:Print("RoRota enabled. Type /rr to open settings.")
     
     -- initialize database tables
     if not RoRotaDB.immunities then
@@ -84,7 +84,7 @@ function RoRota:OnEnable()
     self:RegisterEvent("CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_SELF_DAMAGE")
     self:RegisterEvent("CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE")
-    self:RegisterEvent("CHAT_MSG_SPELL_DMGSHIELDS_ON_OTHERS")
+    self:RegisterEvent("CHAT_MSG_SPELL_DAMAGESHIELDS_ON_OTHERS")
     self:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
     self:RegisterEvent("CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES")
     self:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
@@ -94,6 +94,7 @@ function RoRota:OnEnable()
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("PARTY_MEMBERS_CHANGED")
     self:RegisterEvent("RAID_ROSTER_UPDATE")
+    self:RegisterEvent("ITEM_LOCK_CHANGED")
     
     -- SuperWoW UNIT_CASTEVENT for precise cast tracking
     if UnitCastingInfo then
@@ -106,6 +107,7 @@ function RoRota:OnEnable()
     -- slash command registration (handlers in modules/commands.lua)
     if self.RegisterSlashCommands then
         self:RegisterSlashCommands()
+        self:Print("New menu is now default! Use /rr oldmenu for legacy GUI.")
     end
     
     -- build reverse locale map
@@ -141,4 +143,20 @@ end
 
 function RoRota:OnDisable()
     self:Print("RoRota disabled.")
+end
+
+-- Get approximate distance to target in yards
+function RoRota:GetTargetDistance()
+	if not UnitExists("target") then return 100 end
+	-- Use CheckInteractDistance for range checks
+	-- 1 = Inspect (28 yards), 2 = Trade (11.11 yards), 3 = Duel (9.9 yards), 4 = Follow (28 yards)
+	if CheckInteractDistance("target", 3) then
+		return 5  -- Within melee range (~5 yards)
+	elseif CheckInteractDistance("target", 2) then
+		return 10  -- Within 10 yards
+	elseif CheckInteractDistance("target", 1) then
+		return 25  -- Within 25 yards
+	else
+		return 35  -- Beyond 28 yards, assume 35+
+	end
 end

@@ -2,7 +2,7 @@
 ## Title: RoRota (Rogue One-Button Rotation)
 ## Author: feeder5 (vibe coding ftw)
 ## Notes: Helps you with rotation as a rogue.
-## Version: 0.8.5
+## Version: 0.9.0test
 ## SavedVariables: RoRotaDB
 Libs\AceLibrary\AceLibrary.lua
 Libs\AceOO-2.0\AceOO-2.0.lua
@@ -16,6 +16,7 @@ locales\enUS.lua
 modules\constants.lua
 modules\defaultprofile.lua
 Core.lua
+modules\combatlog.lua
 modules\utils.lua
 modules\fixes.lua
 modules\debug.lua
@@ -37,20 +38,23 @@ modules\rotationlog.lua
 modules\planner.lua
 modules\interrupt.lua
 modules\defensive.lua
+modules\cooldowns.lua
 modules\opener.lua
 modules\commands.lua
 modules\events.lua
 modules\integration.lua
 modules\swingtimer.lua
 modules\helpers.lua
+modules\caststate.lua
 modules\rotation.lua
 modules\rotationaoe.lua
+modules\consumables.lua
 modules\poisons.lua
+modules\equipment.lua
 modules\profileswitcher.lua
 modules\profileexport.lua
 modules\gui_widgets.lua
-modules\gui_menu.lua
-modules\gui.lua
+modules\mainmenu.lua
 modules\gui_minimap.lua
 modules\gui_preview.lua
 modules\gui_cpdebug.lua

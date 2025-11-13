@@ -17,7 +17,7 @@ RoRotaConstants = {
 	ENERGY_COSTS = {
 		["Sinister Strike"] = 40, ["Eviscerate"] = 30, ["Backstab"] = 60,
 		["Gouge"] = 45, ["Slice and Dice"] = 20, ["Sap"] = 65,
-		["Kick"] = 25, ["Garrote"] = 50, ["Ambush"] = 60,
+		["Kick"] = 25, ["Deadly Throw"] = 40, ["Garrote"] = 50, ["Ambush"] = 60,
 		["Rupture"] = 20, ["Cheap Shot"] = 60, ["Kidney Shot"] = 20,
 		["Hemorrhage"] = 40, ["Envenom"] = 20, ["Noxious Assault"] = 45,
 		["Pick Pocket"] = 0, ["Ghostly Strike"] = 40, ["Feint"] = 20,
@@ -60,6 +60,7 @@ RoRotaConstants = {
 		["Rupture"] = "Interface\\Icons\\Ability_Rogue_Rupture",
 		["Expose Armor"] = "Interface\\Icons\\Ability_Warrior_Riposte",
 		["Kick"] = "Interface\\Icons\\Ability_Kick",
+		["Deadly Throw"] = "Interface\\Icons\\Ability_Rogue_DeadlyThrow",
 		["Gouge"] = "Interface\\Icons\\Ability_Gouge",
 		["Kidney Shot"] = "Interface\\Icons\\Ability_Rogue_KidneyShot",
 		["Ambush"] = "Interface\\Icons\\Ability_Rogue_Ambush",

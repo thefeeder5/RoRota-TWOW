@@ -121,12 +121,18 @@ function RoRotaGUI.CreateCheckbox(name, parent, x, y, text, callback)
 end
 
 -- create button
-function RoRotaGUI.CreateButton(name, parent, width, height, text)
+function RoRotaGUI.CreateButton(name, parent, width, height, text, noHighlight)
     local button = CreateFrame("Button", name, parent, "UIPanelButtonTemplate")
     button:SetWidth(width or 100)
     button:SetHeight(height or 22)
     button:SetText(text or "")
-    RoRotaGUI.SkinButton(button)
+    RoRotaGUI.CreateBackdrop(button)
+    button:SetNormalTexture("")
+    button:SetHighlightTexture("")
+    button:SetPushedTexture("")
+    if not noHighlight then
+        RoRotaGUI.SetHighlight(button)
+    end
     return button
 end
 
@@ -615,6 +621,415 @@ function RoRotaGUI.SetTooltipMulti(frame, title, description)
         if origLeave then origLeave() end
         GameTooltip:Hide()
     end)
+end
+
+-- ============================================================================
+-- SUBTAB SYSTEM
+-- ============================================================================
+
+-- Create subtab structure with sidebar and content area
+function RoRotaGUI.CreateSubtabStructure(parent, subtabNames, createFunctions, loadFunctions)
+    local subtabBar = CreateFrame("Frame", nil, parent)
+    subtabBar:SetWidth(90)
+    subtabBar:SetHeight(460)
+    subtabBar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+    subtabBar:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        tile = true, tileSize = 16, edgeSize = 0,
+        insets = {left = 0, right = 0, top = 0, bottom = 0}
+    })
+    subtabBar:SetBackdropColor(0, 0, 0, 0.5)
+    
+    local contentArea = CreateFrame("Frame", nil, parent)
+    contentArea:SetWidth(390)
+    contentArea:SetHeight(460)
+    contentArea:SetPoint("TOPLEFT", parent, "TOPLEFT", 90, 0)
+    
+    parent.subtabs = {}
+    parent.subtabFrames = {}
+    
+    for i = 1, table.getn(subtabNames) do
+        local idx = i
+        local btn = RoRotaGUI.CreateSubTab(subtabBar, -10 - (i-1)*33, subtabNames[i], function()
+            for j = 1, table.getn(parent.subtabFrames) do
+                if j == idx then
+                    parent.subtabFrames[j]:Show()
+                    RoRotaGUI.SetSubTabActive(parent.subtabs[j], true)
+                else
+                    parent.subtabFrames[j]:Hide()
+                    RoRotaGUI.SetSubTabActive(parent.subtabs[j], false)
+                end
+            end
+        end)
+        parent.subtabs[i] = btn
+        
+        local subFrame = CreateFrame("Frame", nil, contentArea)
+        subFrame:SetWidth(390)
+        subFrame:SetHeight(460)
+        subFrame:SetPoint("TOPLEFT", contentArea, "TOPLEFT", 0, 0)
+        subFrame:Hide()
+        parent.subtabFrames[i] = subFrame
+        
+        if createFunctions[i] then
+            createFunctions[i](subFrame)
+        end
+    end
+    
+    parent.subtabFrames[1]:Show()
+    RoRotaGUI.SetSubTabActive(parent.subtabs[1], true)
+end
+
+-- ============================================================================
+-- PRIORITY LIST SYSTEM
+-- ============================================================================
+
+-- Create priority list with up/down arrows
+function RoRotaGUI.CreatePriorityList(parent, x, y, width, height, items, onUpdate)
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetWidth(width or 350)
+    frame:SetHeight(height or 200)
+    frame:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    
+    frame.items = items or {}
+    frame.buttons = {}
+    frame.onUpdate = onUpdate
+    
+    function frame:Refresh()
+        -- Properly destroy old buttons
+        for i, btn in ipairs(self.buttons) do
+            if btn.upBtn then btn.upBtn:Hide() end
+            if btn.downBtn then btn.downBtn:Hide() end
+            btn:Hide()
+        end
+        self.buttons = {}
+        
+        local yPos = -5
+        for i, item in ipairs(self.items) do
+            local btn = RoRotaGUI.CreateButton(nil, self, 140, 22, item)
+            btn:SetPoint("TOPLEFT", self, "TOPLEFT", 10, yPos)
+            btn.index = i
+            btn.item = item
+            
+            local currentIndex = i
+            
+            local upBtn = RoRotaGUI.CreateButton(nil, self, 25, 22, "↑", true)
+            upBtn:SetPoint("LEFT", btn, "RIGHT", 3, 0)
+            RoRotaGUI.SetHighlight(upBtn)
+            upBtn:SetScript("OnClick", function()
+                if currentIndex > 1 then
+                    local temp = frame.items[currentIndex]
+                    frame.items[currentIndex] = frame.items[currentIndex - 1]
+                    frame.items[currentIndex - 1] = temp
+                    if frame.onUpdate then frame.onUpdate(frame.items) end
+                    frame:Refresh()
+                end
+            end)
+            btn.upBtn = upBtn
+            
+            local downBtn = RoRotaGUI.CreateButton(nil, self, 25, 22, "↓", true)
+            downBtn:SetPoint("LEFT", upBtn, "RIGHT", 3, 0)
+            RoRotaGUI.SetHighlight(downBtn)
+            downBtn:SetScript("OnClick", function()
+                if currentIndex < table.getn(frame.items) then
+                    local temp = frame.items[currentIndex]
+                    frame.items[currentIndex] = frame.items[currentIndex + 1]
+                    frame.items[currentIndex + 1] = temp
+                    if frame.onUpdate then frame.onUpdate(frame.items) end
+                    frame:Refresh()
+                end
+            end)
+            btn.downBtn = downBtn
+            
+            table.insert(self.buttons, btn)
+            yPos = yPos - 27
+        end
+    end
+    
+    function frame:SetItems(newItems)
+        self.items = newItems or {}
+        self:Refresh()
+    end
+    
+    frame:Refresh()
+    return frame
+end
+
+-- ============================================================================
+-- SCROLLABLE LIST SYSTEM
+-- ============================================================================
+
+function RoRotaGUI.CreateScrollableList(parent, x, y, width, height)
+    local scroll = CreateFrame("ScrollFrame", nil, parent)
+    scroll:SetWidth(width or 350)
+    scroll:SetHeight(height or 200)
+    scroll:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    scroll:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
+    })
+    scroll:SetBackdropColor(0, 0, 0, 0.5)
+    scroll:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
+    
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetWidth(width - 30 or 320)
+    content:SetHeight(1)
+    scroll:SetScrollChild(content)
+    
+    local slider = CreateFrame("Slider", nil, scroll)
+    slider:SetPoint("TOPRIGHT", scroll, "TOPRIGHT", -5, -18)
+    slider:SetPoint("BOTTOMRIGHT", scroll, "BOTTOMRIGHT", -5, 18)
+    slider:SetWidth(16)
+    slider:SetOrientation("VERTICAL")
+    slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Vertical")
+    slider:SetMinMaxValues(0, 100)
+    slider:SetValue(0)
+    slider:SetValueStep(1)
+    RoRotaGUI.CreateBackdrop(slider)
+    slider:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+    
+    slider:SetScript("OnValueChanged", function()
+        local value = this:GetValue()
+        scroll:SetVerticalScroll(value)
+    end)
+    
+    scroll:SetScript("OnMouseWheel", function()
+        local current = slider:GetValue()
+        local min, max = slider:GetMinMaxValues()
+        if arg1 > 0 then
+            slider:SetValue(math.max(min, current - 20))
+        else
+            slider:SetValue(math.min(max, current + 20))
+        end
+    end)
+    
+    scroll:EnableMouseWheel(true)
+    scroll.content = content
+    scroll.slider = slider
+    
+    function scroll:UpdateScrollRange()
+        local contentHeight = self.content:GetHeight()
+        local scrollHeight = self:GetHeight()
+        local maxScroll = math.max(0, contentHeight - scrollHeight + 20)
+        self.slider:SetMinMaxValues(0, maxScroll)
+        if maxScroll == 0 then
+            self.slider:Hide()
+        else
+            self.slider:Show()
+        end
+    end
+    
+    return scroll
+end
+
+-- ============================================================================
+-- EQUIPMENT TAB SYSTEM
+-- ============================================================================
+
+function RoRotaGUI.CreateEquipmentTab(parent, frame)
+    local y = -10
+    
+    RoRotaGUI.CreateLabel(parent, 10, y, "Manage Equipment Sets")
+    y = y - 25
+    
+    local setListFrame = CreateFrame("Frame", nil, parent)
+    setListFrame:SetWidth(360)
+    setListFrame:SetHeight(150)
+    setListFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    setListFrame:SetBackdrop({
+        bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
+    })
+    setListFrame:SetBackdropColor(0, 0, 0, 0.5)
+    setListFrame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
+    
+    frame.setListFrame = setListFrame
+    frame.setButtons = {}
+    
+    y = y - 160
+    
+    local newSetBtn = RoRotaGUI.CreateButton(nil, parent, 100, 25, "New Set")
+    newSetBtn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    newSetBtn:SetScript("OnClick", function()
+        StaticPopupDialogs["ROROTA_NEW_EQUIPMENT_SET"] = {
+            text = "Enter set name:",
+            button1 = "Create",
+            button2 = "Cancel",
+            hasEditBox = 1,
+            maxLetters = 32,
+            OnAccept = function()
+                local name = getglobal(this:GetParent():GetName().."EditBox"):GetText()
+                if name and name ~= "" then
+                    if not RoRota.db.profile.equipmentSets then
+                        RoRota.db.profile.equipmentSets = {}
+                    end
+                    if RoRota.db.profile.equipmentSets[name] then
+                        RoRota:Print("Set '"..name.."' already exists")
+                        return
+                    end
+                    RoRota.db.profile.equipmentSets[name] = {
+                        mainHand = nil,
+                        offHand = nil,
+                        trinket1 = nil,
+                        trinket2 = nil
+                    }
+                    RoRota:Print("Created equipment set: "..name)
+                    frame.selectedSet = name
+                    RoRotaGUI.RefreshEquipmentTab(frame)
+                end
+            end,
+            OnShow = function()
+                getglobal(this:GetName().."EditBox"):SetFocus()
+            end,
+            EditBoxOnEnterPressed = function()
+                StaticPopupDialogs["ROROTA_NEW_EQUIPMENT_SET"].OnAccept()
+                this:GetParent():Hide()
+            end,
+            EditBoxOnEscapePressed = function()
+                this:GetParent():Hide()
+            end,
+            timeout = 0,
+            whileDead = 1,
+            hideOnEscape = 1
+        }
+        StaticPopup_Show("ROROTA_NEW_EQUIPMENT_SET")
+    end)
+    
+    local deleteSetBtn = RoRotaGUI.CreateButton(nil, parent, 100, 25, "Delete Set")
+    deleteSetBtn:SetPoint("LEFT", newSetBtn, "RIGHT", 10, 0)
+    deleteSetBtn:SetScript("OnClick", function()
+        if not frame.selectedSet then
+            RoRota:Print("No set selected")
+            return
+        end
+        RoRota.db.profile.equipmentSets[frame.selectedSet] = nil
+        RoRota:Print("Deleted set: "..frame.selectedSet)
+        frame.selectedSet = nil
+        RoRotaGUI.RefreshEquipmentTab(frame)
+    end)
+    
+    local saveBtn = RoRotaGUI.CreateButton(nil, parent, 100, 25, "Save Current")
+    saveBtn:SetPoint("LEFT", deleteSetBtn, "RIGHT", 10, 0)
+    saveBtn:SetScript("OnClick", function()
+        if not frame.selectedSet then
+            RoRota:Print("No set selected")
+            return
+        end
+        local mhLink = GetInventoryItemLink("player", 16)
+        local ohLink = GetInventoryItemLink("player", 17)
+        local t1Link = GetInventoryItemLink("player", 13)
+        local t2Link = GetInventoryItemLink("player", 14)
+        
+        local set = RoRota.db.profile.equipmentSets[frame.selectedSet]
+        set.mainHand = mhLink and string.match(mhLink, "|h%[(.-)%]") or nil
+        set.offHand = ohLink and string.match(ohLink, "|h%[(.-)%]") or nil
+        set.trinket1 = t1Link and string.match(t1Link, "|h%[(.-)%]") or nil
+        set.trinket2 = t2Link and string.match(t2Link, "|h%[(.-)%]") or nil
+        
+        RoRota:Print("Saved current equipment to: "..frame.selectedSet)
+        RoRotaGUI.LoadEquipmentEditor(frame)
+    end)
+    
+    y = y - 40
+    
+    local editorFrame = CreateFrame("Frame", nil, parent)
+    editorFrame:SetWidth(360)
+    editorFrame:SetHeight(120)
+    editorFrame:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
+    editorFrame:Hide()
+    frame.editorFrame = editorFrame
+    
+    local editorY = -10
+    RoRotaGUI.CreateLabel(editorFrame, 10, editorY, "Set Items:")
+    editorY = editorY - 25
+    
+    RoRotaGUI.CreateLabel(editorFrame, 10, editorY, "Main Hand:")
+    frame.mainHandLabel = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.mainHandLabel:SetPoint("TOPLEFT", editorFrame, "TOPLEFT", 100, editorY)
+    frame.mainHandLabel:SetText("-")
+    editorY = editorY - 20
+    
+    RoRotaGUI.CreateLabel(editorFrame, 10, editorY, "Off Hand:")
+    frame.offHandLabel = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.offHandLabel:SetPoint("TOPLEFT", editorFrame, "TOPLEFT", 100, editorY)
+    frame.offHandLabel:SetText("-")
+    editorY = editorY - 20
+    
+    RoRotaGUI.CreateLabel(editorFrame, 10, editorY, "Trinket 1:")
+    frame.trinket1Label = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.trinket1Label:SetPoint("TOPLEFT", editorFrame, "TOPLEFT", 100, editorY)
+    frame.trinket1Label:SetText("-")
+    editorY = editorY - 20
+    
+    RoRotaGUI.CreateLabel(editorFrame, 10, editorY, "Trinket 2:")
+    frame.trinket2Label = editorFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.trinket2Label:SetPoint("TOPLEFT", editorFrame, "TOPLEFT", 100, editorY)
+    frame.trinket2Label:SetText("-")
+end
+
+function RoRotaGUI.RefreshEquipmentTab(frame)
+    if not frame or not frame.setListFrame then return end
+    
+    for _, btn in ipairs(frame.setButtons) do
+        btn:Hide()
+    end
+    frame.setButtons = {}
+    
+    local sets = {}
+    if RoRota.db.profile.equipmentSets then
+        for name in pairs(RoRota.db.profile.equipmentSets) do
+            table.insert(sets, name)
+        end
+    end
+    table.sort(sets)
+    
+    local yPos = -10
+    for _, setName in ipairs(sets) do
+        local btn = CreateFrame("Button", nil, frame.setListFrame, "UIPanelButtonTemplate")
+        btn:SetWidth(340)
+        btn:SetHeight(25)
+        btn:SetPoint("TOPLEFT", frame.setListFrame, "TOPLEFT", 10, yPos)
+        btn:SetText(setName)
+        btn.setName = setName
+        RoRotaGUI.SkinButton(btn)
+        
+        btn:SetScript("OnClick", function()
+            frame.selectedSet = this.setName
+            RoRotaGUI.LoadEquipmentEditor(frame)
+        end)
+        
+        table.insert(frame.setButtons, btn)
+        yPos = yPos - 30
+    end
+    
+    if frame.selectedSet and RoRota.db.profile.equipmentSets[frame.selectedSet] then
+        RoRotaGUI.LoadEquipmentEditor(frame)
+    else
+        frame.editorFrame:Hide()
+    end
+end
+
+function RoRotaGUI.LoadEquipmentEditor(frame)
+    if not frame.selectedSet or not RoRota.db.profile.equipmentSets[frame.selectedSet] then
+        frame.editorFrame:Hide()
+        return
+    end
+    
+    local set = RoRota.db.profile.equipmentSets[frame.selectedSet]
+    
+    frame.mainHandLabel:SetText(set.mainHand or "-")
+    frame.offHandLabel:SetText(set.offHand or "-")
+    frame.trinket1Label:SetText(set.trinket1 or "-")
+    frame.trinket2Label:SetText(set.trinket2 or "-")
+    
+    frame.editorFrame:Show()
+end
+
+function RoRotaGUI.LoadEquipmentTab(frame)
+    RoRotaGUI.RefreshEquipmentTab(frame)
 end
 
 RoRotaGUIWidgetsLoaded = true

@@ -8,13 +8,19 @@ RoRota.Debug = {
     logs = {},
     maxLogs = 100,
     window = nil,
+    level = "normal", -- "normal" or "full"
 }
 
 -- Enable/disable debug mode
-function RoRota.Debug:SetEnabled(enabled)
+function RoRota.Debug:SetEnabled(enabled, level)
     self.enabled = enabled
+    self.level = level or "normal"
     if enabled then
-        RoRota:Print("Debug mode enabled. Use /rr debug off to disable.")
+        if self.level == "full" then
+            RoRota:Print("Debug mode enabled (FULL). Use /rr debug off to disable.")
+        else
+            RoRota:Print("Debug mode enabled (NORMAL). Use /rr debug full for detailed logs.")
+        end
     else
         RoRota:Print("Debug mode disabled.")
     end
@@ -35,6 +41,13 @@ end
 -- Log a debug message
 function RoRota.Debug:Log(message, level)
     if not self.enabled or self.paused then return end
+    
+    -- Skip verbose logs in normal mode
+    if self.level == "normal" then
+        if string.find(message, "[PLAN]") or string.find(message, "[FINISHER]") or string.find(message, "[COND]") then
+            return
+        end
+    end
     
     level = level or "INFO"
     local timestamp = date("%H:%M:%S")
@@ -66,6 +79,11 @@ function RoRota.Debug:LogCast(ability, reason)
     table.insert(self.logs, logEntry)
     if table.getn(self.logs) > self.maxLogs then
         table.remove(self.logs, 1)
+    end
+    
+    -- Always show cast messages in chat (not filtered by level)
+    if not (self.window and self.window:IsVisible()) then
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[RoRota]|r " .. logEntry)
     end
     
     -- Update debug window if open
