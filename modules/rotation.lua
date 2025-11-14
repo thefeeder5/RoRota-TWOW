@@ -201,20 +201,14 @@ local function RoRotaRunRotationInternal()
 		return
 	end
 	
-	-- 6. Cooldowns
+	-- 6. Cooldowns (off-GCD, bypass CanCast check)
 	ability = RoRota.GetCooldownAbility and RoRota:GetCooldownAbility()
 	if ability then
-		if RoRota.CastState and not RoRota.CastState:CanCast() then
-			RoRota.CastState:QueueAbility(ability, "Cooldown")
-			if RoRota.Debug then RoRota.Debug:EndTimer() end
-			return
-		end
-		
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(RoRota:T(ability))
-		if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
+		-- Cooldowns are off-GCD, don't set GCD timer
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
 	end

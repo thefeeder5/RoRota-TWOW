@@ -31,6 +31,7 @@ modules\damage.lua
 modules\immunity.lua
 modules\casting.lua
 modules\energytick.lua
+
 modules\timeline.lua
 modules\cppacing.lua
 modules\ttk.lua
@@ -54,6 +55,7 @@ modules\equipment.lua
 modules\profileswitcher.lua
 modules\profileexport.lua
 modules\gui_widgets.lua
+modules\gui_guide.lua
 modules\mainmenu.lua
 modules\gui_minimap.lua
 modules\gui_preview.lua
