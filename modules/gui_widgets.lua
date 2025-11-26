@@ -394,6 +394,16 @@ function RoRotaGUI.CreateSettingRow(parent, y, labelText, controlX)
     return label, controlX or 350
 end
 
+-- create help text (small gray text for hints)
+function RoRotaGUI.CreateHelpText(parent, text, width)
+    local helpText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    helpText:SetText(text)
+    helpText:SetTextColor(0.7, 0.7, 0.7)
+    helpText:SetWidth(width or 350)
+    helpText:SetJustifyH("LEFT")
+    return helpText
+end
+
 -- create horizontal tab button
 function RoRotaGUI.CreateHorizontalTab(parent, x, text, onClick)
     if not parent then return nil end
@@ -924,10 +934,10 @@ function RoRotaGUI.CreateEquipmentTab(parent, frame)
         local t2Link = GetInventoryItemLink("player", 14)
         
         local set = RoRota.db.profile.equipmentSets[frame.selectedSet]
-        set.mainHand = mhLink and string.match(mhLink, "|h%[(.-)%]") or nil
-        set.offHand = ohLink and string.match(ohLink, "|h%[(.-)%]") or nil
-        set.trinket1 = t1Link and string.match(t1Link, "|h%[(.-)%]") or nil
-        set.trinket2 = t2Link and string.match(t2Link, "|h%[(.-)%]") or nil
+        set.mainHand = mhLink or nil
+        set.offHand = ohLink or nil
+        set.trinket1 = t1Link or nil
+        set.trinket2 = t2Link or nil
         
         RoRota:Print("Saved current equipment to: "..frame.selectedSet)
         RoRotaGUI.LoadEquipmentEditor(frame)

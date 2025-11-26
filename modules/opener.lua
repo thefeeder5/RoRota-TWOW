@@ -58,11 +58,12 @@ function RoRota:GetOpenerAbility()
 		last_target = targetName
 	end
 	
-	-- Pick Pocket before opener
+	-- Pick Pocket (off-GCD, cast with opener)
 	if openerCfg.pickPocket and not pick_pocket_used and self:HasSpell("Pick Pocket") then
 		if not self:TargetHasNoPockets() then
 			pick_pocket_used = true
-			return "Pick Pocket"
+			CastSpellByName(self:T("Pick Pocket"))
+			-- Continue to opener selection
 		end
 	end
 	

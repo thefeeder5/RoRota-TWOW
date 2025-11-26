@@ -310,6 +310,17 @@ function RoRota:PlanRotation(state)
 	end
 	
 	-- Build per-call cache with config and dynamic values
+	-- Performance: Pre-cache all buff/debuff times once per planning cycle
+	local buffTimes = {
+		["Slice and Dice"] = self:GetBuffTimeRemaining("Slice and Dice"),
+		["Envenom"] = self:GetBuffTimeRemaining("Envenom"),
+		["Flourish"] = self:GetBuffTimeRemaining("Flourish"),
+		["Rupture"] = self:GetDebuffTimeRemaining("Rupture"),
+		["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor"),
+		["Shadow of Death"] = self:GetDebuffTimeRemaining("Shadow of Death"),
+		["Kidney Shot"] = self:GetDebuffTimeRemaining("Kidney Shot")
+	}
+	
 	local cache = {
 		db = self.db.profile,
 		abilities = self.db.profile.abilities or {},
@@ -319,20 +330,10 @@ function RoRota:PlanRotation(state)
 		mainBuilder = state.mainBuilder,
 		targetHPPct = self.Cache and self.Cache.targetHealthPercent or 100,
 		playerHPPct = self.Cache and self.Cache.healthPercent or 100,
-		-- Use cached values from global cache
 		energyCosts = self.RotationCache.energyCosts,
 		maxEnergy = self.RotationCache.maxEnergy,
 		ruthlessnessChance = self.RotationCache.ruthlessnessChance,
-		-- Cache buff/debuff times for consistent checks within this call
-		buffTimes = {
-			["Slice and Dice"] = self:GetBuffTimeRemaining("Slice and Dice"),
-			["Envenom"] = self:GetBuffTimeRemaining("Envenom"),
-			["Flourish"] = self:GetBuffTimeRemaining("Flourish"),
-			["Rupture"] = self:GetDebuffTimeRemaining("Rupture"),
-			["Expose Armor"] = self:GetDebuffTimeRemaining("Expose Armor"),
-			["Shadow of Death"] = self:GetDebuffTimeRemaining("Shadow of Death"),
-			["Kidney Shot"] = self:GetDebuffTimeRemaining("Kidney Shot")
-		}
+		buffTimes = buffTimes
 	}
 	
 	-- Update timeline only when needed (optimization #4)

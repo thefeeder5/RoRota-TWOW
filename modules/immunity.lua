@@ -10,6 +10,19 @@
 if not RoRota then return end
 if RoRota.immunity then return end
 
+-- Performance: immunity cache (0.1s TTL)
+local immunityCache = {}
+local immunityCacheTime = 0
+local IMMUNITY_CACHE_TTL = 0.1
+
+local function CheckImmunityCache()
+	local now = GetTime()
+	if now - immunityCacheTime > IMMUNITY_CACHE_TTL then
+		immunityCache = {}
+		immunityCacheTime = now
+	end
+end
+
 -- shared immunity groups
 local immunity_groups = {
     bleed = {"Garrote", "Rupture"},
@@ -29,7 +42,17 @@ function RoRota:IsTargetImmune(abilityName)
         return false
     end
     local targetName = UnitName("target")
-    return RoRotaDB.immunities[targetName] and RoRotaDB.immunities[targetName][abilityName]
+    
+    -- Check cache first
+    CheckImmunityCache()
+    local cacheKey = targetName .. ":" .. abilityName
+    if immunityCache[cacheKey] ~= nil then
+        return immunityCache[cacheKey]
+    end
+    
+    local result = RoRotaDB.immunities[targetName] and RoRotaDB.immunities[targetName][abilityName]
+    immunityCache[cacheKey] = result or false
+    return result
 end
 
 function RoRota:TargetHasNoPockets()
@@ -77,12 +100,12 @@ function RoRota:ProcessImmunity(targetName, ability)
                 for _, sharedAbility in ipairs(abilities) do
                     RoRotaDB.immunities[targetName][sharedAbility] = true
                 end
-                self:Print(targetName.." is immune to "..ability.." (and related abilities)")
+                self:PrintNotification(targetName.." is immune to "..ability.." (and related abilities)", "immunity")
                 return
             end
         end
     end
-    self:Print(targetName.." is immune to "..ability)
+    self:PrintNotification(targetName.." is immune to "..ability, "immunity")
 end
 
 function RoRota:UsedSap()
@@ -97,7 +120,7 @@ function RoRota:MarkTargetNoPockets()
         RoRotaDB.noPockets = {}
     end
     RoRotaDB.noPockets[targetName] = true
-    self:Print(targetName.." has no pockets - will skip Pick Pocket")
+    self:PrintNotification(targetName.." has no pockets - will skip Pick Pocket", "immunity")
 end
 
 function RoRota:OnErrorMessage(msg)
@@ -130,15 +153,43 @@ function RoRota:OnErrorMessage(msg)
     end
 end
 
-function RoRota:IsSpellUninterruptible(spellName)
+function RoRota:IsSpellUninterruptible(spellName, interruptType)
     if not spellName or not RoRotaDB or not RoRotaDB.uninterruptible or not UnitExists("target") then
         return false
     end
     local targetName = UnitName("target")
-    return RoRotaDB.uninterruptible[targetName] and RoRotaDB.uninterruptible[targetName][spellName]
+    if not RoRotaDB.uninterruptible[targetName] or not RoRotaDB.uninterruptible[targetName][spellName] then
+        return false
+    end
+    
+    local immuneTypes = RoRotaDB.uninterruptible[targetName][spellName]
+    
+    -- Backward compatibility: convert old boolean format to new table format
+    if type(immuneTypes) == "boolean" then
+        if immuneTypes then
+            RoRotaDB.uninterruptible[targetName][spellName] = {kick = true, stun = true}
+            immuneTypes = RoRotaDB.uninterruptible[targetName][spellName]
+        else
+            return false
+        end
+    end
+    
+    -- If no interrupt type specified, check if immune to all types
+    if not interruptType then
+        return immuneTypes.kick and immuneTypes.stun
+    end
+    
+    -- Check specific interrupt type
+    if interruptType == "kick" then
+        return immuneTypes.kick
+    elseif interruptType == "stun" then
+        return immuneTypes.stun
+    end
+    
+    return false
 end
 
-function RoRota:MarkSpellUninterruptible(spellName)
+function RoRota:MarkSpellUninterruptible(spellName, interruptType)
     if not spellName or not UnitExists("target") then return end
     local targetName = UnitName("target")
     if not RoRotaDB.uninterruptible then
@@ -148,8 +199,28 @@ function RoRota:MarkSpellUninterruptible(spellName)
         RoRotaDB.uninterruptible[targetName] = {}
     end
     if not RoRotaDB.uninterruptible[targetName][spellName] then
-        RoRotaDB.uninterruptible[targetName][spellName] = true
-        self:Print(targetName.."'s '"..spellName.."' cannot be interrupted - will skip")
+        RoRotaDB.uninterruptible[targetName][spellName] = {kick = false, stun = false}
+    end
+    
+    local immuneTypes = RoRotaDB.uninterruptible[targetName][spellName]
+    local wasImmune = immuneTypes.kick or immuneTypes.stun
+    
+    -- Mark specific interrupt type as immune
+    if interruptType == "kick" then
+        immuneTypes.kick = true
+    elseif interruptType == "stun" then
+        immuneTypes.stun = true
+    end
+    
+    -- Print message only if this is new information
+    if not wasImmune then
+        if interruptType == "kick" then
+            self:PrintNotification(targetName.."'s '"..spellName.."' immune to kicks - will try stuns", "immunity")
+        elseif interruptType == "stun" then
+            self:PrintNotification(targetName.."'s '"..spellName.."' immune to stuns", "immunity")
+        end
+    elseif immuneTypes.kick and immuneTypes.stun then
+        self:PrintNotification(targetName.."'s '"..spellName.."' cannot be interrupted at all", "immunity")
     end
 end
 

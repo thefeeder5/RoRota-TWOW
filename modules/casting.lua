@@ -103,7 +103,7 @@ function RoRota:OnSelfSpellEvent(msg)
     if not UnitExists("target") or not msg then return end
     local targetName = UnitName("target")
     
-    if string.find(msg, "interrupts") and (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot")) then
+    if string.find(msg, "interrupts") and (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot") or string.find(msg, "Deadly Throw")) then
         self.targetCasting = false
         self.castingTimeout = 0
         self.currentTargetSpell = nil
@@ -115,8 +115,12 @@ function RoRota:OnSelfSpellEvent(msg)
         end
     end
     
-    if (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Kidney Shot")) then
+    if (string.find(msg, "Kick") or string.find(msg, "Gouge") or string.find(msg, "Deadly Throw")) then
         self.lastInterruptAttempt = GetTime()
+        self.lastInterruptType = "kick"
+    elseif string.find(msg, "Kidney Shot") then
+        self.lastInterruptAttempt = GetTime()
+        self.lastInterruptType = "stun"
     end
     
     if string.find(msg, "failed") and string.find(msg, "immune") then
@@ -129,11 +133,18 @@ end
 function RoRota:OnCreatureSpellEvent(msg)
     if not msg then return end
     
-    if self.lastInterruptAttempt > 0 and GetTime() - self.lastInterruptAttempt < 1.5 then
+    -- Only mark as uninterruptible if we see the spell complete AFTER interrupt attempt
+    if self.lastInterruptAttempt > 0 and GetTime() - self.lastInterruptAttempt < 0.5 then
         if self.currentTargetSpell and self.targetCasting then
-            self:MarkSpellUninterruptible(self.currentTargetSpell)
+            -- Check if spell actually completed (not interrupted)
+            if string.find(msg, self.currentTargetSpell) and (string.find(msg, "gains") or string.find(msg, "hits") or string.find(msg, "casts")) then
+                -- Determine interrupt type that failed
+                local interruptType = self.lastInterruptType or "kick"
+                self:MarkSpellUninterruptible(self.currentTargetSpell, interruptType)
+            end
             self.currentTargetSpell = nil
             self.lastInterruptAttempt = 0
+            self.lastInterruptType = nil
         end
     end
     

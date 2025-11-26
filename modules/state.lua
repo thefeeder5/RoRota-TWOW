@@ -54,7 +54,7 @@ function RoRota.State:IsStealthed()
 			return true
 		end
 		i = i + 1
-		if i > 40 then break end
+		if i > 32 then break end
 	end
 	return false
 end

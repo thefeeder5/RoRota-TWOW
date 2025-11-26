@@ -120,10 +120,9 @@ local function CreateStealthOpenersSubtab(parent)
     end), 30)
     parent.failsafeDD = getglobal("RoRotaStealthOpenerFailDD")
     
-    local pickPocketCheck = RoRotaGUI.CreateCheckbox("RoRotaPickPocket", parent, 20, layout:GetY(), "Pick Pocket before opener", function()
+    layout:Row("Pick Pocket", RoRotaGUI.CreateCheckbox("RoRotaPickPocket", parent, 0, 0, "", function()
         RoRota.db.profile.opener.pickPocket = (this:GetChecked() == 1)
-    end)
-    layout:Space(25)
+    end), 25)
     
     parent.stealthEquipDD = CreateFrame("Frame", "RoRotaStealthEquipDD", parent, "UIDropDownMenuTemplate")
     UIDropDownMenu_SetWidth(150, parent.stealthEquipDD)
@@ -156,6 +155,8 @@ local function CreateStealthOpenersSubtab(parent)
             UIDropDownMenu_AddButton(info)
         end
     end)
+    layout:Add(RoRotaGUI.CreateHelpText(parent, "Tip: This equipment set will be used when you out of combat and gain stealth", 350), 20)
+
 end
 
 local function CreateVanishOpenersSubtab(parent)
@@ -1060,6 +1061,11 @@ local function CreateInterruptSettingsSubtab(parent)
     end), 30)
     parent.kidneyIntMaxCPDD = getglobal("RoRotaKidneyIntMaxCPDD")
     
+    layout:Row("Interrupt Delay", RoRotaGUI.CreateDecimalEditBox("RoRotaIntDelayEB", parent, 0, 0, 50, 0, 1, function(v)
+        RoRota.db.profile.interrupt.interruptDelay = v
+    end), 25)
+    parent.delayEB = getglobal("RoRotaIntDelayEB")
+
     layout:Row("Filter Mode", RoRotaGUI.CreateDropdown("RoRotaIntFilterModeDD", parent, 0, 0, 200, 
         {"Interrupt All (Ignore List)", "Interrupt None (Priority List)"}, function(v)
         RoRota.db.profile.interrupt.filterMode = v
@@ -1208,6 +1214,9 @@ function RoRotaMainMenu.LoadDefensiveTab(frame)
             local val = cfg.filterMode or "Interrupt All (Ignore List)"
             UIDropDownMenu_SetSelectedValue(frame.subtabFrames[1].filterModeDD, val)
             UIDropDownMenu_SetText(val, frame.subtabFrames[1].filterModeDD)
+        end
+        if frame.subtabFrames[1].delayEB then
+            frame.subtabFrames[1].delayEB:SetText(string.format("%.1f", cfg.delay or 1.0))
         end
     end
     
@@ -1953,12 +1962,28 @@ local function CreateConsumablesSubtab(parent)
     end), 25)
 end
 
+local function CreateNotificationsSubtab(parent)
+    local layout = RoRotaGUI.CreateLayout(parent, 20, -20)
+    
+    layout:Row("Show Immunity Messages", RoRotaGUI.CreateCheckbox("RoRotaShowImmunityMsg", parent, 0, 0, "", function()
+        RoRota.db.profile.notifications.showImmunityMessages = (this:GetChecked() == 1)
+    end), 25)
+    
+    layout:Row("Show Poison Messages", RoRotaGUI.CreateCheckbox("RoRotaShowPoisonMsg", parent, 0, 0, "", function()
+        RoRota.db.profile.notifications.showPoisonMessages = (this:GetChecked() == 1)
+    end), 25)
+    
+    layout:Row("Show Equipment Messages", RoRotaGUI.CreateCheckbox("RoRotaShowEquipmentMsg", parent, 0, 0, "", function()
+        RoRota.db.profile.notifications.showEquipmentMessages = (this:GetChecked() == 1)
+    end), 25)
+end
+
 function RoRotaMainMenu.CreateSettingsTab(parent, frame)
     RoRotaGUI.CreateSubtabStructure(
         parent,
-        {"Poisons", "Preview", "Consumables"},
-        {CreatePoisonsSubtab, CreatePreviewSubtab, CreateConsumablesSubtab},
-        {nil, nil, nil}
+        {"Poisons", "Preview", "Consumables", "Notifications"},
+        {CreatePoisonsSubtab, CreatePreviewSubtab, CreateConsumablesSubtab, CreateNotificationsSubtab},
+        {nil, nil, nil, nil}
     )
 end
 
@@ -2019,6 +2044,18 @@ function RoRotaMainMenu.LoadSettingsTab(frame)
             local thistleEnergy = getglobal("RoRotaNewThistleTeaEnergy")
             if thistleEnergy then thistleEnergy:SetText(tostring(p.consumables.thistleTea.energyThreshold or 20)) end
         end
+    end
+    
+    -- Notifications subtab
+    if frame.subtabFrames[4] and p.notifications then
+        local immunityCheck = getglobal("RoRotaShowImmunityMsg")
+        if immunityCheck then immunityCheck:SetChecked(p.notifications.showImmunityMessages and 1 or nil) end
+        
+        local poisonCheck = getglobal("RoRotaShowPoisonMsg")
+        if poisonCheck then poisonCheck:SetChecked(p.notifications.showPoisonMessages and 1 or nil) end
+        
+        local equipmentCheck = getglobal("RoRotaShowEquipmentMsg")
+        if equipmentCheck then equipmentCheck:SetChecked(p.notifications.showEquipmentMessages and 1 or nil) end
     end
 end
 
@@ -2224,7 +2261,7 @@ function RoRotaMainMenu.LoadImmunitiesTab(frame)
     end
     
     -- Load Silence subtab (5)
-    if frame.subtabFrames[5] and frame.subtabFrames[5].spellList then
+    if frame.subtabFrames[5] and frame.subtabFrames[5].spellList and frame.subtabFrames[5].spellList.content then
         for _, child in ipairs({frame.subtabFrames[5].spellList.content:GetChildren()}) do
             child:Hide()
         end
@@ -2247,11 +2284,9 @@ function RoRotaMainMenu.LoadImmunitiesTab(frame)
                             if RoRotaDB.uninterruptible[localTarget] then
                                 RoRotaDB.uninterruptible[localTarget][localSpell] = nil
                             end
-                            this:GetParent():GetParent():GetParent():Hide()
                             if RoRotaMainMenuFrame and RoRotaMainMenuFrame.tabs[10].content.Load then
                                 RoRotaMainMenuFrame.tabs[10].content.Load()
                             end
-                            this:GetParent():GetParent():GetParent():Show()
                         end)
                         
                         y = y - 20

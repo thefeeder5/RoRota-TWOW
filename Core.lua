@@ -36,6 +36,7 @@ RoRota.poisonApplyTime = 0
 RoRota.lastPoisonSlot = 17
 RoRota.lastAbilityCast = nil
 RoRota.lastAbilityTime = 0
+RoRota.lastInterruptType = nil
 
 -- Initialization
 
@@ -143,20 +144,4 @@ end
 
 function RoRota:OnDisable()
     self:Print("RoRota disabled.")
-end
-
--- Get approximate distance to target in yards
-function RoRota:GetTargetDistance()
-	if not UnitExists("target") then return 100 end
-	-- Use CheckInteractDistance for range checks
-	-- 1 = Inspect (28 yards), 2 = Trade (11.11 yards), 3 = Duel (9.9 yards), 4 = Follow (28 yards)
-	if CheckInteractDistance("target", 3) then
-		return 5  -- Within melee range (~5 yards)
-	elseif CheckInteractDistance("target", 2) then
-		return 10  -- Within 10 yards
-	elseif CheckInteractDistance("target", 1) then
-		return 25  -- Within 25 yards
-	else
-		return 35  -- Beyond 28 yards, assume 35+
-	end
 end

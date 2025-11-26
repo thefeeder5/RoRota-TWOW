@@ -73,7 +73,7 @@ function RoRota:GetInterruptAbility()
 	
 	local interrupt = self.db.profile.interrupt or {}
 	
-	-- Skip if spell is uninterruptible
+	-- Skip if spell is uninterruptible by all methods
 	if self.currentTargetSpell and self:IsSpellUninterruptible(self.currentTargetSpell) then
 		castStartTime = 0
 		lastCastingSpell = nil
@@ -95,9 +95,10 @@ function RoRota:GetInterruptAbility()
 		lastInterruptedSpell = self.currentTargetSpell
 	end
 	
-	-- Wait 1 second before interrupting (maximize damage mitigation)
+	-- Wait configured delay before interrupting
+	local interruptDelay = interrupt.interruptDelay or 1.0
 	local castDuration = GetTime() - castStartTime
-	if castDuration < 1.0 then
+	if castDuration < interruptDelay then
 		return nil
 	end
 	
@@ -107,21 +108,25 @@ function RoRota:GetInterruptAbility()
 	local deadlyThrowMaxRange = 30 + (throwingSpec * 3)
 	local hasThrown = GetInventoryItemLink("player", 18) ~= nil
 	
+	-- Check if spell is immune to specific interrupt types
+	local kickImmune = self.currentTargetSpell and self:IsSpellUninterruptible(self.currentTargetSpell, "kick")
+	local stunImmune = self.currentTargetSpell and self:IsSpellUninterruptible(self.currentTargetSpell, "stun")
+	
 	-- Priority: Kick (melee) > Deadly Throw (ranged) > Gouge > Kidney Shot
-	if interrupt.useKick and self:HasSpell("Kick") and self:HasEnoughEnergy("Kick") and not self:IsOnCooldown("Kick") and not self:IsTargetImmune("Kick") and targetDistance <= 5 then
+	if not kickImmune and interrupt.useKick and self:HasSpell("Kick") and self:HasEnoughEnergy("Kick") and not self:IsOnCooldown("Kick") and not self:IsTargetImmune("Kick") and targetDistance <= 5 then
 		return "Kick"
 	end
 	
-	if interrupt.useDeadlyThrow and self:HasSpell("Deadly Throw") and self:HasEnoughEnergy("Deadly Throw") and not self:IsOnCooldown("Deadly Throw") and not self:IsTargetImmune("Deadly Throw") and hasThrown and targetDistance >= 8 and targetDistance <= deadlyThrowMaxRange then
+	if not kickImmune and interrupt.useDeadlyThrow and self:HasSpell("Deadly Throw") and self:HasEnoughEnergy("Deadly Throw") and not self:IsOnCooldown("Deadly Throw") and not self:IsTargetImmune("Deadly Throw") and hasThrown and targetDistance > 5 and targetDistance <= deadlyThrowMaxRange then
 		return "Deadly Throw"
 	end
 	
-	if interrupt.useGouge and self:HasSpell("Gouge") and self:HasEnoughEnergy("Gouge") and not self:IsOnCooldown("Gouge") and not self:IsTargetImmune("Gouge") then
+	if not kickImmune and interrupt.useGouge and self:HasSpell("Gouge") and self:HasEnoughEnergy("Gouge") and not self:IsOnCooldown("Gouge") and not self:IsTargetImmune("Gouge") then
 		return "Gouge"
 	end
 	
 	local cp = GetComboPoints("player", "target")
-	if interrupt.useKidneyShot and cp >= 1 and cp <= (interrupt.kidneyMaxCP or 5) and self:HasSpell("Kidney Shot") and self:HasEnoughEnergy("Kidney Shot") and not self:IsTargetImmune("Kidney Shot") then
+	if not stunImmune and interrupt.useKidneyShot and cp >= 1 and cp <= (interrupt.kidneyMaxCP or 5) and self:HasSpell("Kidney Shot") and self:HasEnoughEnergy("Kidney Shot") and not self:IsOnCooldown("Kidney Shot") and not self:IsTargetImmune("Kidney Shot") then
 		return "Kidney Shot"
 	end
 	

@@ -46,6 +46,7 @@ RoRotaDefaultProfile = {
 		useGouge = false,
 		useKidneyShot = false,
 		kidneyMaxCP = 2,
+		interruptDelay = 1.0,
 		filterMode = "Interrupt All (Ignore List)",
 		filterList = {},
 		history = {},
@@ -124,6 +125,9 @@ RoRotaDefaultProfile = {
 	preview = {enabled = false},
 	notifications = {
 		addonMessages = true,
+		showImmunityMessages = true,
+		showPoisonMessages = true,
+		showEquipmentMessages = true,
 		interruptAnnounce = "None",
 	},
 	consumables = {

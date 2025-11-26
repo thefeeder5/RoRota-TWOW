@@ -38,6 +38,7 @@ L:RegisterTranslations("enUS", function() return {
 	["Feint"] = true,
 	["Sprint"] = true,
 	["Kick"] = true,
+	["Deadly Throw"] = true,
 	["Mark for Death"] = true,
 	
 	-- Buffs

@@ -80,7 +80,7 @@ function RoRota:CheckPoisonApplied()
 	
 	if self:HasWeaponPoison(slot) then
 		local hand = slot == 16 and "main hand" or "off hand"
-		self:Print("Applied "..poisonType.." to "..hand)
+		self:PrintNotification("Applied "..poisonType.." to "..hand, "poison")
 		self.lastPoisonSlot = slot
 	end
 	

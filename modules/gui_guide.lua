@@ -31,6 +31,7 @@ Target Type: type:boss, type:elite, type:worldboss, notype:elite
 Combo Points: combo>3, combo=5, combo<2
 Equipped: equipped:dagger, equipped:sword, equipped:mace
 Immunity: noimmunity:bleed, noimmunity:stun, noimmunity:incap
+Modifier Keys: mod, nomod, mod:alt, mod:ctrl, mod:shift
 
 Examples:
   pbuff:Cold Blood - Player has Cold Blood buff
@@ -40,6 +41,8 @@ Examples:
   thp>80 - Target health above 80%
   type:elite - Target is elite or rare elite
   equipped:dagger - Main hand is a dagger
+  nomod - No modifier keys pressed
+  mod:alt - Alt key is held
 
 |cFFFFFF00Extra Conditions|r
 Extra conditions let you override ability settings based on
@@ -84,6 +87,14 @@ Meaning: Only use Evasion when below 30% health.
 Cold Blood - save for Ambush on elites:
   [type:elite,pnobuff:Stealth]enabled=0
 Meaning: Don't use Cold Blood on elites unless stealthed.
+
+Envenom - only in basic rotation:
+  [nomod]
+Meaning: Only use Envenom when no modifier keys pressed.
+
+Rupture - only when Alt held:
+  [mod:alt]
+Meaning: Only use Rupture when Alt key is held.
 
 |cFFFFFF00Immunity System|r
 Immune Targets: Mob names immune to abilities

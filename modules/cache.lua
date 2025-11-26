@@ -21,6 +21,7 @@ RoRota.Cache = {
 	targetName = nil,
 	inCombat = false,
 	stealthed = false,
+	autoAttacking = false,
 	healthPercent = 100,
 	targetHealthPercent = 100,
 	targetHealth = 0,
@@ -63,6 +64,9 @@ function RoRota.Cache:Update()
 		self.stealthed = RoRota:HasPlayerBuff("Stealth")
 	end
 	
+	-- Auto-attack detection (check if currently attacking)
+	self.autoAttacking = IsCurrentAction(1) or UnitAffectingCombat("player")
+	
 	-- Target health (absolute and percent)
 	if self.hasTarget then
 		self.targetHealth = UnitHealth("target")
@@ -93,6 +97,7 @@ function RoRota.Cache:GetCachedState()
 		targetName = self.targetName,
 		inCombat = self.inCombat,
 		stealthed = self.stealthed,
+		autoAttacking = self.autoAttacking,
 		healthPercent = self.healthPercent,
 		targetHealthPercent = self.targetHealthPercent,
 	}

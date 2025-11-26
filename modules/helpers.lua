@@ -133,25 +133,6 @@ function RoRota:IsTargetRare()
 	return classification == "rare" or classification == "rareelite"
 end
 
--- Get target distance (requires unitxp sp3)
-function RoRota:GetTargetDistance()
-	if not UnitExists("target") then return nil end
-	if not RoRota.Integration or not RoRota.Integration:HasUnitXP() then
-		return nil
-	end
-	return UnitXP("distanceBetween", "player", "target")
-end
-
--- Check if target is in melee range
-function RoRota:IsTargetInMeleeRange()
-	if not UnitExists("target") then return false end
-	if RoRota.Integration and RoRota.Integration:HasUnitXP() then
-		local distance = UnitXP("distanceBetween", "player", "target")
-		return distance and distance <= 5
-	end
-	return CheckInteractDistance("target", 3)
-end
-
 -- Rotation reason (for debug display)
 RoRota.rotationReason = ""
 

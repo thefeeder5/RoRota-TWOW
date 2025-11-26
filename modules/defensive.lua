@@ -22,10 +22,13 @@ function RoRota:GetDefensiveAbility()
 		end
 	end
 	
-	-- Vanish at low HP
-	if defensive.useVanish and playerHP <= (defensive.vanishHP or 0) then
-		if self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish", true) then
-			return "Vanish"
+	-- Vanish at low HP (check current HP, not cached)
+	if defensive.useVanish then
+		local currentHP = (UnitHealth("player") / UnitHealthMax("player")) * 100
+		if currentHP <= (defensive.vanishHP or 0) then
+			if self:HasSpell("Vanish") and not self:IsOnCooldown("Vanish", true) then
+				return "Vanish"
+			end
 		end
 	end
 	

@@ -109,21 +109,36 @@ local function RoRotaRunRotationInternal()
 	local hasTarget = RoRota.Cache and RoRota.Cache.hasTarget or (UnitExists("target") and not UnitIsDead("target"))
 	local inCombat = RoRota.Cache and RoRota.Cache.inCombat or UnitAffectingCombat("player")
 	
-	-- 2. No target: apply poisons
+	-- 2. No target: apply poisons first, then auto-target
 	if not hasTarget then
-		if not inCombat and RoRota.CheckAndApplyPoisons then
-			RoRota:CheckAndApplyPoisons()
+		if not inCombat then
+			if RoRota.CheckAndApplyPoisons then
+				RoRota:CheckAndApplyPoisons()
+			end
+			if RoRota.Debug then RoRota.Debug:EndTimer() end
+			return
+		else
+			-- In combat: auto-target next enemy
+			TargetNearestEnemy()
+			hasTarget = UnitExists("target") and not UnitIsDead("target")
+			if not hasTarget then
+				if RoRota.Debug then RoRota.Debug:EndTimer() end
+				return
+			end
 		end
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
 	end
 	
-	-- 3. Target switch: reset state
+	-- 3. Target switch: reset state and start auto-attack
 	local targetName = UnitName("target")
 	if targetName ~= last_target then
 		last_target = targetName
 		RoRota.targetCasting = false
 		RoRota.castingTimeout = 0
+		
+		-- Reset GCD on target switch to prevent rotation freeze
+		if RoRota.CombatLog then
+			RoRota.CombatLog.gcdEnd = 0
+		end
 		
 		if RoRota.ResetOpenerState then RoRota:ResetOpenerState() end
 		if RoRota.ResetBuilderState then RoRota:ResetBuilderState() end
@@ -177,7 +192,10 @@ local function RoRotaRunRotationInternal()
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability
 		CastSpellByName(RoRota:T(ability))
-		if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
+		-- Kick is off-GCD, others trigger GCD
+		if RoRota.CombatLog and ability ~= "Kick" then
+			RoRota.CombatLog.gcdEnd = GetTime() + 1.0
+		end
 		RoRota.targetCasting = false
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
@@ -219,15 +237,10 @@ local function RoRotaRunRotationInternal()
 		return
 	end
 	
-	-- 7. Opener
+	-- 7. Opener (bypass GCD check when stealthed)
 	ability = RoRota.GetOpenerAbility and RoRota:GetOpenerAbility()
 	if ability then
-		if RoRota.CastState and not RoRota.CastState:CanCast() then
-			RoRota.CastState:QueueAbility(ability, "Opener from stealth")
-			if RoRota.Debug then RoRota.Debug:EndTimer() end
-			return
-		end
-		
+		-- Cast immediately from stealth (don't queue)
 		RoRota.lastAbilityCast = ability
 		RoRota.lastAbilityTime = GetTime()
 		cached_ability = ability

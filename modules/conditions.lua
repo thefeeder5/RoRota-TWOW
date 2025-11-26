@@ -7,6 +7,54 @@ if RoRota.conditions then return end
 
 RoRota.Conditions = {}
 
+-- Performance: weapon type cache (cleared on equipment change)
+local weaponTypeCache = nil
+local weaponTypeCacheTime = 0
+
+-- Performance: condition string parsing cache
+local conditionParseCache = {}
+local conditionParseCacheSize = 0
+local MAX_PARSE_CACHE_SIZE = 50
+
+-- Helper: Check weapon type (cached)
+local function CheckWeaponType(weaponType)
+	if not weaponType then return false end
+	local now = GetTime()
+	if weaponTypeCache and (now - weaponTypeCacheTime) < 1 then
+		return weaponTypeCache == weaponType
+	end
+	
+	local mhLink = GetInventoryItemLink("player", 16)
+	if not mhLink then
+		weaponTypeCache = nil
+		return false
+	end
+	local _, _, _, _, _, itemType, itemSubType = GetItemInfo(mhLink)
+	if not itemSubType then
+		weaponTypeCache = nil
+		return false
+	end
+	
+	local subType = string.lower(itemSubType)
+	weaponTypeCache = nil
+	if string.find(subType, "dagger") then weaponTypeCache = "dagger"
+	elseif string.find(subType, "sword") then weaponTypeCache = "sword"
+	elseif string.find(subType, "mace") then weaponTypeCache = "mace"
+	elseif string.find(subType, "axe") then weaponTypeCache = "axe"
+	elseif string.find(subType, "fist") then weaponTypeCache = "fist"
+	end
+	weaponTypeCacheTime = now
+	
+	local wType = string.lower(weaponType)
+	if wType == "daggers" then wType = "dagger" end
+	if wType == "swords" then wType = "sword" end
+	if wType == "maces" then wType = "mace" end
+	if wType == "axes" then wType = "axe" end
+	if wType == "fist weapon" then wType = "fist" end
+	
+	return weaponTypeCache == wType
+end
+
 -- Condition evaluators (return true/false)
 local evaluators = {
 	-- Buff conditions
@@ -115,24 +163,7 @@ local evaluators = {
 	
 	-- Equipment conditions
 	equipped = function(weaponType)
-		if not weaponType then return false end
-		local mhLink = GetInventoryItemLink("player", 16)
-		if not mhLink then return false end
-		local _, _, _, _, _, itemType, itemSubType = GetItemInfo(mhLink)
-		if not itemSubType then return false end
-		local wType = string.lower(weaponType)
-		if wType == "dagger" or wType == "daggers" then
-			return string.find(string.lower(itemSubType), "dagger")
-		elseif wType == "sword" or wType == "swords" then
-			return string.find(string.lower(itemSubType), "sword")
-		elseif wType == "mace" or wType == "maces" then
-			return string.find(string.lower(itemSubType), "mace")
-		elseif wType == "axe" or wType == "axes" then
-			return string.find(string.lower(itemSubType), "axe")
-		elseif wType == "fist" or wType == "fist weapon" then
-			return string.find(string.lower(itemSubType), "fist")
-		end
-		return false
+		return CheckWeaponType(weaponType)
 	end,
 	
 	-- Immunity conditions
@@ -227,15 +258,30 @@ function RoRota.Conditions:EvaluateAny(conditions)
 	return false
 end
 
--- Parse multi-line conditions
+-- Parse multi-line conditions (cached)
 function RoRota.Conditions:ParseConditionLines(condStr)
 	if not condStr or condStr == "" then return nil end
+	
+	-- Check cache
+	if conditionParseCache[condStr] then
+		return conditionParseCache[condStr]
+	end
+	
 	local lines = {}
 	for line in string.gfind(condStr, "([^\n]+)") do
 		local trimmed = string.gsub(line, "^%s*(.-)%s*$", "%1")
 		if trimmed ~= "" then table.insert(lines, trimmed) end
 	end
-	return table.getn(lines) > 0 and lines or nil
+	
+	local result = table.getn(lines) > 0 and lines or nil
+	
+	-- Cache result (with size limit)
+	if conditionParseCacheSize < MAX_PARSE_CACHE_SIZE then
+		conditionParseCache[condStr] = result
+		conditionParseCacheSize = conditionParseCacheSize + 1
+	end
+	
+	return result
 end
 
 -- Parse single line: [cond1,cond2] override1=val
@@ -384,26 +430,21 @@ function RoRota.Conditions:EvaluateCondition(cond)
 			elseif op == ">=" then return hp >= num
 			elseif op == "<=" then return hp <= num end
 		end
+	-- Energy
+	elseif condType == "energy" then
+		local energy = RoRota.Cache and RoRota.Cache.energy or UnitMana("player")
+		local op, num = string.match(value, "^([<>=]+)(%d+)$")
+		if op and num then
+			num = tonumber(num)
+			if op == ">" then return energy > num
+			elseif op == "<" then return energy < num
+			elseif op == ">=" then return energy >= num
+			elseif op == "<=" then return energy <= num
+			elseif op == "=" then return energy == num end
+		end
 	elseif condType == "equipped" then
 		if not value then return false end
-		local mhLink = GetInventoryItemLink("player", 16)
-		if not mhLink then return false end
-		local _, _, _, _, _, itemType, itemSubType = GetItemInfo(mhLink)
-		if not itemSubType then return false end
-		local wType = string.lower(value)
-		local subType = string.lower(itemSubType)
-		if wType == "dagger" or wType == "daggers" then
-			return string.find(subType, "dagger")
-		elseif wType == "sword" or wType == "swords" then
-			return string.find(subType, "sword")
-		elseif wType == "mace" or wType == "maces" then
-			return string.find(subType, "mace")
-		elseif wType == "axe" or wType == "axes" then
-			return string.find(subType, "axe")
-		elseif wType == "fist" or wType == "fist weapon" then
-			return string.find(subType, "fist")
-		end
-		return false
+		return CheckWeaponType(value)
 	elseif condType == "noimmunity" then
 		if not value or not UnitExists("target") then return true end
 		if not RoRota or not RoRota.IsTargetImmune then return true end
@@ -434,6 +475,19 @@ function RoRota.Conditions:EvaluateCondition(cond)
 	elseif condType == "meleerange" then
 		if not RoRota or not RoRota.IsTargetInMeleeRange then return false end
 		return RoRota:IsTargetInMeleeRange()
+	elseif condType == "mod" then
+		if not value then
+			return IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown()
+		else
+			local modType = string.lower(value)
+			if modType == "alt" then return IsAltKeyDown()
+			elseif modType == "ctrl" or modType == "control" then return IsControlKeyDown()
+			elseif modType == "shift" then return IsShiftKeyDown()
+			end
+		end
+		return false
+	elseif condType == "nomod" then
+		return not IsAltKeyDown() and not IsControlKeyDown() and not IsShiftKeyDown()
 	end
 	return true
 end
