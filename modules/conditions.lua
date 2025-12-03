@@ -5,6 +5,7 @@
 if not RoRota then return end
 if RoRota.conditions then return end
 
+RoRotaConditionParser = {}
 RoRota.Conditions = {}
 
 -- Performance: weapon type cache (cleared on equipment change)
@@ -55,8 +56,8 @@ local function CheckWeaponType(weaponType)
 	return weaponTypeCache == wType
 end
 
--- Condition evaluators (return true/false)
-local evaluators = {
+-- Condition evaluators (moved into parser)
+RoRotaConditionParser.evaluators = {
 	-- Buff conditions
 	has_buff = function(buffName)
 		return RoRota:HasPlayerBuff(buffName)
@@ -201,9 +202,9 @@ local evaluators = {
 	end,
 }
 
--- Evaluate a single condition
-function RoRota.Conditions:Evaluate(conditionType, arg1, arg2, arg3, arg4, arg5)
-	local evaluator = evaluators[conditionType]
+-- Evaluate a single condition (parser method)
+function RoRotaConditionParser:Evaluate(conditionType, arg1, arg2, arg3, arg4, arg5)
+	local evaluator = self.evaluators[conditionType]
 	if not evaluator then
 		return false
 	end
@@ -216,8 +217,13 @@ function RoRota.Conditions:Evaluate(conditionType, arg1, arg2, arg3, arg4, arg5)
 	return result
 end
 
--- Evaluate multiple conditions with AND logic
-function RoRota.Conditions:EvaluateAll(conditions)
+-- Backward compatibility wrapper
+function RoRota.Conditions:Evaluate(conditionType, arg1, arg2, arg3, arg4, arg5)
+	return RoRotaConditionParser:Evaluate(conditionType, arg1, arg2, arg3, arg4, arg5)
+end
+
+-- Evaluate multiple conditions with AND logic (parser method)
+function RoRotaConditionParser:EvaluateAll(conditions)
 	if not conditions or table.getn(conditions) == 0 then
 		return true
 	end
@@ -237,8 +243,8 @@ function RoRota.Conditions:EvaluateAll(conditions)
 	return true
 end
 
--- Evaluate multiple conditions with OR logic
-function RoRota.Conditions:EvaluateAny(conditions)
+-- Evaluate multiple conditions with OR logic (parser method)
+function RoRotaConditionParser:EvaluateAny(conditions)
 	if not conditions or table.getn(conditions) == 0 then
 		return false
 	end
@@ -258,8 +264,17 @@ function RoRota.Conditions:EvaluateAny(conditions)
 	return false
 end
 
--- Parse multi-line conditions (cached)
-function RoRota.Conditions:ParseConditionLines(condStr)
+-- Backward compatibility wrappers
+function RoRota.Conditions:EvaluateAll(conditions)
+	return RoRotaConditionParser:EvaluateAll(conditions)
+end
+
+function RoRota.Conditions:EvaluateAny(conditions)
+	return RoRotaConditionParser:EvaluateAny(conditions)
+end
+
+-- Parse multi-line conditions (cached) - parser method
+function RoRotaConditionParser:ParseConditionLines(condStr)
 	if not condStr or condStr == "" then return nil end
 	
 	-- Check cache
@@ -284,8 +299,13 @@ function RoRota.Conditions:ParseConditionLines(condStr)
 	return result
 end
 
--- Parse single line: [cond1,cond2] override1=val
-function RoRota.Conditions:ParseConditionLine(line)
+-- Backward compatibility wrapper
+function RoRota.Conditions:ParseConditionLines(condStr)
+	return RoRotaConditionParser:ParseConditionLines(condStr)
+end
+
+-- Parse single line: [cond1,cond2] override1=val - parser method
+function RoRotaConditionParser:ParseConditionLine(line)
 	local condBlock, overrides = string.match(line, "^%[([^%]]+)%]%s*(.*)$")
 	if not condBlock then condBlock, overrides = line, "" end
 	local conditions = {}
@@ -303,8 +323,13 @@ function RoRota.Conditions:ParseConditionLine(line)
 	return conditions, overrideTable
 end
 
--- Evaluate single condition
-function RoRota.Conditions:EvaluateCondition(cond)
+-- Backward compatibility wrapper
+function RoRota.Conditions:ParseConditionLine(line)
+	return RoRotaConditionParser:ParseConditionLine(line)
+end
+
+-- Evaluate single condition - parser method
+function RoRotaConditionParser:EvaluateCondition(cond)
 	local condType, value = string.match(cond, "^([^:]+):(.+)$")
 	if not condType then condType, value = cond, nil end
 	-- Player buffs
@@ -492,8 +517,13 @@ function RoRota.Conditions:EvaluateCondition(cond)
 	return true
 end
 
--- Check ability conditions with multi-line support
-function RoRota.Conditions:CheckAbilityConditions(abilityName, config)
+-- Backward compatibility wrapper
+function RoRota.Conditions:EvaluateCondition(cond)
+	return RoRotaConditionParser:EvaluateCondition(cond)
+end
+
+-- Check ability conditions with multi-line support - parser method
+function RoRotaConditionParser:CheckAbilityConditions(abilityName, config)
 	if not config then return true, {} end
 	if not config.conditions or config.conditions == "" then return true, config end
 	local lines = self:ParseConditionLines(config.conditions)
@@ -530,14 +560,79 @@ function RoRota.Conditions:CheckAbilityConditions(abilityName, config)
 	return false, config
 end
 
--- Get list of available condition types (for GUI)
-function RoRota.Conditions:GetAvailableConditions()
+-- Backward compatibility wrapper
+function RoRota.Conditions:CheckAbilityConditions(abilityName, config)
+	return RoRotaConditionParser:CheckAbilityConditions(abilityName, config)
+end
+
+-- Get list of available condition types (for GUI) - parser method
+function RoRotaConditionParser:GetAvailableConditions()
 	local conditions = {}
-	for condType in pairs(evaluators) do
+	for condType in pairs(self.evaluators) do
 		table.insert(conditions, condType)
 	end
 	table.sort(conditions)
 	return conditions
+end
+
+-- Backward compatibility wrapper
+function RoRota.Conditions:GetAvailableConditions()
+	return RoRotaConditionParser:GetAvailableConditions()
+end
+
+-- Validate condition syntax - parser method
+function RoRotaConditionParser:Validate(conditionString)
+	if not conditionString or conditionString == "" then
+		return {valid = true, error = nil}
+	end
+	
+	-- Check basic syntax: [type:value]
+	local condType, value = string.match(conditionString, "^%[([^:]+):(.+)%]$")
+	if not condType then
+		return {valid = false, error = "Invalid syntax. Expected [type:value]"}
+	end
+	
+	-- Check if type exists in evaluators
+	if not self.evaluators[condType] then
+		return {valid = false, error = "Unknown condition type: " .. condType}
+	end
+	
+	-- Type-specific validation
+	if condType == "combo" or condType == "cp" then
+		local op, num = string.match(value, "^([<>=]+)#?(%d+)$")
+		if not op or not num then
+			return {valid = false, error = "Invalid combo point syntax. Expected [cp:>=3] or [cp:5]"}
+		end
+		num = tonumber(num)
+		if num < 0 or num > 5 then
+			return {valid = false, error = "Combo points must be 0-5"}
+		end
+	elseif condType == "energy" then
+		local op, num = string.match(value, "^([<>=]+)(%d+)$")
+		if not op or not num then
+			return {valid = false, error = "Invalid energy syntax. Expected [energy:>=40]"}
+		end
+		num = tonumber(num)
+		if num < 0 or num > 100 then
+			return {valid = false, error = "Energy must be 0-100"}
+		end
+	elseif condType == "php" or condType == "thp" then
+		local op, num = string.match(value, "^([<>=]+)(%d+)$")
+		if not op or not num then
+			return {valid = false, error = "Invalid health syntax. Expected [php:<30]"}
+		end
+		num = tonumber(num)
+		if num < 0 or num > 100 then
+			return {valid = false, error = "Health must be 0-100"}
+		end
+	end
+	
+	return {valid = true, error = nil}
+end
+
+-- Backward compatibility wrapper
+function RoRota.Conditions:Validate(conditionString)
+	return RoRotaConditionParser:Validate(conditionString)
 end
 
 RoRota.conditions = true

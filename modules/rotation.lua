@@ -1,5 +1,5 @@
 --[[ rotation ]]--
--- Rotation orchestrator (Phase 7: Simplified).
+-- Rotation orchestrator with extracted decision logic.
 -- Coordinates decision modules in priority order.
 --
 -- Priority Chain:
@@ -14,11 +14,6 @@
 --
 -- Entry Point: RoRotaRunRotation()
 
--- Throttling (legacy, now using CastState)
-local last_rotation_time = 0
-local cached_ability = nil
-local THROTTLE_INTERVAL = 0.05
-
 -- State tracking
 local last_target = nil
 local was_stealthed = false
@@ -31,58 +26,84 @@ RoRota.ruptureTarget = nil
 RoRota.exposeArmorExpiry = 0
 RoRota.exposeArmorTarget = nil
 
+-- Extract decision logic into separate functions
+function RoRota:DecideAbility()
+	-- Priority order: Interrupt → Defensive → Cooldowns → Opener → Rotation
+	
+	if self.GetInterruptAbility then
+		local ability = self:GetInterruptAbility()
+		if ability then return ability, "Interrupt" end
+	end
+	
+	if self.GetDefensiveAbility then
+		local ability = self:GetDefensiveAbility()
+		if ability then return ability, "Defensive" end
+	end
+	
+	if self.GetCooldownAbility then
+		local ability = self:GetCooldownAbility()
+		if ability then return ability, "Cooldown" end
+	end
+	
+	if self.GetOpenerAbility then
+		local ability = self:GetOpenerAbility()
+		if ability then return ability, "Opener" end
+	end
+	
+	if self.GetRotationAbility then
+		local ability = self:GetRotationAbility()
+		if ability then return ability, "Rotation" end
+	end
+	
+	return nil, nil
+end
+
+function RoRota:CanCastAbility(ability)
+	if not ability then return false end
+	
+	-- Check if ability is off-GCD
+	if RoRotaStateMachine and RoRotaStateMachine.offGCDAbilities[ability] then
+		return true
+	end
+	
+	-- Check if on GCD
+	if RoRotaStateMachine and RoRotaStateMachine:IsOnGCD() then
+		return false
+	end
+	
+	return true
+end
+
+function RoRota:CastAbility(ability, reason)
+	if not ability then return false end
+	
+	self.lastAbilityCast = ability
+	self.lastAbilityTime = GetTime()
+	
+	CastSpellByName(self:T(ability))
+	
+	-- Update state machine
+	if RoRotaStateMachine then
+		RoRotaStateMachine:CastAbility(ability)
+	end
+	
+	-- Log cast
+	if self.Debug and self.Debug.enabled then
+		self.Debug:LogCast(ability, reason or "Cast")
+	end
+	
+	-- Update finisher timers
+	if self.IsFinisher and self:IsFinisher(ability) and self.UpdateFinisherTimer then
+		local cp = self.Cache and self.Cache.comboPoints or GetComboPoints("player", "target")
+		self:UpdateFinisherTimer(ability, cp)
+	end
+	
+	return true
+end
+
 -- Internal rotation logic
 local function RoRotaRunRotationInternal()
 	local now = GetTime()
-	
-	-- Throttle check (minimal, state machine does heavy lifting)
-	if now - last_rotation_time < THROTTLE_INTERVAL then
-		return
-	end
-	
-	-- Check if we have a queued ability from previous GCD
-	if RoRota.CastState then
-		local queuedAbility, queuedReason = RoRota.CastState:GetQueuedAbility()
-		if queuedAbility and RoRota.CastState:CanCast() then
-			-- Validate queued finisher still valid (CP in range)
-			local isValid = true
-			if RoRota.IsFinisher and RoRota:IsFinisher(queuedAbility) then
-				local cp = RoRota.Cache and RoRota.Cache.comboPoints or GetComboPoints("player", "target")
-				if RoRota.db and RoRota.db.profile and RoRota.db.profile.finishers then
-					local finisherCfg = RoRota.db.profile.finishers[queuedAbility]
-					if finisherCfg and finisherCfg.enabled then
-						local minCP = finisherCfg.minCP or 1
-						local maxCP = finisherCfg.maxCP or 5
-						if cp < minCP or cp > maxCP then
-							isValid = false
-						end
-					end
-				end
-			end
-			
-			if isValid then
-				last_rotation_time = now
-				RoRota.lastAbilityCast = queuedAbility
-				RoRota.lastAbilityTime = GetTime()
-				CastSpellByName(RoRota:T(queuedAbility))
-				if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
-				if RoRota.Debug and RoRota.Debug.enabled then
-					RoRota.Debug:LogCast(queuedAbility, queuedReason or "Queued")
-				end
-				if RoRota.IsFinisher and RoRota:IsFinisher(queuedAbility) and RoRota.UpdateFinisherTimer then
-					local cp = RoRota.Cache and RoRota.Cache.comboPoints or GetComboPoints("player", "target")
-					RoRota:UpdateFinisherTimer(queuedAbility, cp)
-				end
-				RoRota.CastState:ClearQueue()
-				return
-			else
-				RoRota.CastState:ClearQueue()
-			end
-		end
-	end
-	
-	last_rotation_time = now
-	cached_ability = nil
 	
 	-- 1. Update caches
 	if RoRota.UpdateBuffCache then
@@ -109,7 +130,7 @@ local function RoRotaRunRotationInternal()
 	local hasTarget = RoRota.Cache and RoRota.Cache.hasTarget or (UnitExists("target") and not UnitIsDead("target"))
 	local inCombat = RoRota.Cache and RoRota.Cache.inCombat or UnitAffectingCombat("player")
 	
-	-- 2. No target: apply poisons first, then auto-target
+	-- 3. No target: apply poisons first, then auto-target
 	if not hasTarget then
 		if not inCombat then
 			if RoRota.CheckAndApplyPoisons then
@@ -128,17 +149,12 @@ local function RoRotaRunRotationInternal()
 		end
 	end
 	
-	-- 3. Target switch: reset state and start auto-attack
+	-- 4. Target switch: reset state
 	local targetName = UnitName("target")
 	if targetName ~= last_target then
 		last_target = targetName
 		RoRota.targetCasting = false
 		RoRota.castingTimeout = 0
-		
-		-- Reset GCD on target switch to prevent rotation freeze
-		if RoRota.CombatLog then
-			RoRota.CombatLog.gcdEnd = 0
-		end
 		
 		if RoRota.ResetOpenerState then RoRota:ResetOpenerState() end
 		if RoRota.ResetBuilderState then RoRota:ResetBuilderState() end
@@ -161,135 +177,31 @@ local function RoRotaRunRotationInternal()
 		end
 	end
 	
-	-- Stealth detection
+	-- 5. Stealth detection
 	local isStealthed = RoRota.Cache and RoRota.Cache.stealthed or false
 	if isStealthed and not was_stealthed then
 		if RoRota.ResetOpenerState then RoRota:ResetOpenerState() end
 	end
 	was_stealthed = isStealthed
 	
-	-- Get CP and energy for logging
-	local cp = RoRota.Cache and RoRota.Cache.comboPoints or GetComboPoints("player", "target")
-	local energy = RoRota.Cache and RoRota.Cache.energy or UnitMana("player")
-	
-	-- 4. Interrupt (highest priority)
-	local ability = RoRota.GetInterruptAbility and RoRota:GetInterruptAbility()
-	if ability then
-		if RoRota.CastState and not RoRota.CastState:CanCast() then
-			RoRota.CastState:QueueAbility(ability, "Target casting")
-			if RoRota.Debug then RoRota.Debug:EndTimer() end
-			return
-		end
-		
-		-- Store interrupt in history immediately
-		local targetName = UnitName("target")
-		local spellName = RoRota.currentTargetSpell or (RoRota.interruptState and RoRota.interruptState.lastInterruptedSpell)
-		if targetName and spellName and RoRota.StoreInterruptedSpell then
-			RoRota:StoreInterruptedSpell(targetName, spellName)
-		end
-		
-		RoRota.lastAbilityCast = ability
-		RoRota.lastAbilityTime = GetTime()
-		cached_ability = ability
-		CastSpellByName(RoRota:T(ability))
-		-- Kick is off-GCD, others trigger GCD
-		if RoRota.CombatLog and ability ~= "Kick" then
-			RoRota.CombatLog.gcdEnd = GetTime() + 1.0
-		end
-		RoRota.targetCasting = false
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
-	end
-	
-	-- 5. Defensive
-	ability = RoRota.GetDefensiveAbility and RoRota:GetDefensiveAbility()
-	if ability then
-		if RoRota.CastState and not RoRota.CastState:CanCast() then
-			RoRota.CastState:QueueAbility(ability, "Defensive ability")
-			if RoRota.Debug then RoRota.Debug:EndTimer() end
-			return
-		end
-		
-		RoRota.lastAbilityCast = ability
-		RoRota.lastAbilityTime = GetTime()
-		cached_ability = ability
-		CastSpellByName(RoRota:T(ability))
-		if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
-	end
-	
-	-- 6. Cooldowns (off-GCD, bypass CanCast check)
-	ability = RoRota.GetCooldownAbility and RoRota:GetCooldownAbility()
-	if ability then
-		RoRota.lastAbilityCast = ability
-		RoRota.lastAbilityTime = GetTime()
-		cached_ability = ability
-		CastSpellByName(RoRota:T(ability))
-		-- Cooldowns are off-GCD, don't set GCD timer
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
-	end
-	
-	-- Check for immunity buffs (skip damaging abilities)
+	-- 6. Check for immunity buffs (skip damaging abilities)
 	if RoRota.TargetHasImmunityBuff and RoRota:TargetHasImmunityBuff() then
 		if RoRota.Debug then RoRota.Debug:EndTimer() end
 		return
 	end
 	
-	-- 7. Opener (bypass GCD check when stealthed)
-	ability = RoRota.GetOpenerAbility and RoRota:GetOpenerAbility()
-	if ability then
-		-- Cast immediately from stealth (don't queue)
-		RoRota.lastAbilityCast = ability
-		RoRota.lastAbilityTime = GetTime()
-		cached_ability = ability
-		CastSpellByName(RoRota:T(ability))
-		if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
-	end
-	
-	-- 8. Rotation (planner)
-	local reason, data
-	if RoRota.GetRotationAbility then
-		ability, reason, data = RoRota:GetRotationAbility()
-	else
-		-- Fallback: simple rotation (use configured builder)
-		local mainBuilder = RoRota.db and RoRota.db.profile and RoRota.db.profile.mainBuilder or "Sinister Strike"
-		if cp >= 5 and energy >= 30 then
-			ability = "Eviscerate"
-			reason = "5 CP finisher"
-		elseif cp < 5 and energy >= 40 then
-			ability = mainBuilder
-			reason = "Build combo points"
-		end
-	end
+	-- 7. Decide ability using extracted logic
+	local ability, reason = RoRota:DecideAbility()
 	
 	if ability then
-		-- Don't cast or log if on GCD
-		if RoRota.CastState and not RoRota.CastState:CanCast() then
-			RoRota.CastState:QueueAbility(ability, reason)
+		-- Check if we can cast
+		if not RoRota:CanCastAbility(ability) then
 			if RoRota.Debug then RoRota.Debug:EndTimer() end
 			return
 		end
 		
-		RoRota.lastAbilityCast = ability
-		RoRota.lastAbilityTime = GetTime()
-		cached_ability = ability
-		CastSpellByName(RoRota:T(ability))
-		if RoRota.CombatLog then RoRota.CombatLog.gcdEnd = GetTime() + 0.8 end
-		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:LogCast(ability, reason or "Rotation")
-		end
-		
-		-- Update finisher timers
-		if RoRota.IsFinisher and RoRota:IsFinisher(ability) and RoRota.UpdateFinisherTimer then
-			RoRota:UpdateFinisherTimer(ability, cp)
-		end
-		
-		if RoRota.Debug then RoRota.Debug:EndTimer() end
-		return
+		-- Cast ability
+		RoRota:CastAbility(ability, reason)
 	end
 	
 	if RoRota.Debug then RoRota.Debug:EndTimer() end
@@ -307,32 +219,8 @@ function RoRota:GetCurrentAbility()
 	local hasTarget = self.Cache and self.Cache.hasTarget or (UnitExists("target") and not UnitIsDead("target"))
 	if not hasTarget then return nil end
 	
-	local ability
-	
-	if self.GetInterruptAbility then
-		ability = self:GetInterruptAbility()
-		if ability then return ability end
-	end
-	
-	if self.GetDefensiveAbility then
-		ability = self:GetDefensiveAbility()
-		if ability then return ability end
-	end
-	
-	if self.GetCooldownAbility then
-		ability = self:GetCooldownAbility()
-		if ability then return ability end
-	end
-	
-	if self.GetOpenerAbility then
-		ability = self:GetOpenerAbility()
-		if ability then return ability end
-	end
-	
-	if self.GetRotationAbility then
-		ability = self:GetRotationAbility()
-		if ability then return ability end
-	end
+	local ability, reason = self:DecideAbility()
+	if ability then return ability end
 	
 	-- Fallback: show intended ability even if no energy
 	local cp = GetComboPoints("player", "target")
