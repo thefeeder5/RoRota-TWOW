@@ -37,36 +37,41 @@ local REASON = {
 	EXECUTE = 12
 }
 
--- Module state for builder failsafe
-local builder_attempts = 0
-local last_builder_cast = nil
+-- Initialize state if needed
+if not RoRota.State then RoRota.State = {} end
+if not RoRota.State.builderAttempts then RoRota.State.builderAttempts = 0 end
+if not RoRota.State.lastBuilderCast then RoRota.State.lastBuilderCast = nil end
 
 function RoRota:ResetBuilderState()
-	builder_attempts = 0
-	last_builder_cast = nil
+	if not self.State then self.State = {} end
+	self.State.builderAttempts = 0
+	self.State.lastBuilderCast = nil
 end
 
 function RoRota:GetBuilderFailsafeInfo()
+	if not self.State then self.State = {} end
 	return {
-		attempts = builder_attempts,
-		lastCast = last_builder_cast,
+		attempts = self.State.builderAttempts or 0,
+		lastCast = self.State.lastBuilderCast,
 		threshold = self.db.profile.builderFailsafeAttempts or 3
 	}
 end
 
 function RoRota:OnBuilderPositionError()
+	if not self.State then self.State = {} end
 	-- Only increment if NOT in stealth (don't count opener failures)
 	if not self:HasPlayerBuff("Stealth") then
-		builder_attempts = builder_attempts + 1
+		self.State.builderAttempts = (self.State.builderAttempts or 0) + 1
 	end
 end
 
 function RoRota:OnBuilderCast(ability)
+	if not self.State then self.State = {} end
 	local mainBuilder = self.db.profile.mainBuilder
 	local secondaryBuilder = self.db.profile.secondaryBuilder
 	if ability == mainBuilder or ability == secondaryBuilder then
-		builder_attempts = 0
-		last_builder_cast = ability
+		self.State.builderAttempts = 0
+		self.State.lastBuilderCast = ability
 	end
 end
 
@@ -81,6 +86,7 @@ local function GetFinisherKey(finisher)
 end
 
 function RoRota:ShouldRefreshFinisher(finisher, state, cache)
+	if not state or state.cp == nil then return false end
 	local cfg = cache.abilities[GetFinisherKey(finisher)]
 	
 	if finisher == "Rupture" and cfg and cfg.tasteForBlood then
@@ -247,7 +253,7 @@ function RoRota:ShouldRefreshFinisher(finisher, state, cache)
 	
 	if timeRemaining <= threshold then return true end
 	
-	if state.cp == 5 and state.energy >= cache.energyCosts[finisher] + 40 then
+	if state.cp == 5 and state.energy >= (cache.energyCosts[finisher] or 35) + 40 then
 		if timeRemaining < 5 then return true end
 	end
 	
@@ -301,7 +307,7 @@ end
 
 function RoRota:PlanRotation(state)
 	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] START: CP=%d Energy=%d", state.cp, state.energy))
+		RoRota.Debug:Log(string.format("[PLAN] START: CP=%d Energy=%d", state.cp or 0, state.energy or 0))
 	end
 	
 	-- Update global rotation cache if dirty (optimization #1, #2)
@@ -330,9 +336,9 @@ function RoRota:PlanRotation(state)
 		mainBuilder = state.mainBuilder,
 		targetHPPct = self.Cache and self.Cache.targetHealthPercent or 100,
 		playerHPPct = self.Cache and self.Cache.healthPercent or 100,
-		energyCosts = self.RotationCache.energyCosts,
-		maxEnergy = self.RotationCache.maxEnergy,
-		ruthlessnessChance = self.RotationCache.ruthlessnessChance,
+		energyCosts = (self.RotationCache and self.RotationCache.energyCosts) or {},
+		maxEnergy = (self.RotationCache and self.RotationCache.maxEnergy) or 100,
+		ruthlessnessChance = (self.RotationCache and self.RotationCache.ruthlessnessChance) or 0,
 		buffTimes = buffTimes
 	}
 	
@@ -347,7 +353,7 @@ function RoRota:PlanRotation(state)
 	local pacing = self:CalculateCPPacing(state)
 	
 	-- Early exit: CP = 0 always builds (optimization #3)
-	if state.cp == 0 then
+	if (state.cp or 0) == 0 then
 		if RoRota.Debug and RoRota.Debug.enabled then
 			RoRota.Debug:Log("[PLAN] CP=0, returning builder")
 		end
@@ -356,7 +362,7 @@ function RoRota:PlanRotation(state)
 	
 	-- Execute phase: Smart Eviscerate (kill at any CP) - HIGHEST PRIORITY
 	local evisConfig = cache.abilities.Eviscerate or {}
-	if state.cp >= 1 and evisConfig.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
+	if (state.cp or 0) >= 1 and evisConfig.smartEviscerate and not self:IsTargetImmune("Eviscerate") then
 		local evisCost = cache.energyCosts["Eviscerate"] or 30
 		if self:CanKillWithEviscerate(state.cp) and state.energy >= evisCost then
 			if evisConfig.useColdBlood and state.cp >= (evisConfig.coldBloodMinCP or 4) then
@@ -369,7 +375,7 @@ function RoRota:PlanRotation(state)
 	end
 	
 	-- CP overflow prevention: at 5 CP, check if we should wait for deadline
-	if state.cp == 5 then
+	if (state.cp or 0) == 5 then
 		-- Check if Cold Blood Eviscerate is enabled and high priority (only if player has CB)
 		if self:HasSpell("Cold Blood") then
 			local cbEvisConfig = cache.abilities.ColdBloodEviscerate
@@ -427,7 +433,7 @@ function RoRota:PlanRotation(state)
 	else
 		-- Not at 5 CP, check if any finisher is available
 		if RoRota.Debug and RoRota.Debug.enabled then
-			RoRota.Debug:Log(string.format("[PLAN] CP=%d, checking finishers", state.cp))
+			RoRota.Debug:Log(string.format("[PLAN] CP=%d, checking finishers", state.cp or 0))
 		end
 		local finisher, reason, data = self:GetOptimalFinisherWithTimeline(state, pacing, cache)
 		if RoRota.Debug and RoRota.Debug.enabled then
@@ -446,9 +452,9 @@ function RoRota:PlanRotation(state)
 	
 	-- Build phase: CP < 5, need to build
 	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] Entering build phase check: CP=%d < 5 = %s", state.cp, tostring(state.cp < 5)))
+		RoRota.Debug:Log(string.format("[PLAN] Entering build phase check: CP=%d < 5 = %s", state.cp or 0, tostring((state.cp or 0) < 5)))
 	end
-	if state.cp < 5 then
+	if (state.cp or 0) < 5 then
 		if RoRota.Debug and RoRota.Debug.enabled then
 			RoRota.Debug:Log("[PLAN] Inside build phase")
 		end
@@ -538,7 +544,7 @@ function RoRota:PlanRotation(state)
 		
 		local builder = cache.mainBuilder
 		local failsafeThreshold = cache.db.builderFailsafe or 3
-		if builder_attempts >= failsafeThreshold and cache.db.secondaryBuilder then
+		if (self.State.builderAttempts or 0) >= failsafeThreshold and cache.db.secondaryBuilder then
 			builder = cache.db.secondaryBuilder
 		end
 		
@@ -573,7 +579,7 @@ function RoRota:PlanRotation(state)
 			if cache.db.secondaryBuilder and not self:IsTargetImmune(cache.db.secondaryBuilder) then
 				builder = cache.db.secondaryBuilder
 				builderCost = cache.energyCosts[builder] or 40
-				builder_attempts = 0
+				self.State.builderAttempts = 0
 			else
 				return nil, REASON.BUILD, 0
 			end
@@ -611,11 +617,11 @@ function RoRota:PlanRotation(state)
 	end
 	
 	if RoRota.Debug and RoRota.Debug.enabled then
-		RoRota.Debug:Log(string.format("[PLAN] After build phase: CP=%d", state.cp))
+		RoRota.Debug:Log(string.format("[PLAN] After build phase: CP=%d", state.cp or 0))
 	end
 	
 	-- Fallback: dump CP at 5 with Eviscerate (bypasses HP thresholds)
-	if state.cp >= 5 and not self:IsTargetImmune("Eviscerate") then
+	if (state.cp or 0) >= 5 and not self:IsTargetImmune("Eviscerate") then
 		local evisConfig = cache.abilities.Eviscerate
 		if evisConfig and evisConfig.enabled == false then
 			-- Eviscerate disabled, don't use fallback
@@ -737,9 +743,15 @@ end
 
 -- Helper: Create state snapshot for planning
 function RoRota:CreateSimulatedState()
+	local cp = 0
+	local energy = 0
+	if UnitExists("target") and not UnitIsDead("target") then
+		cp = GetComboPoints("player", "target") or 0
+		energy = UnitMana("player") or 0
+	end
 	local state = {
-		cp = GetComboPoints("player", "target"),
-		energy = UnitMana("player"),
+		cp = cp,
+		energy = energy,
 		mainBuilder = self.db.profile.mainBuilder or "Sinister Strike",
 	}
 	return state
@@ -776,12 +788,12 @@ function RoRota:CalculateFinisherDuration(finisher, cp)
 end
 
 -- Main rotation entry point (called by rotation.lua)
-function RoRota:GetRotationAbility()
+function RoRota:GetRotationAbility(config, state, cache)
 	if not self.PlanRotation then 
 		return nil 
 	end
 	
-	local state = self:CreateSimulatedState()
+	state = state or self:CreateSimulatedState()
 	local ability, reason, data = self:PlanRotation(state)
 	local reasonText = self:FormatPlanReason(reason, data, ability)
 	

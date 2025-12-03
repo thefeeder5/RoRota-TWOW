@@ -31,19 +31,19 @@ RoRotaStateMachine = {
 	
 	states = {
 		IDLE = {
-			enter = function(self) end,
-			update = function(self) return self:CheckTransitionFromIdle() end,
-			exit = function(self) end,
+			enter = function() end,
+			update = function() return RoRotaStateMachine:CheckTransitionFromIdle() end,
+			exit = function() end,
 		},
 		PLANNING = {
-			enter = function(self) end,
-			update = function(self) return self:CheckTransitionFromPlanning() end,
-			exit = function(self) end,
+			enter = function() end,
+			update = function() return RoRotaStateMachine:CheckTransitionFromPlanning() end,
+			exit = function() end,
 		},
 		GCD = {
-			enter = function(self) self.gcdEnd = GetTime() + 1.0 end,
-			update = function(self) return self:CheckTransitionFromGCD() end,
-			exit = function(self) end,
+			enter = function() RoRotaStateMachine.gcdEnd = GetTime() + 1.0 end,
+			update = function() return RoRotaStateMachine:CheckTransitionFromGCD() end,
+			exit = function() end,
 		},
 	},
 }
@@ -55,7 +55,7 @@ function RoRotaStateMachine:Transition(newState)
 	
 	-- Exit current state
 	if self.states[self.state] and self.states[self.state].exit then
-		self.states[self.state]:exit()
+		self.states[self.state].exit()
 	end
 	
 	-- Change state
@@ -64,7 +64,7 @@ function RoRotaStateMachine:Transition(newState)
 	
 	-- Enter new state
 	if self.states[newState] and self.states[newState].enter then
-		self.states[newState]:enter()
+		self.states[newState].enter()
 	end
 	
 	return true
@@ -78,7 +78,7 @@ function RoRotaStateMachine:Update()
 	
 	-- Call state update handler
 	if self.states[self.state].update then
-		self.states[self.state]:update()
+		self.states[self.state].update()
 	end
 end
 

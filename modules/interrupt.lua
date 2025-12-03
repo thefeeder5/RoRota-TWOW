@@ -11,9 +11,11 @@
 if not RoRota then return end
 if RoRota.interrupt then return end
 
-local castStartTime = 0
-local lastCastingSpell = nil
-local lastInterruptedSpell = nil
+-- Initialize state if needed
+if not RoRota.State then RoRota.State = {} end
+if not RoRota.State.castStartTime then RoRota.State.castStartTime = 0 end
+if not RoRota.State.lastCastingSpell then RoRota.State.lastCastingSpell = nil end
+if not RoRota.State.lastInterruptedSpell then RoRota.State.lastInterruptedSpell = nil end
 
 function RoRota:StoreInterruptedSpell(targetName, spellName)
 	if not targetName or not spellName then return end
@@ -60,18 +62,20 @@ function RoRota:ShouldInterruptSpell(targetName, spellName)
 	end
 end
 
-function RoRota:GetInterruptAbility()
+function RoRota:GetInterruptAbility(config, state, cache)
+	config = config or (self.db and self.db.profile and self.db.profile.interrupt) or {}
+	state = state or self.State or {}
 	if not self:IsTargetCasting() then
-		castStartTime = 0
-		lastCastingSpell = nil
+		state.castStartTime = 0
+		state.lastCastingSpell = nil
 		return nil
 	end
 	
 	-- Expose for interrupt history
 	if not self.interruptState then self.interruptState = {} end
-	self.interruptState.lastInterruptedSpell = lastInterruptedSpell
+	self.interruptState.lastInterruptedSpell = state.lastInterruptedSpell
 	
-	local interrupt = self.db.profile.interrupt or {}
+	local interrupt = config
 	
 	-- Skip if spell is uninterruptible by all methods
 	if self.currentTargetSpell and self:IsSpellUninterruptible(self.currentTargetSpell) then
@@ -89,15 +93,15 @@ function RoRota:GetInterruptAbility()
 	end
 	
 	-- Track when cast started
-	if self.currentTargetSpell ~= lastCastingSpell then
-		castStartTime = GetTime()
-		lastCastingSpell = self.currentTargetSpell
-		lastInterruptedSpell = self.currentTargetSpell
+	if self.currentTargetSpell ~= state.lastCastingSpell then
+		state.castStartTime = GetTime()
+		state.lastCastingSpell = self.currentTargetSpell
+		state.lastInterruptedSpell = self.currentTargetSpell
 	end
 	
 	-- Wait configured delay before interrupting
 	local interruptDelay = interrupt.interruptDelay or 1.0
-	local castDuration = GetTime() - castStartTime
+	local castDuration = GetTime() - state.castStartTime
 	if castDuration < interruptDelay then
 		return nil
 	end

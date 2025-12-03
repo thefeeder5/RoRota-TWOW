@@ -14,6 +14,16 @@ RoRota.CPPacing = {
 }
 
 function RoRota:CalculateCPPacing(state)
+	if not state or not state.cp then
+		return {
+			inPlanningWindow = false,
+			shouldBuild = false,
+			shouldDump = false,
+			shouldPool = false,
+			canUseAnyFinisher = false,
+		}
+	end
+	
 	local deadline = self:GetNextDeadline()
 	
 	if not deadline then

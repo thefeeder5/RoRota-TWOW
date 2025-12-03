@@ -37,31 +37,34 @@ local function CanUseOpener(self, abilityName)
 	return true
 end
 
-function RoRota:GetOpenerAbility()
+function RoRota:GetOpenerAbility(config, state, cache)
+	config = config or (self.db and self.db.profile and self.db.profile.opener) or {}
+	state = state or self.State or {}
+	cache = cache or self.Cache or {}
 	local isStealthed = self:HasPlayerBuff("Stealth")
 	if not isStealthed then
 		-- Reset opener state when leaving stealth
-		opener_attempts = 0
-		pick_pocket_used = false
-		cold_blood_ready = false
+		state.openerAttempts = 0
+		state.pickPocketUsed = false
+		state.coldBloodReady = false
 		return nil
 	end
 	
-	local openerCfg = self.db.profile.opener or {}
+	local openerCfg = config
 	local targetName = UnitName("target")
 	
 	-- Reset state on target switch
-	if targetName ~= last_target then
-		opener_attempts = 0
-		pick_pocket_used = false
-		cold_blood_ready = false
-		last_target = targetName
+	if targetName ~= state.lastOpenerTarget then
+		state.openerAttempts = 0
+		state.pickPocketUsed = false
+		state.coldBloodReady = false
+		state.lastOpenerTarget = targetName
 	end
 	
 	-- Pick Pocket (off-GCD, cast with opener)
-	if openerCfg.pickPocket and not pick_pocket_used and self:HasSpell("Pick Pocket") then
+	if openerCfg.pickPocket and not state.pickPocketUsed and self:HasSpell("Pick Pocket") then
 		if not self:TargetHasNoPockets() then
-			pick_pocket_used = true
+			state.pickPocketUsed = true
 			CastSpellByName(self:T("Pick Pocket"))
 			-- Continue to opener selection
 		end
@@ -69,7 +72,7 @@ function RoRota:GetOpenerAbility()
 	
 	-- Get opener priority list (Vanish or normal stealth)
 	local priority
-	if vanish_opener_mode then
+	if state.vanishOpenerMode then
 		-- Use Vanish opener priority
 		local vanishCfg = self.db.profile.vanishOpener or {}
 		priority = vanishCfg.priority
@@ -96,8 +99,8 @@ function RoRota:GetOpenerAbility()
 	-- Apply failsafe: skip openers based on attempt count
 	local failsafeThreshold = openerCfg.failsafeAttempts or -1
 	local startIndex = 1
-	if failsafeThreshold > 0 and opener_attempts >= failsafeThreshold then
-		startIndex = math.min(opener_attempts + 1, table.getn(priority))
+	if failsafeThreshold > 0 and (state.openerAttempts or 0) >= failsafeThreshold then
+		startIndex = math.min((state.openerAttempts or 0) + 1, table.getn(priority))
 	end
 	
 	-- Try each opener in priority order (starting from failsafe index)
@@ -147,39 +150,43 @@ function RoRota:GetOpenerAbility()
 	
 	-- Cold Blood before Ambush
 	local cbCfg = self.db.profile.cooldowns and self.db.profile.cooldowns.coldBlood
-	if not cold_blood_ready and cbCfg and cbCfg.enabled and selectedOpener == "Ambush" and self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
+	if not state.coldBloodReady and cbCfg and cbCfg.enabled and selectedOpener == "Ambush" and self:HasSpell("Cold Blood") and not self:IsOnCooldown("Cold Blood") and not self:HasPlayerBuff("Cold Blood") then
 		local conditions = cbCfg.conditions or ""
 		if conditions == "" or (self.Conditions and self.Conditions:CheckAbilityConditions("Cold Blood", {conditions = conditions})) then
-			cold_blood_ready = true
+			state.coldBloodReady = true
 			return "Cold Blood"
 		end
 	end
 	
 	-- Cast selected opener
-	cold_blood_ready = false
-	vanish_opener_mode = false  -- Reset Vanish mode after opener
+	state.coldBloodReady = false
+	state.vanishOpenerMode = false  -- Reset Vanish mode after opener
 	return selectedOpener
 end
 
 function RoRota:OnOpenerPositionError()
-	opener_attempts = opener_attempts + 1
+	if not self.State then self.State = {} end
+	self.State.openerAttempts = (self.State.openerAttempts or 0) + 1
 end
 
 function RoRota:ResetOpenerState()
-	opener_attempts = 0
-	pick_pocket_used = false
-	cold_blood_ready = false
-	last_target = nil
-	vanish_opener_mode = false
+	if not self.State then self.State = {} end
+	self.State.openerAttempts = 0
+	self.State.pickPocketUsed = false
+	self.State.coldBloodReady = false
+	self.State.lastOpenerTarget = nil
+	self.State.vanishOpenerMode = false
 end
 
 function RoRota:SetVanishOpenerMode()
-	vanish_opener_mode = true
+	if not self.State then self.State = {} end
+	self.State.vanishOpenerMode = true
 end
 
 function RoRota:GetOpenerFailsafeInfo()
+	if not self.State then self.State = {} end
 	return {
-		attempts = opener_attempts,
+		attempts = self.State.openerAttempts or 0,
 		threshold = self.db.profile.opener and self.db.profile.opener.failsafeAttempts or -1
 	}
 end

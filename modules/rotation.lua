@@ -14,9 +14,10 @@
 --
 -- Entry Point: RoRotaRunRotation()
 
--- State tracking
-local last_target = nil
-local was_stealthed = false
+-- Initialize state if needed
+if not RoRota.State then RoRota.State = {} end
+if not RoRota.State.lastTarget then RoRota.State.lastTarget = nil end
+if not RoRota.State.wasStealthed then RoRota.State.wasStealthed = false end
 
 -- Manual timer tracking (fallback)
 RoRota.sndExpiry = 0
@@ -26,79 +27,28 @@ RoRota.ruptureTarget = nil
 RoRota.exposeArmorExpiry = 0
 RoRota.exposeArmorTarget = nil
 
--- Extract decision logic into separate functions
+-- Inline rotation decision logic (subtasks 8-10 reverted)
 function RoRota:DecideAbility()
-	-- Priority order: Interrupt → Defensive → Cooldowns → Opener → Rotation
-	
-	if self.GetInterruptAbility then
-		local ability = self:GetInterruptAbility()
-		if ability then return ability, "Interrupt" end
+	-- Interrupt
+	if self:IsTargetCasting() then
+		if self:HasSpell("Kick") and self:HasEnoughEnergy("Kick") and not self:IsOnCooldown("Kick") then
+			return "Kick"
+		end
 	end
 	
-	if self.GetDefensiveAbility then
-		local ability = self:GetDefensiveAbility()
-		if ability then return ability, "Defensive" end
+	-- Opener
+	if self:HasPlayerBuff("Stealth") and self:HasSpell("Ambush") then
+		return "Ambush"
 	end
 	
-	if self.GetCooldownAbility then
-		local ability = self:GetCooldownAbility()
-		if ability then return ability, "Cooldown" end
+	-- Rotation
+	if self.PlanRotation then
+		local state = self:CreateSimulatedState()
+		local ability = self:PlanRotation(state)
+		return ability
 	end
 	
-	if self.GetOpenerAbility then
-		local ability = self:GetOpenerAbility()
-		if ability then return ability, "Opener" end
-	end
-	
-	if self.GetRotationAbility then
-		local ability = self:GetRotationAbility()
-		if ability then return ability, "Rotation" end
-	end
-	
-	return nil, nil
-end
-
-function RoRota:CanCastAbility(ability)
-	if not ability then return false end
-	
-	-- Check if ability is off-GCD
-	if RoRotaStateMachine and RoRotaStateMachine.offGCDAbilities[ability] then
-		return true
-	end
-	
-	-- Check if on GCD
-	if RoRotaStateMachine and RoRotaStateMachine:IsOnGCD() then
-		return false
-	end
-	
-	return true
-end
-
-function RoRota:CastAbility(ability, reason)
-	if not ability then return false end
-	
-	self.lastAbilityCast = ability
-	self.lastAbilityTime = GetTime()
-	
-	CastSpellByName(self:T(ability))
-	
-	-- Update state machine
-	if RoRotaStateMachine then
-		RoRotaStateMachine:CastAbility(ability)
-	end
-	
-	-- Log cast
-	if self.Debug and self.Debug.enabled then
-		self.Debug:LogCast(ability, reason or "Cast")
-	end
-	
-	-- Update finisher timers
-	if self.IsFinisher and self:IsFinisher(ability) and self.UpdateFinisherTimer then
-		local cp = self.Cache and self.Cache.comboPoints or GetComboPoints("player", "target")
-		self:UpdateFinisherTimer(ability, cp)
-	end
-	
-	return true
+	return nil
 end
 
 -- Internal rotation logic
@@ -151,8 +101,8 @@ local function RoRotaRunRotationInternal()
 	
 	-- 4. Target switch: reset state
 	local targetName = UnitName("target")
-	if targetName ~= last_target then
-		last_target = targetName
+	if targetName ~= RoRota.State.lastTarget then
+		RoRota.State.lastTarget = targetName
 		RoRota.targetCasting = false
 		RoRota.castingTimeout = 0
 		
@@ -179,10 +129,10 @@ local function RoRotaRunRotationInternal()
 	
 	-- 5. Stealth detection
 	local isStealthed = RoRota.Cache and RoRota.Cache.stealthed or false
-	if isStealthed and not was_stealthed then
+	if isStealthed and not RoRota.State.wasStealthed then
 		if RoRota.ResetOpenerState then RoRota:ResetOpenerState() end
 	end
-	was_stealthed = isStealthed
+	RoRota.State.wasStealthed = isStealthed
 	
 	-- 6. Check for immunity buffs (skip damaging abilities)
 	if RoRota.TargetHasImmunityBuff and RoRota:TargetHasImmunityBuff() then
@@ -190,18 +140,18 @@ local function RoRotaRunRotationInternal()
 		return
 	end
 	
-	-- 7. Decide ability using extracted logic
-	local ability, reason = RoRota:DecideAbility()
+	-- 7. Decide ability
+	local ability = RoRota:DecideAbility()
 	
 	if ability then
-		-- Check if we can cast
-		if not RoRota:CanCastAbility(ability) then
-			if RoRota.Debug then RoRota.Debug:EndTimer() end
-			return
-		end
+		RoRota.lastAbilityCast = ability
+		RoRota.lastAbilityTime = GetTime()
+		CastSpellByName(RoRota:T(ability))
 		
-		-- Cast ability
-		RoRota:CastAbility(ability, reason)
+		if RoRota.IsFinisher and RoRota:IsFinisher(ability) and RoRota.UpdateFinisherTimer then
+			local cp = RoRota.Cache and RoRota.Cache.comboPoints or GetComboPoints("player", "target")
+			RoRota:UpdateFinisherTimer(ability, cp)
+		end
 	end
 	
 	if RoRota.Debug then RoRota.Debug:EndTimer() end

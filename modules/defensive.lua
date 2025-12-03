@@ -10,12 +10,14 @@
 if not RoRota then return end
 if RoRota.defensive then return end
 
-function RoRota:GetDefensiveAbility()
-	local defensive = self.db.profile.defensive or {}
-	local state = self.State or {}
+function RoRota:GetDefensiveAbility(config, state, cache)
+	config = config or (self.db and self.db.profile and self.db.profile.defensive) or {}
+	state = state or self.State or {}
+	cache = cache or self.Cache or {}
+	local defensive = config
 	
 	-- Health potion at low HP
-	local playerHP = self.Cache and self.Cache.healthPercent or 100
+	local playerHP = cache.healthPercent or 100
 	if defensive.useHealthPotion and self.UseHealthPotion then
 		if self:UseHealthPotion() then
 			return nil
